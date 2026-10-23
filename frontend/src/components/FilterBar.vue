@@ -26,7 +26,7 @@ const props = withDefaults(defineProps<{
   /** Slot right for custom actions */
 }>(), {
   modelValue: () => ({}),
-  placeholder: 'Rechercher (matricule, nom, référence…)',
+  placeholder: undefined,
   chips: () => [],
   recherche: true,
 });
@@ -35,6 +35,8 @@ const emit = defineEmits<{
   'reinitialiser': [];
 }>();
 const { t } = useI18n();
+/** Aide par défaut traduite : une valeur par défaut de prop ne suivrait pas la langue. */
+const placeholderEffectif = computed(() => props.placeholder ?? t('common.search.defaultPlaceholder'));
 
 const filtres = computed(() => ({ ...(props.modelValue ?? {}) }));
 
@@ -85,8 +87,8 @@ const developpe = ref(false);
       <q-input
         v-if="props.recherche"
         v-model="texteRecherche"
-        :placeholder="placeholder"
-        :aria-label="placeholder"
+        :placeholder="placeholderEffectif"
+        :aria-label="placeholderEffectif"
         outlined
         dense
         clearable

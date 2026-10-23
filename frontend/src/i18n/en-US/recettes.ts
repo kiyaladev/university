@@ -18,7 +18,6 @@ export default {
     currency: 'Currency',
     invoiceNumber: 'Invoice number',
     accountingLocked: 'This revenue item has been collected; its type, date, amount and currency are locked.',
-    required: 'Required fields are missing',
     updated: 'Revenue entry updated',
     created: 'Revenue entry issued',
     saveFailed: 'Unable to save',

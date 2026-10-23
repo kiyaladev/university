@@ -110,7 +110,7 @@
           <div class="text-subtitle1 text-weight-medium">{{ m.intitule }}</div>
           <div class="text-caption text-grey-7">{{ m.departement?.nom ?? $t('matieres.card.noDepartment') }}</div>
           <div class="text-caption text-grey-7 q-mt-sm">
-            {{ $t('matieres.table.columns.volume') }} <span class="chiffres">{{ m.volumeHoraireTotal }} h</span>
+            {{ $t('matieres.table.columns.volume') }} <span class="chiffres">{{ $t('common.units.hours', { n: m.volumeHoraireTotal }) }}</span>
           </div>
         </q-card-section>
         <q-separator />

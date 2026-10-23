@@ -80,6 +80,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useQuasar } from 'quasar';
+import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
 import AutocompleteAsync from './AutocompleteAsync.vue';
 import ChampDate from './ChampDate.vue';
@@ -90,6 +91,7 @@ const ouvert = defineModel<boolean>({ required: true });
 const emit = defineEmits<{ enregistre: [] }>();
 
 const $q = useQuasar();
+const { t } = useI18n();
 
 const optionsTypes = (['PARTIEL', 'FINAL', 'RATTRAPAGE', 'CONTROLE_CONTINU'] as const).map((value) => ({
   value,
@@ -114,13 +116,13 @@ const envoi = ref(false);
 
 async function enregistrer() {
   if (!form.value.intitule || !form.value.codeExamen || !form.value.matiereId || !form.value.promotionId || !form.value.anneeId || !form.value.dateExamen) {
-    $q.notify({ type: 'warning', message: 'Champs obligatoires manquants' });
+    $q.notify({ type: 'warning', message: t('common.messages.requiredFields') });
     return;
   }
   envoi.value = true;
   try {
     await api.post('/examens', form.value);
-    $q.notify({ type: 'positive', message: 'Examen planifié' });
+    $q.notify({ type: 'positive', message: t('examens.messages.scheduled') });
     ouvert.value = false;
     emit('enregistre');
   } catch {

@@ -311,7 +311,7 @@ const clePreparation = computed(() => {
 const heurePreparation = computed(() => {
   if (!tourneePrepareeLe.value) return '';
   return new Date(tourneePrepareeLe.value).toLocaleTimeString(
-    locale.value === 'en-US' ? 'en-US' : 'fr-FR',
+    locale.value,
     { hour: '2-digit', minute: '2-digit' },
   );
 });

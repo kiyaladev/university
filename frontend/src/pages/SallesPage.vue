@@ -88,7 +88,7 @@
             <div><q-icon name="groups" size="14px" /> {{ s.capacite }} {{ $t('salles.card.capacitySuffix') }}</div>
             <div v-if="s.latitude">
               <q-icon name="my_location" size="14px" />
-              {{ s.latitude.toFixed(4) }}, {{ s.longitude?.toFixed(4) }} (± {{ s.rayonMetres }} m)
+              {{ s.latitude.toFixed(4) }}, {{ s.longitude?.toFixed(4) }} {{ $t('common.units.radius', { n: s.rayonMetres }) }}
             </div>
             <div v-else class="text-grey-6">
               <q-icon name="location_off" size="14px" /> {{ $t('salles.card.noGpsMark') }}

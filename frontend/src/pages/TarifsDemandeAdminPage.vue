@@ -55,7 +55,7 @@
       </template>
       <template #body-cell-delaiHeures="p">
         <q-td :props="p" class="text-right chiffres">
-          {{ p.row.delaiHeures }} h
+          {{ $t('common.units.hours', { n: p.row.delaiHeures }) }}
         </q-td>
       </template>
       <template #body-cell-actions="p">

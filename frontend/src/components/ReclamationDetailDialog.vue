@@ -81,7 +81,7 @@
           </div>
           <div v-if="reclamation.delaiEscaladeHeures">
             <span class="pochoir reclamation-meta__libelle">{{ $t('reclamations.dialog.detail.escalationDelay') }}</span>
-            <span>{{ reclamation.delaiEscaladeHeures }} h</span>
+            <span>{{ $t('common.units.hours', { n: reclamation.delaiEscaladeHeures }) }}</span>
           </div>
         </div>
 

@@ -258,7 +258,7 @@
                     </template>
                   </i18n-t>
                   <div v-if="suspicion.commentaire" class="text-caption text-grey-7">
-                    « {{ suspicion.commentaire }} »
+                    {{ $t('common.format.quoted', { texte: suspicion.commentaire }) }}
                   </div>
                 </q-timeline-entry>
               </q-timeline>

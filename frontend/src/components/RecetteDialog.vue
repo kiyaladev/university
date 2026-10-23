@@ -122,7 +122,7 @@ watch(
 async function enregistrer() {
   const montant = Number(form.value.montant);
   if ((!props.existant && !form.value.numero) || !form.value.libelle || !Number.isFinite(montant) || montant < 0 || !form.value.date) {
-    $q.notify({ type: 'warning', message: t('recettes.formDialog.required') });
+    $q.notify({ type: 'warning', message: t('common.messages.requiredFields') });
     return;
   }
   envoi.value = true;

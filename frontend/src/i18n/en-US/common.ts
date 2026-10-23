@@ -464,6 +464,7 @@ export default {
       gatewayTimeout: 'Gateway timeout',
       payloadTooLarge: 'Payload too large',
     },
+    requiredFields: 'Required fields are missing',
   },
   fields: {
     name: 'Name',
@@ -688,6 +689,7 @@ export default {
     submit: 'Submit',
     advanced: "Filters",
     hideAdvanced: 'Hide filters',
+    defaultPlaceholder: 'Search (student ID, name, reference…)',
   },
   auth: {
     user: 'User',
@@ -779,4 +781,25 @@ export default {
   retryLater: 'Retry later',
   saveAs: 'Save as',
   saveCopy: 'Save a copy',
+  http: {
+    timeout: 'The server is taking too long to respond. Try again in a moment.',
+    unreachable: 'Server unreachable: check your network connection.',
+    unexpected: 'Unexpected server error (code {statut}).',
+    tooManyLogins: 'Too many sign-in attempts. Wait fifteen minutes before trying again.',
+    tooManyRequests: 'Too many requests sent. Wait a minute.',
+  },
+  units: {
+    hours: '{n} h',
+    megabytes: '{n} MB',
+    credits: '{n} cr.',
+    oClock: '{h}:00',
+    outOf20: '/20',
+    outOf100: '({n}/100)',
+    radius: '(± {n} m)',
+    moreCount: ' · +{n}',
+  },
+  format: {
+    range: '{debut} → {fin}',
+    quoted: '“{texte}”',
+  },
 };

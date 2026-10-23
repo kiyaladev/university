@@ -134,7 +134,7 @@
                   <span v-for="(m, i) in doc.motsClefs.slice(0, 4)" :key="m + i">
                     {{ m }}<span v-if="i < Math.min(doc.motsClefs.length, 4) - 1"> · </span>
                   </span>
-                  <span v-if="doc.motsClefs.length > 4"> · +{{ doc.motsClefs.length - 4 }}</span>
+                  <span v-if="doc.motsClefs.length > 4">{{ $t('common.units.moreCount', { n: doc.motsClefs.length - 4 }) }}</span>
                 </span>
                 <q-space />
                 <span

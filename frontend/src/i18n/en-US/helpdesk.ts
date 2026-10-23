@@ -71,7 +71,8 @@ export default {
       CLOTURE: 'Closed',
     },
     resolutionRate:
-      'Same-day resolution rate: {taux} ({resolus} resolved{pluriel} over the last 24 hours)',
+      'Same-day resolution rate: {taux} ({resolus} over the last 24 hours)',
+    resolvedCount: '{n} resolved | {n} resolved | {n} resolved',
   },
   gestionTable: {
     emptyTitle: 'No ticket matches these criteria.',

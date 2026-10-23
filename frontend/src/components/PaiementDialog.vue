@@ -171,6 +171,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
+import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
 import AutocompleteAsync from './AutocompleteAsync.vue';
 import {
@@ -191,6 +192,7 @@ const props = defineProps<{
 const emit = defineEmits<{ 'update:modelValue': [boolean]; paye: [] }>();
 
 const $q = useQuasar();
+const { t } = useI18n();
 const auth = useAuthStore();
 const enregistrement = ref(false);
 const enregistrementSimu = ref(false);
@@ -312,7 +314,7 @@ async function enregistrer() {
   enregistrement.value = true;
   try {
     await poster();
-    $q.notify({ type: 'positive', message: 'Paiement enregistré' });
+    $q.notify({ type: 'positive', message: t('paiements.messages.recorded') });
     emit('paye');
     emit('update:modelValue', false);
   } finally {
@@ -327,7 +329,7 @@ async function enregistrerEnSimulantReussi() {
     const id = await poster();
     // Confirmation opérateur : la transaction est validée immédiatement.
     await api.post(`/paiements/${id}/simuler`, { statut: 'REUSSI' });
-    $q.notify({ type: 'positive', message: 'Paiement enregistré et marqué réussi' });
+    $q.notify({ type: 'positive', message: t('paiements.messages.recordedAndSucceeded') });
     emit('paye');
     emit('update:modelValue', false);
   } finally {

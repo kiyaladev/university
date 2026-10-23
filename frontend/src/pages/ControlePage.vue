@@ -296,6 +296,7 @@ import {
 } from '../utils/libelles';
 import type { Salle, Seance } from '../types';
 import { ouvrirImpression } from '../services/impression';
+import { getAppLocale } from '../boot/i18n';
 
 const $q = useQuasar();
 const pointages = usePointagesStore();
@@ -359,7 +360,7 @@ const lienStatistiques = computed(() => ({
 }));
 
 const jourLisible = computed(() =>
-  new Date(`${date.value}T12:00:00`).toLocaleDateString('fr-FR', {
+  new Date(`${date.value}T12:00:00`).toLocaleDateString(getAppLocale(), {
     weekday: 'long',
     day: 'numeric',
     month: 'long',

@@ -60,7 +60,7 @@
         <div class="apercu-bulletin__ligne" v-for="m in apercu.lignes" :key="m.code">
           <div class="apercu-bulletin__matiere">
             <div class="text-weight-medium">{{ m.intitule }}</div>
-            <div class="text-caption text-grey-7">{{ m.code }} · {{ m.credits }} cr.</div>
+            <div class="text-caption text-grey-7">{{ m.code }} · {{ $t('common.units.credits', { n: m.credits }) }}</div>
           </div>
           <div class="apercu-bulletin__moyenne chiffres">—</div>
         </div>

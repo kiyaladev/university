@@ -383,7 +383,7 @@
               <dd>
                 {{ LIBELLE_ATTESTATION[detail.controle.attestation ?? 'AUCUNE'] }}
                 <span v-if="detail.controle.empreinteScore" class="chiffres">
-                  ({{ detail.controle.empreinteScore }}/100)
+                  {{ $t('common.units.outOf100', { n: detail.controle.empreinteScore }) }}
                 </span>
               </dd>
 
@@ -535,6 +535,7 @@ import {
 } from '../utils/libelles';
 import type { Enseignant, Salle, Seance } from '../types';
 import { ouvrirImpression } from '../services/impression';
+import { getAppLocale } from '../boot/i18n';
 
 const $q = useQuasar();
 const route = useRoute();
@@ -735,7 +736,7 @@ const journees = computed(() => {
     .sort((a, b) => b[0].localeCompare(a[0]))
     .map(([date, liste]) => ({
       date,
-      libelle: new Date(`${date}T12:00:00`).toLocaleDateString('fr-FR', {
+      libelle: new Date(`${date}T12:00:00`).toLocaleDateString(getAppLocale(), {
         weekday: 'long',
         day: 'numeric',
         month: 'long',

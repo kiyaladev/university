@@ -71,7 +71,8 @@ export default {
       CLOTURE: 'Clôturés',
     },
     resolutionRate:
-      'Taux de résolution le jour même : {taux} ({resolus} résolu{pluriel} au cours des 24 dernières heures)',
+      'Taux de résolution le jour même : {taux} ({resolus} au cours des 24 dernières heures)',
+    resolvedCount: '{n} résolu | {n} résolu | {n} résolus',
   },
   gestionTable: {
     emptyTitle: 'Aucun ticket pour ces critères.',

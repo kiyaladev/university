@@ -97,5 +97,6 @@ export default {
     startFailed: 'Unable to start',
     finished: 'Exam finished',
     finishFailed: 'Operation failed',
+    scheduled: 'Exam scheduled',
   },
 };

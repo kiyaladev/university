@@ -89,6 +89,7 @@ import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
 import DialogueFormulaire from './DialogueFormulaire.vue';
 import { LIBELLE_MODE_PAIEMENT } from '../utils/libelles';
+import { getAppLocale } from '../boot/i18n';
 
 interface EtudiantOption {
   id: string;
@@ -167,7 +168,7 @@ async function recharger() {
     $q.notify({
       type: data.immediat ? 'positive' : 'info',
       message: data.immediat
-        ? t('resto.rechargeDialog.messages.credited', { balance: data.solde.toLocaleString('fr-FR') })
+        ? t('resto.rechargeDialog.messages.credited', { balance: data.solde.toLocaleString(getAppLocale()) })
         : t('resto.rechargeDialog.messages.pending', { reference: data.paiement.reference }),
     });
     emit('enregistre');
@@ -203,7 +204,7 @@ async function charger(hard = false) {
       nom: p.etudiant.nom,
       prenom: p.etudiant.prenom,
       solde: p.solde,
-      libelle: `${p.etudiant.matricule} — ${p.etudiant.nom} ${p.etudiant.prenom} (${p.solde.toLocaleString('fr-FR')} GNF)`,
+      libelle: `${p.etudiant.matricule} — ${p.etudiant.nom} ${p.etudiant.prenom} (${p.solde.toLocaleString(getAppLocale())} GNF)`,
     }));
     optionsEtudiants.value = tousEtudiants.value;
   } catch {

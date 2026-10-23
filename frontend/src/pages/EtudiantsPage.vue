@@ -101,7 +101,7 @@
       <template #body-cell-sexe="p">
         <q-td :props="p">
           <q-chip v-if="p.row.sexe" dense outline color="primary">
-            {{ p.row.sexe === 'F' ? 'F' : 'M' }}
+            {{ $t(p.row.sexe === 'F' ? 'etudiants.options.genderShort.F' : 'etudiants.options.genderShort.M') }}
           </q-chip>
           <span v-else class="text-grey-7">{{ $t('rectorat.subtitleFallback') }}</span>
         </q-td>

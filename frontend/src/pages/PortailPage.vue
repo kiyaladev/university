@@ -126,8 +126,8 @@
                 class="lettrage carte-portail__resultat-moyenne chiffres"
                 :class="tonResultat(resultats.finale.decision)"
               >
-                {{ resultats.finale.moyenne.toLocaleString('fr-FR', { maximumFractionDigits: 2 }) }}
-                <span class="carte-portail__resultat-surligne">/20</span>
+                {{ resultats.finale.moyenne.toLocaleString(getAppLocale(), { maximumFractionDigits: 2 }) }}
+                <span class="carte-portail__resultat-surligne">{{ $t('common.units.outOf20') }}</span>
               </span>
               <q-chip
                 :color="resultats.finale.decision === 'ADMIS' ? 'positive' : 'negative'"
@@ -320,6 +320,7 @@ const modules = useServicesActifsStore();
 import BarreTaux from '../components/BarreTaux.vue';
 import DialogueFormulaire from '../components/DialogueFormulaire.vue';
 import { ouvrirImpression } from '../services/impression';
+import { getAppLocale } from '../boot/i18n';
 import {
   LIBELLE_DECISION_JURY,
   LIBELLE_MODE_PAIEMENT,

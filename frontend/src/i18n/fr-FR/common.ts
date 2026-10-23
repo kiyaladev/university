@@ -464,6 +464,7 @@ export default {
       gatewayTimeout: 'Délai de passerelle dépassé',
       payloadTooLarge: 'Charge utile trop lourde',
     },
+    requiredFields: 'Champs obligatoires manquants',
   },
   fields: {
     name: 'Nom',
@@ -688,6 +689,7 @@ export default {
     submit: 'Lancer',
     advanced: "Filtres",
     hideAdvanced: 'Masquer les filtres',
+    defaultPlaceholder: 'Rechercher (matricule, nom, référence…)',
   },
   auth: {
     user: 'Utilisateur',
@@ -779,4 +781,25 @@ export default {
   retryLater: 'Réessayer plus tard',
   saveAs: 'Enregistrer sous',
   saveCopy: 'Enregistrer une copie',
+  http: {
+    timeout: 'Le serveur met trop de temps à répondre. Réessayez dans un instant.',
+    unreachable: 'Serveur injoignable : vérifiez votre connexion réseau.',
+    unexpected: 'Erreur inattendue du serveur (code {statut}).',
+    tooManyLogins: 'Trop de tentatives de connexion. Patientez un quart d’heure avant de réessayer.',
+    tooManyRequests: 'Trop de requêtes envoyées. Patientez une minute.',
+  },
+  units: {
+    hours: '{n} h',
+    megabytes: '{n} Mo',
+    credits: '{n} cr.',
+    oClock: '{h}:00',
+    outOf20: '/20',
+    outOf100: '({n}/100)',
+    radius: '(± {n} m)',
+    moreCount: ' · +{n}',
+  },
+  format: {
+    range: '{debut} → {fin}',
+    quoted: '« {texte} »',
+  },
 };

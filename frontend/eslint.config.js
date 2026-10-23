@@ -54,10 +54,12 @@ export default tseslint.config(
   },
   {
     // Texte en dur dans les gabarits : tout libellé visible doit passer par vue-i18n.
+    // Sont tolérés la ponctuation, les flèches et signes (→ − ±) et la chaîne
+    // vide des ternaires (`x ? … : ''`), qui ne contiennent rien à traduire.
     files: ['src/**/*.vue'],
     plugins: { '@intlify/vue-i18n': vueI18n },
     settings: { 'vue-i18n': { messageSyntaxVersion: '^9.0.0' } },
-    rules: { '@intlify/vue-i18n/no-raw-text': ['warn', { ignorePattern: '^[-#:()&—–·/×+%*|.,…]+$' }] },
+    rules: { '@intlify/vue-i18n/no-raw-text': ['warn', { ignorePattern: '^[-#:()&—–·/×+%*|.,…→−±]*$' }] },
   },
   {
     // Scénarios navigateur et outils en Node (CommonJS ou ESM).

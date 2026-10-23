@@ -71,7 +71,7 @@
         />
       </div>
       <div class="col-12 col-sm-6">
-        <q-input v-model="form.mention" outlined dense :label="$t('bulletins.table.columns.mention')" hint="Félicitations, Très bien…" />
+        <q-input v-model="form.mention" outlined dense :label="$t('bulletins.table.columns.mention')" :hint="$t('stages.dialogs.defense.mentionHint')" />
       </div>
     </div>
   </dialogue-formulaire>

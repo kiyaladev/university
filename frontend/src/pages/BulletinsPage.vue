@@ -228,7 +228,7 @@
               <div class="text-subtitle1 text-weight-medium">{{ l.nom }} {{ l.prenom }}</div>
               <div class="row items-baseline q-gutter-md q-mt-sm">
                 <div class="chiffres text-h6">
-                  {{ l.moyenne !== null ? l.moyenne.toFixed(2) : '—' }}<span class="text-caption">/20</span>
+                  {{ l.moyenne !== null ? l.moyenne.toFixed(2) : '—' }}<span class="text-caption">{{ $t('common.units.outOf20') }}</span>
                 </div>
                 <div class="text-caption text-grey-7">
                   {{ $t('bulletins.cards.rang', { rang: l.rang ?? '—' }) }}{{ l.mention ? ` · ${l.mention}` : '' }}

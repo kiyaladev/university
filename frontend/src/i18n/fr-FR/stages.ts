@@ -125,6 +125,7 @@ export default {
       jurySaved: 'Constat du jury enregistré',
       dateRequired: 'La date de soutenance est requise',
       saved: 'Soutenance enregistrée — travail soutenu',
+      mentionHint: 'Félicitations, Très bien…',
     },
     transition: {
       title: 'Passer en « {label} »',

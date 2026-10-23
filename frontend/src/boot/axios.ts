@@ -1,7 +1,7 @@
 import { defineBoot } from '#q-app/wrappers';
 import axios from 'axios';
 import { Notify } from 'quasar';
-import { getAppLocale } from './i18n';
+import { getAppLocale, i18n } from './i18n';
 import { effacerToken, lireToken } from '../services/session';
 
 /**
@@ -42,16 +42,16 @@ export default defineBoot(({ router }) => {
         error.response?.data?.message ??
         (!error.response
           ? error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT'
-            ? 'Le serveur met trop de temps à répondre. Réessayez dans un instant.'
-            : 'Serveur injoignable : vérifiez votre connexion réseau.'
-          : `Erreur inattendue du serveur (code ${statut}).`);
+            ? i18n.global.t('common.http.timeout')
+            : i18n.global.t('common.http.unreachable')
+          : i18n.global.t('common.http.unexpected', { statut }));
 
       // Le serveur répond « ThrottlerException: Too many requests » : illisible
       // pour un contrôleur, et en anglais.
       if (statut === 429) {
         message = error.config?.url?.includes('/auth/login')
-          ? 'Trop de tentatives de connexion. Patientez un quart d’heure avant de réessayer.'
-          : 'Trop de requêtes envoyées. Patientez une minute.';
+          ? i18n.global.t('common.http.tooManyLogins')
+          : i18n.global.t('common.http.tooManyRequests');
         error.response.data = { ...error.response.data, message };
       }
 

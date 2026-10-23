@@ -182,7 +182,7 @@
       </template>
       <template #body-cell-taille="p">
         <q-td :props="p" class="text-right">
-          <span v-if="p.row.tailleKo">{{ (p.row.tailleKo / 1024).toFixed(1) }} Mo</span>
+          <span v-if="p.row.tailleKo">{{ $t('common.units.megabytes', { n: (p.row.tailleKo / 1024).toFixed(1) }) }}</span>
           <span v-else>{{ $t('rectorat.subtitleFallback') }}</span>
         </q-td>
       </template>
@@ -290,7 +290,7 @@
               <div>{{ doc.departement?.nom ?? '—' }}</div>
               <div>
                 {{ $t('bibliotheque.card.year', { year: anneeDocument(doc) }) }}
-                <template v-if="doc.tailleKo">· {{ (doc.tailleKo / 1024).toFixed(1) }} Mo</template>
+                <template v-if="doc.tailleKo">· {{ $t('common.units.megabytes', { n: (doc.tailleKo / 1024).toFixed(1) }) }}</template>
               </div>
             </div>
             <div class="col-auto" :title="$t('bibliotheque.card.downloads', { count: doc.telechargements })">

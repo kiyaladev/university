@@ -30,7 +30,7 @@
         />
         <div class="text-caption text-grey-7 q-mt-xs">
           {{ $t('verificationCarte.form.qrExplanationPrefix') }}
-          <code>carte</code> {{ $t('verificationCarte.form.qrExplanationAnd') }} <code>k</code>
+          <code>{{ PARAMETRES_QR.carte }}</code> {{ $t('verificationCarte.form.qrExplanationAnd') }} <code>{{ PARAMETRES_QR.k }}</code>
           {{ $t('verificationCarte.form.qrExplanationSuffix') }}
         </div>
         <div class="row justify-end q-mt-md">
@@ -136,6 +136,8 @@ interface ResultatVerification {
 
 const route = useRoute();
 const { t } = useI18n();
+/** Noms des paramètres d'URL lus dans le QR : identifiants techniques, non traduits. */
+const PARAMETRES_QR = { carte: 'carte', k: 'k' } as const;
 
 const identifiant = ref('');
 const codeQr = ref('');

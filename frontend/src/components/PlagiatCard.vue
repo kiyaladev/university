@@ -9,6 +9,7 @@
 import { computed } from 'vue';
 import { LIBELLE_STATUT_SUSPICION, LIBELLE_TYPE_DOCUMENT } from '../utils/libelles';
 import type { DocumentDepot, SuspicionPlagiat } from '../types';
+import { getAppLocale } from '../boot/i18n';
 
 const props = withDefaults(defineProps<{
   suspicion: SuspicionPlagiat;
@@ -126,7 +127,7 @@ function miniature(doc?: DocumentDepot | null) {
     <q-card-actions class="q-px-md">
       <div class="text-caption text-grey-7">
         <q-icon name="event" size="14px" class="q-mr-xs" />
-        {{ $t('plagiatDetail.score.detectedOn') }} {{ new Date(suspicion.detecteLe).toLocaleDateString('fr-FR') }}
+        {{ $t('plagiatDetail.score.detectedOn') }} {{ new Date(suspicion.detecteLe).toLocaleDateString(getAppLocale()) }}
       </div>
       <q-space />
       <q-btn v-if="clickable" flat dense no-caps icon="open_in_new" :label="$t('common.actions.detail')" @click.stop="emit('voir', suspicion)" />

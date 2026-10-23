@@ -41,7 +41,7 @@ const PEREMPTION_JOURS = 7;
 async function lireFile(owner: string): Promise<Pointage[]> {
   if (!owner) return [];
   const file = await lireFileChiffree<unknown>(cleFile(owner), owner, []);
-  if (!Array.isArray(file)) throw new Error('Format de file hors ligne invalide');
+  if (!Array.isArray(file)) throw new Error(i18n.global.t('filePointages.chiffrement.invalidFormat'));
   const { file: sansSecrets, modifie: secretsRetires } = retirerPins(file);
   const limite = Date.now() - PEREMPTION_JOURS * 24 * 3600 * 1000;
   const retenus = sansSecrets.filter((p) => {

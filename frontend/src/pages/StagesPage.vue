@@ -202,7 +202,7 @@
               <div>{{ dateHeureLisible(p.row.soutenance.date) }}</div>
               <div class="text-caption text-grey-7">
                 <template v-if="p.row.soutenance.note !== null">
-                  {{ p.row.soutenance.note }}/20<template v-if="p.row.soutenance.mention"> · {{ p.row.soutenance.mention }}</template>
+                  {{ p.row.soutenance.note }}{{ $t('common.units.outOf20') }}<template v-if="p.row.soutenance.mention"> · {{ p.row.soutenance.mention }}</template>
                 </template>
                 <span v-else>{{ $t('stages.table.defense.awaitingReport') }}</span>
               </div>
@@ -434,7 +434,7 @@
               <q-item-section side>
                 {{ dateHeureLisible(detail.soutenance.date) }}
                 <template v-if="detail.soutenance.note !== null">
-                  · {{ detail.soutenance.note }}/20
+                  · {{ detail.soutenance.note }}{{ $t('common.units.outOf20') }}
                   <template v-if="detail.soutenance.mention"> · {{ detail.soutenance.mention }}</template>
                 </template>
               </q-item-section>

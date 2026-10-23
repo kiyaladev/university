@@ -266,7 +266,7 @@
           <q-card-section class="text-center">
             <div class="text-h3 chiffres">{{ montantLisible(f.prix) }} <span class="text-h6">{{ f.devise }}</span></div>
             <div class="text-caption text-grey-7 q-mt-sm">
-              <span v-if="f.dureeHeures">{{ f.dureeHeures }} h</span>
+              <span v-if="f.dureeHeures">{{ $t('common.units.hours', { n: f.dureeHeures }) }}</span>
               <span v-if="f.dateDebut"> · {{ datesLisible(f) }}</span>
             </div>
             <div class="q-mt-md">

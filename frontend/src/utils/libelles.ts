@@ -339,16 +339,33 @@ export const LIBELLE_TYPE_COURS: Record<TypeCours, string> = traduireLibelles('t
 
 export const NIVEAUX = ['L1', 'L2', 'L3', 'M1', 'M2', 'DOCTORAT'];
 
-export const JOURS = ['', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
+/** Jours de la semaine, numérotés de 1 (lundi) à 7 (dimanche). */
+export const JOURS: Record<number, string> = traduireLibelles('jours', {
+  1: 'Lundi',
+  2: 'Mardi',
+  3: 'Mercredi',
+  4: 'Jeudi',
+  5: 'Vendredi',
+  6: 'Samedi',
+  7: 'Dimanche',
+});
 
-export const TYPES_JUSTIFICATIF = [
-  { value: 'MALADIE', label: 'Maladie' },
-  { value: 'MISSION', label: 'Mission' },
-  { value: 'FORMATION', label: 'Formation' },
-  { value: 'DEUIL', label: 'Deuil' },
-  { value: 'TRANSPORT', label: 'Transport' },
-  { value: 'AUTRE', label: 'Autre' },
-];
+export const LIBELLE_TYPE_JUSTIFICATIF: Record<string, string> = traduireLibelles('types_justificatif', {
+  MALADIE: 'Maladie',
+  MISSION: 'Mission',
+  FORMATION: 'Formation',
+  DEUIL: 'Deuil',
+  TRANSPORT: 'Transport',
+  AUTRE: 'Autre',
+});
+
+/** Options du sélecteur : le libellé est relu à chaque rendu pour suivre la langue. */
+export const TYPES_JUSTIFICATIF = Object.keys(LIBELLE_TYPE_JUSTIFICATIF).map((value) => ({
+  value,
+  get label() {
+    return LIBELLE_TYPE_JUSTIFICATIF[value];
+  },
+}));
 
 /**
  * Badges d'accès. Le même badge se nomme dans le registre, dans le formulaire

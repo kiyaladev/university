@@ -115,7 +115,7 @@ function imprimer() {
           {{ $t('bulletins.cards.deliberatedOn') }} {{ dateLisible(bulletin.dateDeliberation) }} · {{ bulletin.session }}
         </div>
         <div class="bulletin__moyenne">
-          {{ $t('bulletins.cards.overallAverage') }} <strong>{{ bulletin.moyenneGenerale.toFixed(2) }}</strong>/20
+          {{ $t('bulletins.cards.overallAverage') }} <strong>{{ bulletin.moyenneGenerale.toFixed(2) }}</strong>{{ $t('common.units.outOf20') }}
         </div>
         <div v-if="bulletin.mention" class="bulletin__mention">{{ $t('bulletins.cards.honors') }} {{ bulletin.mention }}</div>
       </div>

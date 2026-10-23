@@ -125,6 +125,7 @@ export default {
       jurySaved: 'Jury outcome saved',
       dateRequired: 'The defense date is required',
       saved: 'Defense recorded — work defended',
+      mentionHint: 'Highest honours, High honours…',
     },
     transition: {
       title: 'Move to "{label}"',

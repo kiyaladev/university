@@ -18,5 +18,15 @@ export default {
   "close": "Fermer",
   "retry": "Réessayer",
   "removeConfirm": "Retirer ce pointage non synchronisé de cet appareil ?",
-  "legacy": "Une ancienne file de pointages est conservée sur cet appareil. Son auteur doit être identifié avant sa reprise ; contactez l’administrateur."
+  "legacy": "Une ancienne file de pointages est conservée sur cet appareil. Son auteur doit être identifié avant sa reprise ; contactez l’administrateur.",
+  chiffrement: {
+    unavailable: 'Chiffrement hors ligne indisponible',
+    openFailed: 'Ouverture du coffre hors ligne impossible',
+    keyMissing: 'Clé hors ligne absente',
+    keySaveFailed: 'Enregistrement de la clé hors ligne impossible',
+    keySaveAborted: 'Enregistrement de la clé hors ligne annulé',
+    keyReadFailed: 'Lecture de la clé hors ligne impossible',
+    decryptKeyMissing: 'Clé de déchiffrement hors ligne absente',
+    invalidFormat: 'Format de file hors ligne invalide',
+  },
 };

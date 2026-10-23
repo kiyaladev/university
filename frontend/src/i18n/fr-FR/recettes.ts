@@ -18,7 +18,6 @@ export default {
     currency: 'Devise',
     invoiceNumber: 'N° de facture',
     accountingLocked: 'La recette est encaissée : son type, sa date, son montant et sa devise sont figés.',
-    required: 'Champs obligatoires manquants',
     updated: 'Recette modifiée',
     created: 'Recette émise',
     saveFailed: 'Enregistrement impossible',

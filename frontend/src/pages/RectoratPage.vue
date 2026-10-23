@@ -253,6 +253,7 @@ import { useReferentielsStore } from '../stores/referentiels';
 import ChartCanvas from '../components/ChartCanvas.vue';
 import { montantLisible, nombreLisible, pourcentLisible } from '../utils/libelles';
 import type { AnneeAcademique, FeuillePaie, TableauBordPatrimoine, TableauBordRectorat } from '../types';
+import { getAppLocale } from '../boot/i18n';
 
 /**
  * Les peintures des graphiques. Un même indicateur porte la même couleur ici et
@@ -386,7 +387,7 @@ async function evolutionMasseSalariale(): Promise<{ mois: string; total: number 
     const d = new Date(maintenant.getFullYear(), maintenant.getMonth() - i, 1);
     mois.push({
       key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
-      label: d.toLocaleDateString('fr-FR', { month: 'short', year: '2-digit' }),
+      label: d.toLocaleDateString(getAppLocale(), { month: 'short', year: '2-digit' }),
       total: 0,
     });
   }

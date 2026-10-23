@@ -153,5 +153,7 @@ export default {
     confirmed: 'Paiement confirmé',
     markedFailed: 'Paiement marqué échoué',
     cancelled: 'Paiement annulé',
+    recorded: 'Paiement enregistré',
+    recordedAndSucceeded: 'Paiement enregistré et marqué réussi',
   },
 };

@@ -60,6 +60,10 @@ export default {
       male: 'Male',
       female: 'Female',
     },
+    genderShort: {
+      F: 'F',
+      M: 'M',
+    },
   },
   table: {
     columns: {

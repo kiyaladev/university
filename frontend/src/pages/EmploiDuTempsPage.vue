@@ -173,7 +173,7 @@
       <div class="grille__axe">
         <div class="grille__coin" />
         <div v-for="h in heures" :key="h" class="grille__heure">
-          <span class="pochoir chiffres">{{ String(h).padStart(2, '0') }}:00</span>
+          <span class="pochoir chiffres">{{ $t('common.units.oClock', { h: String(h).padStart(2, '0') }) }}</span>
         </div>
       </div>
 

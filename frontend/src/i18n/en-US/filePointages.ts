@@ -18,5 +18,15 @@ export default {
   "close": "Close",
   "retry": "Retry",
   "removeConfirm": "Remove this unsynced record from this device?",
-  "legacy": "An older attendance queue is preserved on this device. Its owner must be identified before it can be recovered; contact the administrator."
+  "legacy": "An older attendance queue is preserved on this device. Its owner must be identified before it can be recovered; contact the administrator.",
+  chiffrement: {
+    unavailable: 'Offline encryption unavailable',
+    openFailed: 'Unable to open the offline vault',
+    keyMissing: 'Offline key missing',
+    keySaveFailed: 'Unable to save the offline key',
+    keySaveAborted: 'Saving the offline key was aborted',
+    keyReadFailed: 'Unable to read the offline key',
+    decryptKeyMissing: 'Offline decryption key missing',
+    invalidFormat: 'Invalid offline queue format',
+  },
 };

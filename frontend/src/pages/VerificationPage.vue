@@ -30,8 +30,8 @@
         />
         <div class="text-caption text-grey-7 q-mt-xs">
           <i18n-t keypath="verification.form.qrParamsHint" tag="span">
-            <template #ref><code>ref</code></template>
-            <template #k><code>k</code></template>
+            <template #ref><code>{{ PARAMETRES_QR.ref }}</code></template>
+            <template #k><code>{{ PARAMETRES_QR.k }}</code></template>
           </i18n-t>
         </div>
         <div class="row justify-end q-mt-md">
@@ -155,6 +155,8 @@ interface ResultatVerification {
 
 const route = useRoute();
 const { t } = useI18n();
+/** Noms des paramètres d'URL lus dans le QR : identifiants techniques, non traduits. */
+const PARAMETRES_QR = { ref: 'ref', k: 'k' } as const;
 
 const numero = ref('');
 const codeQr = ref('');

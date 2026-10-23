@@ -3,6 +3,8 @@
  * est conservée dans IndexedDB ; le contenu JSON chiffré reste dans
  * localStorage pour garder une purge simple par compte.
  */
+import { i18n } from '../boot/i18n';
+
 const BASE = 'unipresence-file-crypto-v1';
 const STORE = 'cles';
 const PREFIXE = 'upf1:';
@@ -15,7 +17,7 @@ interface EntreeCle {
 const ouvertures = new Map<string, Promise<CryptoKey>>();
 
 function ouvrirBase(): Promise<IDBDatabase> {
-  if (!globalThis.indexedDB) return Promise.reject(new Error('Chiffrement hors ligne indisponible'));
+  if (!globalThis.indexedDB) return Promise.reject(new Error(i18n.global.t('filePointages.chiffrement.unavailable')));
   return new Promise((resolve, reject) => {
     const demande = indexedDB.open(BASE, 1);
     demande.onupgradeneeded = () => {
@@ -24,12 +26,12 @@ function ouvrirBase(): Promise<IDBDatabase> {
       }
     };
     demande.onsuccess = () => resolve(demande.result);
-    demande.onerror = () => reject(demande.error ?? new Error('Ouverture du coffre hors ligne impossible'));
+    demande.onerror = () => reject(demande.error ?? new Error(i18n.global.t('filePointages.chiffrement.openFailed')));
   });
 }
 
 async function obtenirCle(proprietaire: string): Promise<CryptoKey> {
-  if (!proprietaire || !globalThis.crypto?.subtle) throw new Error('Chiffrement hors ligne indisponible');
+  if (!proprietaire || !globalThis.crypto?.subtle) throw new Error(i18n.global.t('filePointages.chiffrement.unavailable'));
   const existante = ouvertures.get(proprietaire);
   if (existante) return existante;
 
@@ -50,9 +52,9 @@ async function obtenirCle(proprietaire: string): Promise<CryptoKey> {
             store.put({ proprietaire, cle: generee } satisfies EntreeCle);
           }
         };
-        tx.oncomplete = () => resultat ? resolve(resultat) : reject(new Error('Clé hors ligne absente'));
-        tx.onerror = () => reject(tx.error ?? new Error('Enregistrement de la clé hors ligne impossible'));
-        tx.onabort = () => reject(tx.error ?? new Error('Enregistrement de la clé hors ligne annulé'));
+        tx.oncomplete = () => resultat ? resolve(resultat) : reject(new Error(i18n.global.t('filePointages.chiffrement.keyMissing')));
+        tx.onerror = () => reject(tx.error ?? new Error(i18n.global.t('filePointages.chiffrement.keySaveFailed')));
+        tx.onabort = () => reject(tx.error ?? new Error(i18n.global.t('filePointages.chiffrement.keySaveAborted')));
       });
     } finally {
       db.close();
@@ -72,9 +74,9 @@ async function chargerCle(proprietaire: string): Promise<CryptoKey> {
       const tx = db.transaction(STORE, 'readonly');
       const lecture = tx.objectStore(STORE).get(proprietaire);
       lecture.onsuccess = () => resolve(lecture.result as EntreeCle | undefined);
-      lecture.onerror = () => reject(lecture.error ?? new Error('Lecture de la clé hors ligne impossible'));
+      lecture.onerror = () => reject(lecture.error ?? new Error(i18n.global.t('filePointages.chiffrement.keyReadFailed')));
     });
-    if (!entree?.cle) throw new Error('Clé de déchiffrement hors ligne absente');
+    if (!entree?.cle) throw new Error(i18n.global.t('filePointages.chiffrement.decryptKeyMissing'));
     return entree.cle;
   } finally {
     db.close();
@@ -125,7 +127,7 @@ export async function lireFileChiffree<T>(cleStockage: string, proprietaire: str
   }
 
   const [nonceBase64, chiffreBase64, reste] = brut.slice(PREFIXE.length).split(':');
-  if (!nonceBase64 || !chiffreBase64 || reste) throw new Error('Format de file hors ligne invalide');
+  if (!nonceBase64 || !chiffreBase64 || reste) throw new Error(i18n.global.t('filePointages.chiffrement.invalidFormat'));
   const clair = await crypto.subtle.decrypt(
     { name: 'AES-GCM', iv: bufferStable(decoderBase64(nonceBase64)) },
     await chargerCle(proprietaire),

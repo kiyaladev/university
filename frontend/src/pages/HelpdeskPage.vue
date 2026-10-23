@@ -78,8 +78,7 @@
       <q-banner v-if="dsi" class="note--info q-mb-md">
         <i18n-t keypath="helpdesk.stats.resolutionRate" tag="span">
           <template #taux><strong>{{ stats?.tauxResolution24h ?? 0 }} %</strong></template>
-          <template #resolus>{{ stats?.resolus24h ?? 0 }}</template>
-          <template #pluriel>{{ (stats?.resolus24h ?? 0) > 1 ? 's' : '' }}</template>
+          <template #resolus>{{ $t('helpdesk.stats.resolvedCount', stats?.resolus24h ?? 0) }}</template>
         </i18n-t>
       </q-banner>
 
