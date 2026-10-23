@@ -11,7 +11,7 @@ import {
   MinLength,
 } from 'class-validator';
 import * as bcrypt from 'bcryptjs';
-import { CrudService } from '../../common/crud.service';
+import { CrudService, supprimerOuConflit } from '../../common/crud.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { QueryDto } from '../../common/dto';
 import { AuthUser, CurrentUser, Roles } from '../../common/decorators';
@@ -157,7 +157,7 @@ export class UsersService extends CrudService {
     return this.prisma.$transaction(async (tx) => {
       const avant = await tx.user.findUnique({ where: { id }, select: this.selectAudit() });
       if (!avant) throw new NotFoundException(t('common.crud.itemNotFound', { label: 'Utilisateur' }));
-      await tx.user.delete({ where: { id } });
+      await supprimerOuConflit(() => tx.user.delete({ where: { id } }), 'referentiel.user_referenced_delete');
       await journaliser(
         tx,
         acteur ?? null,

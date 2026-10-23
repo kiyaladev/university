@@ -357,6 +357,8 @@ describe('Demandes de documents — transitions de cycle', () => {
   it('trace le marquage PRETE sans le message au demandeur', async () => {
     const { tx, prisma, audit } = transaction(
       {
+        // Verrou de ligne pris avant la relecture de la demande.
+        $queryRaw: jest.fn().mockResolvedValue([]),
         demandeDocument: {
           findUnique: jest.fn().mockResolvedValue({ ...DEMANDE, statut: StatutDemande.PAYEE }),
           update: jest.fn().mockResolvedValue({

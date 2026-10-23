@@ -15,5 +15,7 @@
   "un_paiement_a_deja_ete_initie_pour_cette_demande_attendez_la": "A payment has already been initiated for this request: please wait for confirmation or contact the academic services.",
   "cette_demande_n_est_pas_encore_prete_a_etre_traitee_paiement": "This request is not yet ready to be processed: payment pending or already completed.",
   "cette_demande_n_est_pas_marquee_comme_prete": "This request is not marked as ready.",
-  "cette_demande_n_est_pas_encore_prete_a_etre_traitee": "This request is not ready for processing: payment is pending or processing has already finished."
+  "cette_demande_n_est_pas_encore_prete_a_etre_traitee": "This request is not ready for processing: payment is pending or processing has already finished.",
+  "attestation_deja_liee_a_une_autre_demande": "Certificate {numero} of the same type and year has already been issued for another request. Revoke it before issuing a new one.",
+  "attestation_service_indisponible": "Verifiable certificate issuance is unavailable: the request was not marked as ready."
 }

@@ -2,7 +2,7 @@ import { Body, Controller, Delete, Get, Injectable, NotFoundException, Param, Po
 import { ApiBearerAuth, ApiTags, PartialType } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 import { IsInt, IsOptional, IsString, IsUUID, Min } from 'class-validator';
-import { CrudService } from '../../common/crud.service';
+import { CrudService, supprimerOuConflit } from '../../common/crud.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { QueryDto } from '../../common/dto';
 import { AuthUser, CurrentUser, Roles } from '../../common/decorators';
@@ -86,7 +86,7 @@ export class MatieresService extends CrudService {
     return this.prisma.$transaction(async (tx) => {
       const avant = await tx.matiere.findUnique({ where: { id } });
       if (!avant) throw new NotFoundException(t('common.notFound'));
-      await tx.matiere.delete({ where: { id } });
+      await supprimerOuConflit(() => tx.matiere.delete({ where: { id } }), 'referentiel.matiere_referenced_delete');
       await journaliser(tx, acteur ?? null, 'MATIERE_SUPPRIMEE', 'Matiere', id, { avant: this.instantaneAudit(avant), apres: null });
       return { id };
     });

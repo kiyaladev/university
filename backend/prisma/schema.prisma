@@ -653,7 +653,7 @@ model Controle {
   seance   Seance @relation(fields: [seanceId], references: [id], onDelete: Cascade)
 
   controleurId String
-  controleur   User   @relation("ControleAgent", fields: [controleurId], references: [id])
+  controleur   User   @relation("ControleAgent", fields: [controleurId], references: [id], onDelete: Restrict)
 
   statut StatutPresence @default(PRESENT)
 
@@ -816,7 +816,7 @@ model Inscription {
   id          String          @id @default(uuid())
   numero      String          @unique // "INS-2026-00042"
   etudiantId  String
-  etudiant    Etudiant        @relation(fields: [etudiantId], references: [id], onDelete: Cascade)
+  etudiant    Etudiant        @relation(fields: [etudiantId], references: [id], onDelete: Restrict)
   anneeId     String
   annee       AnneeAcademique @relation(fields: [anneeId], references: [id], onDelete: Restrict)
   promotionId String
@@ -877,11 +877,11 @@ model Paiement {
   transactionId String? // référence renvoyée par l'opérateur Mobile Money
 
   inscriptionId String?
-  inscription   Inscription?     @relation(fields: [inscriptionId], references: [id], onDelete: Cascade)
+  inscription   Inscription?     @relation(fields: [inscriptionId], references: [id], onDelete: Restrict)
   anneeId       String?
   annee         AnneeAcademique? @relation(fields: [anneeId], references: [id], onDelete: Restrict)
   etudiantId    String?
-  etudiant      Etudiant?        @relation(fields: [etudiantId], references: [id], onDelete: Cascade)
+  etudiant      Etudiant?        @relation(fields: [etudiantId], references: [id], onDelete: Restrict)
 
   horodatage DateTime  @default(now())
   completeLe DateTime?
@@ -943,9 +943,9 @@ model Evaluation {
 model Note {
   id            String      @id @default(uuid())
   evaluationId  String
-  evaluation    Evaluation  @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+  evaluation    Evaluation  @relation(fields: [evaluationId], references: [id], onDelete: Restrict)
   inscriptionId String
-  inscription   Inscription @relation(fields: [inscriptionId], references: [id], onDelete: Cascade)
+  inscription   Inscription @relation(fields: [inscriptionId], references: [id], onDelete: Restrict)
   note          Float? // /20, null si non noté (absent)
   present       Boolean     @default(true)
   saisieParId   String?
@@ -989,7 +989,7 @@ model DeliberationLigne {
   deliberationId String
   deliberation   Deliberation @relation(fields: [deliberationId], references: [id], onDelete: Cascade)
   inscriptionId  String
-  inscription    Inscription  @relation(fields: [inscriptionId], references: [id], onDelete: Cascade)
+  inscription    Inscription  @relation(fields: [inscriptionId], references: [id], onDelete: Restrict)
 
   moyenne  Float        @default(0) // /20 calculée par le jury
   decision DecisionJury @default(AJOURNE)
@@ -1033,7 +1033,8 @@ model Attestation {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  verifications VerificationAttestation[]
+  verifications   VerificationAttestation[]
+  demandeDocument DemandeDocument?
 
   @@index([type, statut])
   @@index([etudiantId])
@@ -1092,7 +1093,7 @@ model LignePaie {
   feuilleId    String
   feuille      FeuillePaie @relation(fields: [feuilleId], references: [id], onDelete: Cascade)
   enseignantId String
-  enseignant   Enseignant  @relation(fields: [enseignantId], references: [id], onDelete: Cascade)
+  enseignant   Enseignant  @relation(fields: [enseignantId], references: [id], onDelete: Restrict)
 
   tauxHoraire   Float   @default(0) // instantané au moment du calcul
   heuresReelles Int     @default(0) // heures de service fait contrôlé
@@ -1285,7 +1286,7 @@ enum StatutSuspicionPlagiat {
 model PortefeuilleResto {
   id         String   @id @default(uuid())
   etudiantId String   @unique
-  etudiant   Etudiant @relation(fields: [etudiantId], references: [id], onDelete: Cascade)
+  etudiant   Etudiant @relation(fields: [etudiantId], references: [id], onDelete: Restrict)
   solde      Int      @default(0) // en francs (GNF)
   updatedAt  DateTime @updatedAt
 
@@ -1296,9 +1297,9 @@ model PortefeuilleResto {
 model Recharge {
   id             String            @id @default(uuid())
   portefeuilleId String
-  portefeuille   PortefeuilleResto @relation(fields: [portefeuilleId], references: [id], onDelete: Cascade)
+  portefeuille   PortefeuilleResto @relation(fields: [portefeuilleId], references: [id], onDelete: Restrict)
   etudiantId     String
-  etudiant       Etudiant          @relation(fields: [etudiantId], references: [id], onDelete: Cascade)
+  etudiant       Etudiant          @relation(fields: [etudiantId], references: [id], onDelete: Restrict)
   montant        Int
   statut         StatutPaiement    @default(EN_ATTENTE)
   paiementId     String?
@@ -1311,7 +1312,7 @@ model Recharge {
 model ConsommationResto {
   id             String             @id @default(uuid())
   portefeuilleId String
-  portefeuille   PortefeuilleResto  @relation(fields: [portefeuilleId], references: [id], onDelete: Cascade)
+  portefeuille   PortefeuilleResto  @relation(fields: [portefeuilleId], references: [id], onDelete: Restrict)
   etudiant       String // référence affichée (matricule ou nom) au moment du service
   repas          TypeRepas
   montant        Int
@@ -1361,7 +1362,7 @@ model TravailEncadre {
   intitule         String
   description      String?
   etudiantId       String
-  etudiant         Etudiant          @relation(fields: [etudiantId], references: [id], onDelete: Cascade)
+  etudiant         Etudiant          @relation(fields: [etudiantId], references: [id], onDelete: Restrict)
   encadrantId      String?
   encadrant        Enseignant?       @relation(fields: [encadrantId], references: [id], onDelete: SetNull)
   entreprise       String?
@@ -1425,7 +1426,9 @@ model TicketSupport {
   equipementId           String?
   equipement             EquipementCampus?     @relation(fields: [equipementId], references: [id], onDelete: SetNull)
   // Liaison optionnelle au patrimoine (lorsque le ticket provient d'un
-  // équipement inventorié)
+  // équipement inventorié). Au plus UN des deux inventaires est renseigné :
+  // CHECK "TicketSupport_un_seul_inventaire", posé en SQL par la migration
+  // 20261023100000 (Prisma ne représente pas les contraintes CHECK).
   equipementPatrimoineId String?
   equipementPatrimoine   EquipementPatrimoine? @relation("TicketEquipementPatrimoine", fields: [equipementPatrimoineId], references: [id], onDelete: SetNull)
   utilisateurId          String?
@@ -1475,7 +1478,7 @@ model InscriptionFormation {
   id          String                     @id @default(uuid())
   numero      String                     @unique // "FOR-2026-00001"
   formationId String
-  formation   Formation                  @relation(fields: [formationId], references: [id], onDelete: Cascade)
+  formation   Formation                  @relation(fields: [formationId], references: [id], onDelete: Restrict)
   etudiantId  String?
   etudiant    Etudiant?                  @relation(fields: [etudiantId], references: [id], onDelete: SetNull)
   nomComplet  String?
@@ -1537,7 +1540,7 @@ model EquipementPatrimoine {
   numeroSerie       String              @unique
   libelle           String
   categorieId       String
-  categorie         CategoriePatrimoine @relation(fields: [categorieId], references: [id])
+  categorie         CategoriePatrimoine @relation(fields: [categorieId], references: [id], onDelete: Restrict)
   departementId     String?
   departement       Departement?        @relation(fields: [departementId], references: [id], onDelete: SetNull)
   salleId           String?
@@ -1900,7 +1903,7 @@ model DemandeDocument {
   type          TypeDemandeDocument
   motif         String?
   etudiantId    String
-  etudiant      Etudiant            @relation(fields: [etudiantId], references: [id], onDelete: Cascade)
+  etudiant      Etudiant            @relation(fields: [etudiantId], references: [id], onDelete: Restrict)
   inscriptionId String?
   inscription   Inscription?        @relation(fields: [inscriptionId], references: [id], onDelete: SetNull)
   frais         Float               @default(0)
@@ -1914,6 +1917,11 @@ model DemandeDocument {
   creeLe        DateTime            @default(now())
   remiseLe      DateTime?
   notes         String?
+  // Attestation vérifiable par QR émise au passage « prête » (types
+  // ATTESTATION_SCOLARITE, CERTIFICAT_SCOLARITE, ATTESTATION_REUSSITE).
+  // Une attestation ne se supprime jamais (elle se révoque) : Restrict.
+  attestationId String?             @unique
+  attestation   Attestation?        @relation(fields: [attestationId], references: [id], onDelete: Restrict)
 
   @@index([etudiantId, statut])
 }

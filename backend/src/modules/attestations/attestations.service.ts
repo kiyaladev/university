@@ -35,6 +35,7 @@ import {
 } from './attestations.dto';
 import { paginer, pagine } from '../../common/pagination';
 import { journaliser } from '../../common/audit';
+import { t } from '../../common/i18n';
 
 export const ATTESTATION_INCLUDE = {
   etudiant: {
@@ -119,9 +120,9 @@ export class AttestationsService {
 
   // ------------------------------------------------------------------ émission
 
-  private async anneeRetenue(anneeId?: string) {
+  private async anneeRetenue(anneeId?: string, client: Prisma.TransactionClient | PrismaService = this.prisma) {
     if (anneeId) {
-      const annee = await this.prisma.anneeAcademique.findUnique({
+      const annee = await client.anneeAcademique.findUnique({
         where: { id: anneeId },
       });
       if (!annee) throw new BadRequestException(I18nContext.current()!.t('attestations.annee_academique_introuvable'));
@@ -129,7 +130,7 @@ export class AttestationsService {
       return annee;
     }
     return (
-      (await this.prisma.anneeAcademique.findFirst({
+      (await client.anneeAcademique.findFirst({
         where: { active: true, cloturee: false },
       })) ?? null
     );
@@ -183,70 +184,7 @@ export class AttestationsService {
     // d'en émettre une nouvelle.
     for (let tentative = 0; tentative < 10; tentative++) {
       try {
-        const attestation = await this.prisma.$transaction(async (tx) => {
-          const promotion = dto.promotionId ? await tx.promotion.findUnique({
-            where: { id: dto.promotionId },
-            select: { id: true, anneeId: true, annee: { select: { libelle: true } } },
-          }) : null;
-          if (dto.promotionId && !promotion) {
-            throw new BadRequestException(I18nContext.current()!.t('common.academicPromotionNotFound'));
-          }
-          if (dto.promotionId && annee?.id) {
-            await exigerPromotionMemeAnnee(tx, dto.promotionId, annee.id);
-          }
-          const anneeIdRetenue = annee?.id ?? promotion?.anneeId ?? null;
-          await exigerAnneeOuverte(tx, anneeIdRetenue);
-          // Même verrou pour l’émission et le changement de type : le contrôle
-          // d’unicité reste vrai quand plusieurs documents du même étudiant changent.
-          await tx.$queryRaw`SELECT id FROM "Etudiant" WHERE id = ${dto.etudiantId} FOR UPDATE`;
-          let promotionIdRetenue = dto.promotionId ?? null;
-          if (dto.inscriptionId) {
-            await tx.$queryRaw`SELECT id FROM "Inscription" WHERE id = ${dto.inscriptionId} FOR SHARE`;
-            const inscription = await tx.inscription.findUnique({
-              where: { id: dto.inscriptionId },
-              select: { etudiantId: true, anneeId: true, promotionId: true },
-            });
-            if (!inscription) throw new BadRequestException(I18nContext.current()!.t('attestations.inscription_introuvable'));
-            if (inscription.etudiantId !== dto.etudiantId || inscription.anneeId !== anneeIdRetenue
-              || (dto.promotionId && inscription.promotionId !== dto.promotionId)) {
-              throw new BadRequestException(I18nContext.current()!.t('attestations.rattachement_incoherent'));
-            }
-            promotionIdRetenue = inscription.promotionId;
-            await exigerPromotionMemeAnnee(tx, promotionIdRetenue, inscription.anneeId);
-          }
-          const numeroAnnee = anneeNumero(annee?.libelle ?? promotion?.annee.libelle, 'debut');
-          const doublon = await tx.attestation.findFirst({
-            where: {
-              etudiantId: dto.etudiantId,
-              type: dto.type as TypeAttestation,
-              anneeId: anneeIdRetenue,
-              statut: StatutAttestation.EMISE,
-            },
-          });
-          if (doublon) {
-            throw new ConflictException(
-              I18nContext.current()!.t('attestations.une_attestation_doublon_numero_est_deja_emise_pour_cet_etudi', { args: { numero: doublon.numero } }),
-            );
-          }
-
-          const numero = await this.prochainNumero(tx, numeroAnnee);
-          const cree = await tx.attestation.create({
-            data: {
-              numero,
-              type: dto.type,
-              motif: dto.motif ?? null,
-              qrToken: this.nouveauQrToken(),
-              etudiantId: dto.etudiantId,
-              anneeId: anneeIdRetenue,
-              promotionId: promotionIdRetenue,
-              inscriptionId: dto.inscriptionId ?? null,
-              emiseParId: user.id,
-            },
-            include: ATTESTATION_INCLUDE,
-          });
-          await journaliser(tx, user, 'ATTESTATION_EMISE', 'Attestation', cree.id, { avant: null, apres: this.instantaneAudit(cree) });
-          return cree;
-        });
+        const attestation = await this.prisma.$transaction((tx) => this.emettreTx(tx, dto, annee, user));
         return attestation;
       } catch (e: any) {
         if (e instanceof ConflictException) throw e;
@@ -255,6 +193,107 @@ export class AttestationsService {
       }
     }
     throw new ConflictException(I18nContext.current()!.t('attestations.numero_d_attestation_temporairement_indisponible_reessayez'));
+  }
+
+  /**
+   * Cœur de l'émission, dans la transaction de l'appelant. `creer` l'appelle
+   * dans sa propre transaction ; `emettrePourDemandeTx` dans celle de la
+   * demande de document, pour que la demande et l'attestation soient écrites
+   * ensemble ou pas du tout.
+   */
+  private async emettreTx(
+    tx: Prisma.TransactionClient,
+    dto: CreateAttestationDto,
+    annee: { id: string; libelle: string } | null,
+    user: AuthUser,
+    options: { reutiliserLibre?: boolean } = {},
+  ) {
+    const promotion = dto.promotionId ? await tx.promotion.findUnique({
+      where: { id: dto.promotionId },
+      select: { id: true, anneeId: true, annee: { select: { libelle: true } } },
+    }) : null;
+    if (dto.promotionId && !promotion) {
+      throw new BadRequestException(I18nContext.current()!.t('common.academicPromotionNotFound'));
+    }
+    if (dto.promotionId && annee?.id) {
+      await exigerPromotionMemeAnnee(tx, dto.promotionId, annee.id);
+    }
+    const anneeIdRetenue = annee?.id ?? promotion?.anneeId ?? null;
+    await exigerAnneeOuverte(tx, anneeIdRetenue);
+    // Même verrou pour l’émission et le changement de type : le contrôle
+    // d’unicité reste vrai quand plusieurs documents du même étudiant changent.
+    await tx.$queryRaw`SELECT id FROM "Etudiant" WHERE id = ${dto.etudiantId} FOR UPDATE`;
+    let promotionIdRetenue = dto.promotionId ?? null;
+    if (dto.inscriptionId) {
+      await tx.$queryRaw`SELECT id FROM "Inscription" WHERE id = ${dto.inscriptionId} FOR SHARE`;
+      const inscription = await tx.inscription.findUnique({
+        where: { id: dto.inscriptionId },
+        select: { etudiantId: true, anneeId: true, promotionId: true },
+      });
+      if (!inscription) throw new BadRequestException(I18nContext.current()!.t('attestations.inscription_introuvable'));
+      if (inscription.etudiantId !== dto.etudiantId || inscription.anneeId !== anneeIdRetenue
+        || (dto.promotionId && inscription.promotionId !== dto.promotionId)) {
+        throw new BadRequestException(I18nContext.current()!.t('attestations.rattachement_incoherent'));
+      }
+      promotionIdRetenue = inscription.promotionId;
+      await exigerPromotionMemeAnnee(tx, promotionIdRetenue, inscription.anneeId);
+    }
+    const numeroAnnee = anneeNumero(annee?.libelle ?? promotion?.annee.libelle, 'debut');
+    const doublon = await tx.attestation.findFirst({
+      where: {
+        etudiantId: dto.etudiantId,
+        type: dto.type as TypeAttestation,
+        anneeId: anneeIdRetenue,
+        statut: StatutAttestation.EMISE,
+      },
+    });
+    if (doublon) {
+      // Demande de document : une attestation déjà émise à la main et libre
+      // (rattachée à aucune demande) est réutilisée au lieu d'être dupliquée.
+      if (options.reutiliserLibre) {
+        const lien = await tx.demandeDocument.findUnique({ where: { attestationId: doublon.id }, select: { id: true } });
+        if (!lien) return doublon;
+        throw new ConflictException(t('documents-demande.attestation_deja_liee_a_une_autre_demande', { numero: doublon.numero }));
+      }
+      throw new ConflictException(
+        I18nContext.current()!.t('attestations.une_attestation_doublon_numero_est_deja_emise_pour_cet_etudi', { args: { numero: doublon.numero } }),
+      );
+    }
+
+    const numero = await this.prochainNumero(tx, numeroAnnee);
+    const cree = await tx.attestation.create({
+      data: {
+        numero,
+        type: dto.type,
+        motif: dto.motif ?? null,
+        qrToken: this.nouveauQrToken(),
+        etudiantId: dto.etudiantId,
+        anneeId: anneeIdRetenue,
+        promotionId: promotionIdRetenue,
+        inscriptionId: dto.inscriptionId ?? null,
+        emiseParId: user.id,
+      },
+      include: ATTESTATION_INCLUDE,
+    });
+    await journaliser(tx, user, 'ATTESTATION_EMISE', 'Attestation', cree.id, { avant: null, apres: this.instantaneAudit(cree) });
+    return cree;
+  }
+
+  /**
+   * Émission déclenchée par une demande de document passée « prête ». Tout se
+   * fait sur `tx` : l'année est celle de l'inscription rattachée, sinon
+   * l'année active (même règle que `creer`). Une attestation identique déjà
+   * émise et libre est réutilisée.
+   */
+  async emettrePourDemandeTx(tx: Prisma.TransactionClient, dto: CreateAttestationDto, user: AuthUser) {
+    let anneeId = dto.anneeId;
+    if (!anneeId && dto.inscriptionId) {
+      const inscription = await tx.inscription.findUnique({ where: { id: dto.inscriptionId }, select: { anneeId: true } });
+      if (!inscription) throw new BadRequestException(t('attestations.inscription_introuvable'));
+      anneeId = inscription.anneeId;
+    }
+    const annee = await this.anneeRetenue(anneeId, tx);
+    return this.emettreTx(tx, dto, annee, user, { reutiliserLibre: true });
   }
 
   // ------------------------------------------------------------------ gestion

@@ -4,5 +4,8 @@
   "filiere_referenced_delete": "Cette filière ne peut pas être supprimée : des promotions y sont encore rattachées. Supprimez ou réaffectez-les d'abord.",
   "promotion_referenced_delete": "Cette promotion ne peut pas être supprimée : des données y sont rattachées (inscriptions, affectations, frais…). Traitez-les d'abord.",
   "annee_referenced_delete": "Cette année académique ne peut pas être supprimée : des données y sont rattachées (promotions, inscriptions, séances…). Clôturez-la plutôt que de la supprimer.",
-  "annee_dates_incoherentes": "La date de fin d’une année académique doit être postérieure à sa date de début."
+  "annee_dates_incoherentes": "La date de fin d’une année académique doit être postérieure à sa date de début.",
+  "matiere_referenced_delete": "Cette matière ne peut pas être supprimée : des notes sont déjà saisies sur ses évaluations. Les notes sont des pièces académiques, elles ne s’effacent pas.",
+  "enseignant_referenced_delete": "Cet enseignant ne peut pas être supprimé : des lignes de paie ou des contrôles lui sont rattachés. Désactivez sa fiche plutôt que de la supprimer.",
+  "user_referenced_delete": "Ce compte ne peut pas être supprimé : des contrôles ou d’autres enregistrements y font référence. Désactivez-le plutôt que de le supprimer."
 }

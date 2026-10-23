@@ -28,8 +28,10 @@ import {
   StatutNotification,
   StatutPaiement,
   TypeDemandeDocument,
+  TypeAttestation,
   ModePaiement,
 } from '@prisma/client';
+import { AttestationsService } from '../attestations/attestations.service';
 import { randomUUID } from 'node:crypto';
 import { CrudService } from '../../common/crud.service';
 import { t } from '../../common/i18n';
@@ -64,13 +66,32 @@ export const DEMANDE_INCLUDE = {
   inscription: { select: { id: true, numero: true } },
   paiement: { select: { id: true, reference: true, statut: true, montant: true, devise: true, mode: true } },
   traitePar: { select: { id: true, nom: true, prenom: true, role: true } },
+  // Numéro de l'attestation vérifiable émise au passage « prête » : le front
+  // en tire le lien vers la page publique de vérification.
+  attestation: { select: { id: true, numero: true, statut: true } },
 } satisfies Prisma.DemandeDocumentInclude;
+
+/**
+ * Types de demande qui donnent lieu à une attestation vérifiable par QR.
+ * CERTIFICAT_SCOLARITE et ATTESTATION_SCOLARITE désignent le même document
+ * (TypeAttestation.SCOLARITE : « certificat de scolarité »). Les autres types
+ * (relevé, duplicata de carte, fréquentation, autre) restent hors registre.
+ */
+export const TYPE_ATTESTATION_PAR_DEMANDE: Partial<Record<TypeDemandeDocument, TypeAttestation>> = {
+  [TypeDemandeDocument.ATTESTATION_SCOLARITE]: TypeAttestation.SCOLARITE,
+  [TypeDemandeDocument.CERTIFICAT_SCOLARITE]: TypeAttestation.SCOLARITE,
+  [TypeDemandeDocument.ATTESTATION_REUSSITE]: TypeAttestation.REUSSITE,
+};
 
 @Injectable()
 export class DocumentsDemandeService extends CrudService {
   private readonly logger = new Logger(DocumentsDemandeService.name);
 
-  constructor(prisma: PrismaService, private readonly mobileMoney: MobileMoneyService = new MobileMoneyService()) {
+  constructor(
+    prisma: PrismaService,
+    private readonly mobileMoney: MobileMoneyService = new MobileMoneyService(),
+    private readonly attestations?: AttestationsService,
+  ) {
     super(prisma, 'demandeDocument', {
       orderBy: { creeLe: 'desc' },
       include: DEMANDE_INCLUDE,
@@ -631,34 +652,7 @@ export class DocumentsDemandeService extends CrudService {
       dto.message?.trim() ||
       `Votre document ${demande.numero} (${this.libelleType(demande.type)}) est prêt : retirez-le au guichet de la scolarité.`;
 
-    const miseAJour = await this.prisma.$transaction(async (tx) => {
-      const avant = await tx.demandeDocument.findUnique({ where: { id } });
-      if (!avant) throw new NotFoundException(t('documents-demande.demande_introuvable'));
-      const apres = await tx.demandeDocument.update({
-        where: { id },
-        data: {
-          statut: StatutDemande.PRETE,
-          notification: message,
-          traiteParId: user.id,
-        },
-        include: DEMANDE_INCLUDE,
-      });
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'DEMANDE_DOC_PRETE',
-          entite: 'DemandeDocument',
-          entiteId: id,
-          details: JSON.stringify({
-            avant: this.instantaneDemande(avant),
-            apres: this.instantaneDemande(apres),
-            champsModifies: ['statut', 'traiteParId', 'notification'],
-            sms: 'meilleur-effort hors transaction',
-          }),
-        },
-      });
-      return apres;
-    });
+    const miseAJour = await this.marquerPreteTx(id, message, user);
 
     // Notification SMS — best effort, sans bloquer le flux en cas d'échec.
     const etudiant = await this.prisma.etudiant.findUnique({
@@ -690,6 +684,84 @@ export class DocumentsDemandeService extends CrudService {
     }
 
     return miseAJour;
+  }
+
+  /**
+   * Passage PRETE et, pour les types attestables, émission de l'attestation
+   * vérifiable dans la même transaction : la demande n'est jamais « prête »
+   * sans son attestation, ni l'attestation émise sans la demande.
+   *
+   * Idempotent : la ligne est verrouillée, une demande déjà liée à une
+   * attestation n'en reçoit pas une seconde, et une attestation identique
+   * déjà émise à la main (libre) est réutilisée. Une collision de numéro
+   * (P2002) rejoue la transaction entière.
+   */
+  private async marquerPreteTx(id: string, message: string, user: AuthUser) {
+    for (let tentative = 0; tentative < 5; tentative++) {
+      try {
+        return await this.prisma.$transaction(async (tx) => {
+          await tx.$queryRaw`SELECT id FROM "DemandeDocument" WHERE id = ${id} FOR UPDATE`;
+          const avant = await tx.demandeDocument.findUnique({ where: { id } });
+          if (!avant) throw new NotFoundException(t('documents-demande.demande_introuvable'));
+          if (avant.statut === StatutDemande.PRETE || avant.statut === StatutDemande.REMISE) {
+            throw new BadRequestException(t('documents-demande.cette_demande_est_deja_prete_ou_remise'));
+          }
+
+          const attestationId = await this.attestationPourDemandeTx(tx, avant, user);
+          const apres = await tx.demandeDocument.update({
+            where: { id },
+            data: {
+              statut: StatutDemande.PRETE,
+              notification: message,
+              traiteParId: user.id,
+              ...(attestationId && attestationId !== avant.attestationId ? { attestationId } : {}),
+            },
+            include: DEMANDE_INCLUDE,
+          });
+          await tx.auditLog.create({
+            data: {
+              userId: user.id,
+              action: 'DEMANDE_DOC_PRETE',
+              entite: 'DemandeDocument',
+              entiteId: id,
+              details: JSON.stringify({
+                avant: this.instantaneDemande(avant),
+                apres: this.instantaneDemande(apres),
+                champsModifies: ['statut', 'traiteParId', 'notification',
+                  ...(attestationId && attestationId !== avant.attestationId ? ['attestationId'] : [])],
+                sms: 'meilleur-effort hors transaction',
+              }),
+            },
+          });
+          return apres;
+        });
+      } catch (e: any) {
+        if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') continue;
+        throw e;
+      }
+    }
+    throw new ConflictException(t('attestations.numero_d_attestation_temporairement_indisponible_reessayez'));
+  }
+
+  /** Attestation liée à la demande (existante ou émise ici), ou null si le type n'en relève pas. */
+  private async attestationPourDemandeTx(
+    tx: Prisma.TransactionClient,
+    demande: { id: string; type: TypeDemandeDocument; etudiantId: string; inscriptionId: string | null; motif: string | null; attestationId?: string | null },
+    user: AuthUser,
+  ): Promise<string | null> {
+    const type = TYPE_ATTESTATION_PAR_DEMANDE[demande.type];
+    if (!type) return null;
+    if (demande.attestationId) return demande.attestationId;
+    if (!this.attestations) {
+      throw new ConflictException(t('documents-demande.attestation_service_indisponible'));
+    }
+    const attestation = await this.attestations.emettrePourDemandeTx(tx, {
+      type,
+      etudiantId: demande.etudiantId,
+      inscriptionId: demande.inscriptionId ?? undefined,
+      motif: demande.motif ?? undefined,
+    }, user);
+    return attestation.id;
   }
 
   /** Remise effective au guichet : passe en REMISE et date remiseLe. */
@@ -821,6 +893,7 @@ export class DocumentsDemandeService extends CrudService {
       devise: demande.devise,
       traiteParId: demande.traiteParId ?? null,
       remiseLe: demande.remiseLe ?? null,
+      ...(demande.attestationId ? { attestationId: demande.attestationId } : {}),
     };
   }
 
