@@ -1,14 +1,7 @@
 import { defineStore } from 'pinia';
 import { computed, reactive } from 'vue';
-import { lister } from '../services/http';
-import type {
-  AnneeAcademique,
-  Departement,
-  Enseignant,
-  Matiere,
-  Promotion,
-  Salle,
-} from '../types';
+import { lister } from '@/shared/services/http';
+import type { AnneeAcademique, Departement, Enseignant, Matiere, Promotion, Salle } from '../types';
 
 /**
  * Référentiels partagés par de nombreux écrans (années, promotions,
@@ -66,9 +59,7 @@ export const useReferentielsStore = defineStore('referentiels', () => {
   let generation = 0;
 
   /** Année marquée active côté serveur (remplace les `.find(a => a.active)`). */
-  const anneeCourante = computed<AnneeAcademique | null>(
-    () => listes.annees.find((a) => a.active) ?? null,
-  );
+  const anneeCourante = computed<AnneeAcademique | null>(() => listes.annees.find((a) => a.active) ?? null);
 
   /**
    * Liste complète d'un référentiel, depuis le cache si elle y est. Renvoie

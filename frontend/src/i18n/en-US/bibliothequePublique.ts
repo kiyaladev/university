@@ -15,8 +15,7 @@ export default {
     filteredHint: 'Try a shorter keyword, or broaden the type and department.',
     clearSearch: 'Clear search',
     noDocsTitle: 'The collection does not contain any published document yet.',
-    noDocsHint:
-      'Theses, dissertations and course materials will appear here as soon as the library publishes them.',
+    noDocsHint: 'Theses, dissertations and course materials will appear here as soon as the library publishes them.',
   },
   card: {
     year: 'year {year}',

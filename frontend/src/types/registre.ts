@@ -2,12 +2,7 @@
 
 import type { AnneeAcademique, Enseignant, Matiere, Promotion } from './referentiels';
 
-export type StatutInscription =
-  | 'BROUILLON'
-  | 'EN_ATTENTE_PAIEMENT'
-  | 'PAYEE'
-  | 'VALIDEE'
-  | 'ANNULEE';
+export type StatutInscription = 'BROUILLON' | 'EN_ATTENTE_PAIEMENT' | 'PAYEE' | 'VALIDEE' | 'ANNULEE';
 
 export type StatutPaiement = 'EN_ATTENTE' | 'REUSSI' | 'ECHOUE' | 'ANNULE' | 'REMBOURSE';
 export type ModePaiement = 'MOBILE_MONEY' | 'ESPECES' | 'VIREMENT';

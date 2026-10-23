@@ -26,8 +26,7 @@ export default {
   dialogs: {
     close: {
       title: 'Close the evaluation',
-      message:
-        'Close "{name}"? Grades become final and a deliberation recalculation will take them into account.',
+      message: 'Close "{name}"? Grades become final and a deliberation recalculation will take them into account.',
     },
   },
   messages: {
@@ -56,7 +55,8 @@ export default {
     missing: 'missing',
     modified: 'modified',
     saved: 'saved',
-    empty: 'No students to grade: the sheet only lists students with validated enrollment in this class for the evaluation year.',
+    empty:
+      'No students to grade: the sheet only lists students with validated enrollment in this class for the evaluation year.',
     markAllPresent: 'Mark all present',
     markAllAbsent: 'Mark all absent',
     saveAll: 'Save all',

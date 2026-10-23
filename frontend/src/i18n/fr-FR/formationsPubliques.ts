@@ -71,9 +71,11 @@ export default {
       deposee: 'Déposée',
       numeroDossier: 'N° de dossier',
       aReglerMobileMoney: 'À régler par Mobile Money',
-      paiementTexte: 'Rendez-vous au guichet de la scolarité pour régler ce montant ({numero} en motivation). Dès réception du paiement, votre inscription passe {confirmee} et votre place est réservée.',
+      paiementTexte:
+        'Rendez-vous au guichet de la scolarité pour régler ce montant ({numero} en motivation). Dès réception du paiement, votre inscription passe {confirmee} et votre place est réservée.',
       confirmee: 'confirmée',
-      statutInfo: 'Statut actuel de votre demande : {statut} — vous recevrez votre attestation de formation en fin de parcours.',
+      statutInfo:
+        'Statut actuel de votre demande : {statut} — vous recevrez votre attestation de formation en fin de parcours.',
       enAttentePaiement: 'en attente de paiement',
       inscrireAutre: 'Inscrire un autre participant',
     },

@@ -1,24 +1,23 @@
 /** Namespace `helpdesk`. */
 export default {
   title: 'Assistance informatique',
-  subtitle:
-    "Signalez un problème informatique et suivez son traitement.",
+  subtitle: 'Signalez un problème informatique et suivez son traitement.',
   actions: {
-    declareIncident: "Signaler un problème",
+    declareIncident: 'Signaler un problème',
     scanEquipment: 'Scanner QR équipement',
     newEquipment: 'Nouvel équipement',
   },
   tabs: {
-    myTickets: "Mes signalements",
-    management: "Traitement des incidents",
-    equipment: "Équipements du support",
+    myTickets: 'Mes signalements',
+    management: 'Traitement des incidents',
+    equipment: 'Équipements du support',
   },
   myTicketsTable: {
     titleAll: 'Toutes les déclarations',
     titleMine: 'Mes déclarations',
     emptyAll: 'Aucun ticket déclaré.',
     emptyMine: "Vous n'avez déclaré aucun incident.",
-    emptyHint: "Utilisez « Signaler un problème » ou scannez le QR de l’équipement.",
+    emptyHint: 'Utilisez « Signaler un problème » ou scannez le QR de l’équipement.',
   },
   filters: {
     searchTickets: 'Rechercher (N°, description…)',
@@ -45,13 +44,13 @@ export default {
       RESOLU: 'Résolus',
       CLOTURE: 'Clôturés',
     },
-    resolutionRate:
-      'Taux de résolution le jour même : {taux} ({resolus} au cours des 24 dernières heures)',
+    resolutionRate: 'Taux de résolution le jour même : {taux} ({resolus} au cours des 24 dernières heures)',
     resolvedCount: '{n} résolu | {n} résolu | {n} résolus',
   },
   gestionTable: {
     emptyTitle: 'Aucun ticket pour ces critères.',
-    emptyHint: 'Le registre se remplit par les déclarations : élargissez les filtres pour retrouver les tickets clôturés.',
+    emptyHint:
+      'Le registre se remplit par les déclarations : élargissez les filtres pour retrouver les tickets clôturés.',
     emptyHintShort: 'Élargissez les filtres pour retrouver les tickets clôturés.',
     viewTicket: 'Visualiser le ticket',
     viewTicketTooltip: 'Visualiser',
@@ -71,7 +70,7 @@ export default {
     subtitle:
       "Chaque étiquette porte un QR unique : les pannes arrivent à la DSI avec le nom exact de l'équipement, sans usurpation possible.",
     emptyTitle: 'Aucun équipement pour ces critères.',
-    emptyHint: "Déclarez le parc pour que chaque panne arrive avec le nom exact du matériel.",
+    emptyHint: 'Déclarez le parc pour que chaque panne arrive avec le nom exact du matériel.',
     active: 'en service',
     inactive: 'désactivé',
     activeCapitalized: 'En service',
@@ -117,7 +116,7 @@ export default {
     minLength: 'Au moins 5 caractères',
     maxLength: 'Au plus 500 caractères',
     descriptionLabel: 'Décrivez le problème',
-    descriptionPlaceholder: "Ex. : l’image du vidéoprojecteur clignote puis s’éteint après quelques minutes",
+    descriptionPlaceholder: 'Ex. : l’image du vidéoprojecteur clignote puis s’éteint après quelques minutes',
     priorityHint: 'Normale par défaut — réservez « Haute » aux incidents qui bloquent un cours',
     priorities: { low: 'Basse', normal: 'Normale', high: 'Haute' },
     opened: 'Ticket {number} ouvert — la DSI est prévenue',

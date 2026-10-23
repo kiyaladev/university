@@ -99,7 +99,8 @@ export default {
     dialogForm: {
       editTitle: 'Edit session',
       unscheduledTitle: 'Unscheduled session',
-      unscheduledHint: 'A class found in a room without a timetable entry: open it here, then record attendance as usual.',
+      unscheduledHint:
+        'A class found in a room without a timetable entry: open it here, then record attendance as usual.',
       courseSection: 'Which class',
       assignment: 'Teaching assignment',
       assignmentHint: 'Teacher · subject · cohort',
@@ -118,7 +119,8 @@ export default {
   },
   offline: {
     sessionRequired: 'Sign in to create and sync a session.',
-    assignmentUnavailable: 'Teaching assignments are unavailable offline. Prepare the round before losing network access.',
+    assignmentUnavailable:
+      'Teaching assignments are unavailable offline. Prepare the round before losing network access.',
     rejected: 'The server rejected this session.',
     queued: 'Session saved on this device; it will sync automatically.',
     synced: '{ok}/{total} session(s) synced',

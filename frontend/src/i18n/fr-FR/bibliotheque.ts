@@ -90,7 +90,8 @@ export default {
       noKeywords: 'Aucun mot-clé. Conseillé : « machine learning », « Conakry », « durabilité ».',
     },
     file: {
-      description: 'PDF jusqu’à {max} : converti en data-url base64 puis stocké côté serveur, où son contenu texte sera extrait pour la recherche intégrale et l’analyse anti-plagiat.',
+      description:
+        'PDF jusqu’à {max} : converti en data-url base64 puis stocké côté serveur, où son contenu texte sera extrait pour la recherche intégrale et l’analyse anti-plagiat.',
       attachment: 'PDF joint',
       maxSize: 'Maximum {max}',
       maxSizeValue: '{count} Mo',
@@ -102,7 +103,8 @@ export default {
     },
     plagiarism: {
       title: 'Doublon potentiel détecté',
-      message: 'Ce document pourrait être un doublon d’un document existant (score {score} %) — vérifiez avant de publier.',
+      message:
+        'Ce document pourrait être un doublon d’un document existant (score {score} %) — vérifiez avant de publier.',
       view: 'Voir la suspicion',
     },
     validation: {

@@ -20,7 +20,8 @@ export default {
       priorityHint: "Haute ou urgente pour les blocages ; basse pour les demandes d'information",
       department: 'Département concerné',
       anonymous: 'Déposer de façon anonyme',
-      anonymousHint: "L'anonymat conserve votre dossier à l'écart : ni votre nom, ni votre matricule ne seront associés à la réclamation.",
+      anonymousHint:
+        "L'anonymat conserve votre dossier à l'écart : ni votre nom, ni votre matricule ne seront associés à la réclamation.",
       contactName: 'Nom de contact',
       contactHint: "Pour vous recontacter hors de l'application",
       contactEmail: 'Email de contact',

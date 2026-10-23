@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vitest/config';
 
 /**
@@ -9,6 +10,8 @@ import { defineConfig } from 'vitest/config';
  * demandent une application lancée : ils ne sont pas exécutés ici.
  */
 export default defineConfig({
+  // Même alias que quasar.config.ts : `@/` désigne src/.
+  resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
   test: {
     include: ['tests/unit/**/*.spec.ts'],
     environment: 'node',

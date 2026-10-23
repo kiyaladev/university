@@ -19,8 +19,7 @@ export default {
   result: {
     valid: 'Badge authentique',
     invalid: 'Badge non valable',
-    intro:
-      'Le badge {numero} figure bien au registre de l’établissement. Mentions vérifiées :',
+    intro: 'Le badge {numero} figure bien au registre de l’établissement. Mentions vérifiées :',
     table: {
       porteur: 'Porteur',
       numero: 'Numéro',
@@ -30,8 +29,7 @@ export default {
       delivreLe: 'Délivré le',
       valableJusquau: 'Valable jusqu’au',
     },
-    checkedAt:
-      'Vérifié le {date} — cette consultation a été enregistrée dans le journal du badge.',
+    checkedAt: 'Vérifié le {date} — cette consultation a été enregistrée dans le journal du badge.',
   },
   footer:
     'La vérification est gratuite et ne requiert aucun compte. Un badge annulé ou un identifiant inconnu ne prouve rien — méfiance.',

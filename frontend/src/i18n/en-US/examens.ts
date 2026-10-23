@@ -70,7 +70,7 @@ export default {
   confirm: {
     startTitle: 'Start the exam',
     startMessage:
-      'Start {code} — {title}? The number of enrolled students will be recalculated from the class\'s validated registrations, and the scan station will open on this exam.',
+      "Start {code} — {title}? The number of enrolled students will be recalculated from the class's validated registrations, and the scan station will open on this exam.",
     finishTitle: 'Finish the exam',
     finishMessage:
       'Close {code} — {title}? The number of present students is now locked: no more cards can be scanned for this exam. This operation is final.',

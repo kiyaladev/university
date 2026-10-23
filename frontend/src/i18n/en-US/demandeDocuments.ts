@@ -4,7 +4,7 @@ export default {
   subtitle:
     'The student submits their request online, pays the configured fee, the registrar processes it, marks the document as ready, and hands it over at the counter.',
   studentBanner: {
-    message: 'Register restricted to a single student\'s requests (incoming link).',
+    message: "Register restricted to a single student's requests (incoming link).",
     seeAll: 'See all requests',
   },
   plaques: {
@@ -25,8 +25,7 @@ export default {
     paymentPending: 'Payment pending',
   },
   emptyState: {
-    message:
-      'No request matches these criteria. Requests are created by students from "My document requests".',
+    message: 'No request matches these criteria. Requests are created by students from "My document requests".',
   },
   actionsColumn: {
     confirmPayment: 'Confirm payment',
@@ -59,7 +58,8 @@ export default {
     delay: 'processing time: {hours} h',
     fees: 'Fee:',
     usualDelay: 'usual processing time: {hours} h',
-    noFeeConfigured: 'No fee is configured for this type, so the request will be free. Contact the registrar if needed.',
+    noFeeConfigured:
+      'No fee is configured for this type, so the request will be free. Contact the registrar if needed.',
     reasonLabel: 'Reason for the request',
     reasonPlaceholder: 'E.g. needed for a scholarship application',
     enrollmentSection: 'Related enrollment',

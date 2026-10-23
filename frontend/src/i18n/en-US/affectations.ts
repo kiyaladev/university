@@ -49,8 +49,7 @@ export default {
   },
   deleteDialog: {
     title: 'Delete the assignment',
-    message:
-      '"{subject}" assigned to {teacher}: related sessions will also be deleted. Continue?',
+    message: '"{subject}" assigned to {teacher}: related sessions will also be deleted. Continue?',
   },
   messages: {
     saved: 'Assignment saved',

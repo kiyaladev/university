@@ -1,6 +1,6 @@
 /** Namespace `patrimoine` — page PatrimoinePage.vue (equipment inventory). */
 export default {
-  title: "Inventory and repairs",
+  title: 'Inventory and repairs',
   subtitle:
     "The university's equipment inventory. Every item carries an inventory QR code, an acquisition value and a repair log that follows it from commissioning to retirement.",
   actions: {
@@ -45,7 +45,7 @@ export default {
     inRepair: 'under repair',
     inRepairCaption: 'log open, item unavailable',
     obsolete: 'obsolete',
-    obsoleteCaption: 'age beyond their category\'s amortization period',
+    obsoleteCaption: "age beyond their category's amortization period",
   },
   tabs: {
     equipments: 'Equipment',
@@ -108,7 +108,7 @@ export default {
     emptyState: {
       title: 'No category',
       description:
-        "A category groups a type of equipment and carries its amortization period: it is what decides when an equipment item becomes obsolete. Without a category, no equipment can be registered.",
+        'A category groups a type of equipment and carries its amortization period: it is what decides when an equipment item becomes obsolete. Without a category, no equipment can be registered.',
       createFirst: 'Create the first category',
     },
     dialog: {
@@ -147,7 +147,7 @@ export default {
     emptyState: {
       title: 'No ongoing repairs',
       description:
-        "All equipment in service is available. A repair is reported from an equipment record, in the Equipment tab.",
+        'All equipment in service is available. A repair is reported from an equipment record, in the Equipment tab.',
       goToEquipments: 'Go to equipment',
     },
   },

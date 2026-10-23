@@ -29,7 +29,7 @@ export default {
     verifiedAt: 'Vérifié le {date} — cette consultation a été enregistrée dans le journal de la carte.',
   },
   footer:
-    "La vérification est gratuite et ne requiert aucun compte. Une carte révoquée ou un identifiant inconnu ne prouve rien — méfiance.",
+    'La vérification est gratuite et ne requiert aucun compte. Une carte révoquée ou un identifiant inconnu ne prouve rien — méfiance.',
   messages: {
     verificationFailed:
       "La vérification n'a pas pu aboutir : le service est momentanément indisponible. Réessayez dans un instant.",

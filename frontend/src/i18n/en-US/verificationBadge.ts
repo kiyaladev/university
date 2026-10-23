@@ -19,8 +19,7 @@ export default {
   result: {
     valid: 'Genuine badge',
     invalid: 'Invalid badge',
-    intro:
-      'Badge {numero} does indeed exist in the institution\'s register. Verified details:',
+    intro: "Badge {numero} does indeed exist in the institution's register. Verified details:",
     table: {
       porteur: 'Holder',
       numero: 'Number',
@@ -30,8 +29,7 @@ export default {
       delivreLe: 'Issued on',
       valableJusquau: 'Valid until',
     },
-    checkedAt:
-      'Verified on {date} — this check has been recorded in the badge log.',
+    checkedAt: 'Verified on {date} — this check has been recorded in the badge log.',
   },
   footer:
     'Verification is free and requires no account. A cancelled badge or an unknown identifier proves nothing — be cautious.',

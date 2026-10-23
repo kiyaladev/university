@@ -2,7 +2,7 @@
 export default {
   title: 'Continuing education',
   subtitle:
-    "Hub management: courses are published to the showcase, filled and confirmed at the desk (pilot mode). The registrar then hands out the training certificate. You are viewing the full catalog here, drafts included.",
+    'Hub management: courses are published to the showcase, filled and confirmed at the desk (pilot mode). The registrar then hands out the training certificate. You are viewing the full catalog here, drafts included.',
   actions: {
     seeShowcase: 'View public showcase',
     seeShowcaseTooltip: 'Page seen by candidates — published courses only',
@@ -14,7 +14,8 @@ export default {
       edit: 'Edit course',
       create: 'New course',
     },
-    subtitle: 'Every course starts as a draft and is not available for sale until published. After the first confirmed registration, its title and price are locked.',
+    subtitle:
+      'Every course starts as a draft and is not available for sale until published. After the first confirmed registration, its title and price are locked.',
     sections: {
       presentation: 'Overview',
       price: 'Price',
@@ -95,14 +96,12 @@ export default {
   },
   emptyState: {
     title: 'No course matches these criteria.',
-    description:
-      'A course starts as a draft, then is published to appear on the public showcase.',
+    description: 'A course starts as a draft, then is published to appear on the public showcase.',
   },
   dialogs: {
     publish: {
       title: 'Publish this course?',
-      message:
-        '"{title}" goes live on the public showcase: requests and Mobile Money payments will become possible.',
+      message: '"{title}" goes live on the public showcase: requests and Mobile Money payments will become possible.',
     },
     close: {
       title: 'Close this course?',

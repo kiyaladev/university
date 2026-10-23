@@ -8,8 +8,7 @@ export default {
   },
   otherRole: {
     title: 'Espace étudiant',
-    message:
-      'Cette vue est réservée aux comptes étudiants, ouverts par connexion par SMS depuis le portail étudiant.',
+    message: 'Cette vue est réservée aux comptes étudiants, ouverts par connexion par SMS depuis le portail étudiant.',
   },
   errorState: {
     title: 'Dossier indisponible',
@@ -72,8 +71,7 @@ export default {
     montantHint: 'Minimum 500 GNF',
     montantError: "Saisissez un montant d'au moins 500 GNF",
     operateurLabel: 'Opérateur Mobile Money',
-    note:
-      'Vous paierez par Mobile Money : une référence vous sera communiquée pour le transfert. Le solde est crédité après confirmation du guichet.',
+    note: 'Vous paierez par Mobile Money : une référence vous sera communiquée pour le transfert. Le solde est crédité après confirmation du guichet.',
     submit: 'Demander le paiement',
   },
   loading: 'Chargement de votre dossier…',

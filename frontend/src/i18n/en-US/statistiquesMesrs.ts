@@ -1,8 +1,7 @@
 /** Namespace `statistiquesMesrs` — StatistiquesMesrsPage.vue page (MESRS snapshot archive). */
 export default {
-  title: "Archived reports",
-  subtitle:
-    "Figures saved on each report date for Ministry reporting.",
+  title: 'Archived reports',
+  subtitle: 'Figures saved on each report date for Ministry reporting.',
   allYears: 'all years',
   filters: {
     annee: {
@@ -10,27 +9,26 @@ export default {
     },
   },
   actions: {
-    export: "Export {count} report(s) to CSV",
+    export: 'Export {count} report(s) to CSV',
     exportTooltip: 'Spreadsheet (Excel / LibreOffice) — {annee}',
-    generateFromRectorat: "Open current figures",
+    generateFromRectorat: 'Open current figures',
   },
   emptyState: {
-    title: "No report archived",
-    text: "Save a report from “Current figures” to archive headcount, success rate and payroll.",
+    title: 'No report archived',
+    text: 'Save a report from “Current figures” to archive headcount, success rate and payroll.',
   },
   stats: {
     effectif: 'Reported headcount',
     tauxReussite: 'Reported success rate',
     masseSalariale: 'Reported payroll',
-    snapshotsArchived: "Archived reports",
-    lastSnapshot: "Last report from {date}",
+    snapshotsArchived: 'Archived reports',
+    lastSnapshot: 'Last report from {date}',
   },
   chart: {
     title: 'Reporting trend',
-    subtitle:
-      "Headcount, success rate and payroll — one point per report, from the oldest to the most recent",
-    summary: "MESRS reporting trend over {count} report(s): {details}.",
-    summaryEmpty: "No report to display.",
+    subtitle: 'Headcount, success rate and payroll — one point per report, from the oldest to the most recent',
+    summary: 'MESRS reporting trend over {count} report(s): {details}.',
+    summaryEmpty: 'No report to display.',
     summaryEntry: '{date} — headcount {effectif}, success rate {reussite}, payroll {masse} GNF',
     datasets: {
       tauxReussite: 'Success rate (%)',
@@ -41,7 +39,7 @@ export default {
     },
   },
   table: {
-    title: "Archived reports",
+    title: 'Archived reports',
     countLabel: '{count} record(s) —',
     filteredOn: 'filtered on {annee}',
     columns: {

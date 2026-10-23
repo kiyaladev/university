@@ -22,7 +22,7 @@ export default {
   filters: {
     search_placeholder: 'Rechercher par intitulé…',
     promotion: 'Promotion',
-    type: 'Type d\'épreuve',
+    type: "Type d'épreuve",
     status: 'État',
   },
   chips: {
@@ -46,15 +46,15 @@ export default {
       notes: 'Notes',
     },
     view_notes: 'Voir les notes',
-    view_notes_aria: 'Voir les notes de l\'évaluation',
+    view_notes_aria: "Voir les notes de l'évaluation",
     enter_notes: 'Saisir les notes (plein écran)',
     enter_notes_aria: 'Saisir les notes',
     close_evaluation: 'Clôturer l’évaluation (notes figées)',
-    close_evaluation_aria: 'Clôturer l\'évaluation',
+    close_evaluation_aria: "Clôturer l'évaluation",
     edit_evaluation: 'Modifier l’évaluation',
-    edit_evaluation_aria: 'Modifier l\'évaluation',
+    edit_evaluation_aria: "Modifier l'évaluation",
     delete_locked: 'Des notes sont déjà saisies : suppression impossible',
-    delete_aria: 'Supprimer l\'évaluation',
+    delete_aria: "Supprimer l'évaluation",
   },
   cards: {
     coefficient: 'coeff. {n}',

@@ -12,7 +12,8 @@ export default {
   createDialog: {
     session: 'Session *',
     sessionHint: 'For a resit, only students who failed the regular session are rescheduled.',
-    draftHint: 'The deliberation starts as a draft: averages are calculated automatically, then approved by the jury (management).',
+    draftHint:
+      'The deliberation starts as a draft: averages are calculated automatically, then approved by the jury (management).',
     previewTitle: 'Sample transcript preview',
     previewDecision: 'PASSED / RESIT',
     previewHint: 'Grades and the decision are entered after calculation.',

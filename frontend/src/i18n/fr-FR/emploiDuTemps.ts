@@ -9,7 +9,8 @@ export default {
     newSlot: 'Nouveau créneau',
   },
   generationDialog: {
-    description: 'Les séances sont créées jour par jour à partir des créneaux de l’emploi du temps. Les séances déjà présentes sont conservées.',
+    description:
+      'Les séances sont créées jour par jour à partir des créneaux de l’emploi du temps. Les séances déjà présentes sont conservées.',
     excludedDays: 'Jours fériés à exclure',
     excludedDaysHint: 'Dates séparées par des virgules — ex. 2026-04-07, 2026-05-01',
     result: '{created} séance(s) créée(s) sur {candidates} créneaux traités ({skipped} déjà présente(s)).',

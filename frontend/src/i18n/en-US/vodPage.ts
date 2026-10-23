@@ -21,8 +21,10 @@ export default {
     duration: 'Duration (seconds)',
     publicResource: 'Public resource',
     privateEnrollment: 'Beneficiary enrollment (optional)',
-    privateEnrollmentHint: 'An enrollment grants access to that student only. Without an enrollment, the private resource is restricted to its author, linked teacher and management.',
-    privateEnrollmentManaged: 'Administration can assign this private resource to an enrollment. Without an assignment, it is restricted to its author, linked teacher and management.',
+    privateEnrollmentHint:
+      'An enrollment grants access to that student only. Without an enrollment, the private resource is restricted to its author, linked teacher and management.',
+    privateEnrollmentManaged:
+      'Administration can assign this private resource to an enrollment. Without an assignment, it is restricted to its author, linked teacher and management.',
     required: 'Title and URL are required.',
     updated: 'Resource updated.',
     created: 'Resource created.',
@@ -58,8 +60,7 @@ export default {
   },
   emptyState: {
     filtered: 'No resource matches these criteria.',
-    student:
-      'No online courses for your enrollments: your teachers have not published a replay yet.',
+    student: 'No online courses for your enrollments: your teachers have not published a replay yet.',
     staff: 'No resources in the catalog: upload a replay, a podcast or a transcript.',
   },
   dialogs: {

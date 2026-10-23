@@ -1,8 +1,7 @@
 /** Namespace `parametres`. */
 export default {
   title: 'Settings',
-  subtitle:
-    'Rules applied when checking attendance: late tolerance, required evidence, report headers',
+  subtitle: 'Rules applied when checking attendance: late tolerance, required evidence, report headers',
   actions: {
     discard: 'Discard my changes',
     save: 'Save settings',

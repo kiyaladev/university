@@ -50,12 +50,12 @@ export default {
       'Les exemplaires sont déclarés mis sous pli et scellés. Cette étape est enregistrée au journal et ne peut pas être annulée.',
     DISTRIBUE:
       'Les plis sont déclarés remis au centre d’examen. Cette étape est enregistrée au journal et ne peut pas être annulée.',
-    RECUPERE:
-      'Les copies sont déclarées récupérées : le tirage est clos. Cette étape est définitive.',
+    RECUPERE: 'Les copies sont déclarées récupérées : le tirage est clos. Cette étape est définitive.',
   },
   dialogs: {
     schedule: {
-      fingerprintPolicy: 'L’empreinte SHA-256 du fichier source sera exigée à l’impression pour bloquer toute substitution.',
+      fingerprintPolicy:
+        'L’empreinte SHA-256 du fichier source sera exigée à l’impression pour bloquer toute substitution.',
       examLabel: 'Examen *',
       dateLabel: 'Date du tirage *',
       copiesLabel: 'Nombre d’exemplaires *',
@@ -67,7 +67,8 @@ export default {
       printRouteLabel: 'Circuit d’impression (ex. : Salle 1 → Salle 2 → …)',
       submit: 'Programmer',
       required: 'Examen, date, nombre d’exemplaires et empreinte sont obligatoires.',
-      invalidFingerprint: 'L’empreinte doit être un SHA-256 de 64 caractères hexadécimaux. Chargez le fichier pour la calculer.',
+      invalidFingerprint:
+        'L’empreinte doit être un SHA-256 de 64 caractères hexadécimaux. Chargez le fichier pour la calculer.',
     },
     print: {
       fileLabel: 'Fichier à imprimer',
@@ -80,8 +81,7 @@ export default {
     },
     cancel: {
       title: 'Annuler le tirage',
-      message:
-        'Annuler définitivement le tirage de {examen} ? Les exemplaires programmés ne seront pas imprimés.',
+      message: 'Annuler définitivement le tirage de {examen} ? Les exemplaires programmés ne seront pas imprimés.',
       thisExam: 'cet examen',
     },
   },

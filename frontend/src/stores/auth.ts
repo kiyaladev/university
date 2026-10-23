@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import { api } from '../boot/axios';
-import { enrolerAppareilSiNecessaire } from '../services/empreinte';
-import { ecrireToken, effacerToken, lireToken } from '../services/session';
+import { enrolerAppareilSiNecessaire } from '@/shared/services/empreinte';
+import { ecrireToken, effacerToken, lireToken } from '@/shared/services/session';
 import { useReferentielsStore } from './referentiels';
 import type { Role, Utilisateur } from '../types';
 import { roleAutorise, type Permission } from '../navigation/permissions';
@@ -16,12 +16,9 @@ export const useAuthStore = defineStore('auth', {
   getters: {
     connecte: (s) => !!s.token,
     role: (s): Role | null => s.utilisateur?.role ?? null,
-    nomComplet: (s) =>
-      s.utilisateur ? `${s.utilisateur.prenom} ${s.utilisateur.nom}` : '',
+    nomComplet: (s) => (s.utilisateur ? `${s.utilisateur.prenom} ${s.utilisateur.nom}` : ''),
     initiales: (s) =>
-      s.utilisateur
-        ? `${s.utilisateur.prenom?.[0] ?? ''}${s.utilisateur.nom?.[0] ?? ''}`.toUpperCase()
-        : '?',
+      s.utilisateur ? `${s.utilisateur.prenom?.[0] ?? ''}${s.utilisateur.nom?.[0] ?? ''}`.toUpperCase() : '?',
 
     /** Vrai si l'utilisateur a l'un des rôles demandés. */
     aRole: (s) => (roles: Role[]) => !!s.utilisateur && roles.includes(s.utilisateur.role),
@@ -61,9 +58,7 @@ export const useAuthStore = defineStore('auth', {
         // dès la première session : c'est elle qui rendra ses lectures
         // d'empreinte recevables, et elle seule pourra être révoquée.
         try {
-          await enrolerAppareilSiNecessaire(
-            `Appareil de ${data.user.prenom} ${data.user.nom}`,
-          );
+          await enrolerAppareilSiNecessaire(`Appareil de ${data.user.prenom} ${data.user.nom}`);
         } catch {
           // Un enrôlement raté ne doit pas empêcher d'entrer : le contrôleur
           // garde la signature et le code, et l'appareil réessaiera.
@@ -85,11 +80,7 @@ export const useAuthStore = defineStore('auth', {
     async connexionOtp(telephone: string, code: string) {
       this.chargement = true;
       try {
-        const { data } = await api.post(
-          '/portail/otp/verifier',
-          { telephone, code },
-          { silencieux: true },
-        );
+        const { data } = await api.post('/portail/otp/verifier', { telephone, code }, { silencieux: true });
         useReferentielsStore().vider();
         this.token = data.token;
         ecrireToken(data.token);
@@ -125,7 +116,7 @@ export const useAuthStore = defineStore('auth', {
       useReferentielsStore().vider();
       effacerToken();
       if ('caches' in window) {
-        void Promise.all(['unipresence-api', 'unipresence-api-v2'].map(name => caches.delete(name)));
+        void Promise.all(['unipresence-api', 'unipresence-api-v2'].map((name) => caches.delete(name)));
       }
     },
   },

@@ -40,28 +40,36 @@
             <q-list dense role="presentation">
               <q-item-label header>{{ t('layout.preferences') }}</q-item-label>
               <div class="column q-px-md q-pb-sm">
-              <q-btn flat dense no-caps align="left" icon="translate" :label="t('layout.changerLangue')">
-                <q-tooltip>{{ t('layout.changerLangue') }}</q-tooltip>
-                <q-menu>
-                  <q-list dense role="menu">
-                    <q-item
-                            v-for="option in LANGUES"
-                            :key="option.code"
-                            v-close-popup
-                            clickable
-                            :active="localeCourante === option.code"
-                            @click="changerLangue(option.code)"
-                    >
-                            <q-item-section>{{ option.libelle }}</q-item-section>
-                    </q-item>
-                  </q-list>
-                </q-menu>
-              </q-btn>
+                <q-btn flat dense no-caps align="left" icon="translate" :label="t('layout.changerLangue')">
+                  <q-tooltip>{{ t('layout.changerLangue') }}</q-tooltip>
+                  <q-menu>
+                    <q-list dense role="menu">
+                      <q-item
+                        v-for="option in LANGUES"
+                        :key="option.code"
+                        v-close-popup
+                        clickable
+                        :active="localeCourante === option.code"
+                        @click="changerLangue(option.code)"
+                      >
+                        <q-item-section>{{ option.libelle }}</q-item-section>
+                      </q-item>
+                    </q-list>
+                  </q-menu>
+                </q-btn>
 
-              <q-btn v-close-popup flat dense no-caps align="left" :icon="dark.isActive ? 'light_mode' : 'dark_mode'" :label="t('layout.basculerTheme')" @click="dark.toggle()">
-                <q-tooltip>{{ t('layout.basculerTheme') }}</q-tooltip>
-              </q-btn>
-
+                <q-btn
+                  v-close-popup
+                  flat
+                  dense
+                  no-caps
+                  align="left"
+                  :icon="dark.isActive ? 'light_mode' : 'dark_mode'"
+                  :label="t('layout.basculerTheme')"
+                  @click="dark.toggle()"
+                >
+                  <q-tooltip>{{ t('layout.basculerTheme') }}</q-tooltip>
+                </q-btn>
               </div>
               <q-item v-if="installable" clickable v-close-popup @click="installer">
                 <q-item-section avatar><q-icon name="install_mobile" /></q-item-section>
@@ -72,13 +80,7 @@
               </q-item>
               <!-- L'application Android n'a de sens que sur Android, et pas
                    depuis l'application elle-même. -->
-              <q-item
-                v-if="proposerApk"
-                clickable
-                v-close-popup
-                tag="a"
-                href="/telechargement/unipresence.apk"
-              >
+              <q-item v-if="proposerApk" clickable v-close-popup tag="a" href="/telechargement/unipresence.apk">
                 <q-item-section avatar><q-icon name="android" /></q-item-section>
                 <q-item-section>
                   <q-item-label>{{ t('layout.downloadAndroid') }}</q-item-label>
@@ -111,43 +113,71 @@
           </div>
           <template v-if="raccourcisVisibles.length">
             <div class="index__repere">{{ t('layout.frequentTasks') }}</div>
-            <q-item v-for="lien in raccourcisVisibles" :key="lien.to" :to="lien.to" :exact="lien.exact" :active="familles[lien.to]?.includes(route.path) || undefined" class="index__lien" @click="avantNavigationMenu">
-              <q-item-section avatar><q-icon :name="lien.icone" /></q-item-section>
-              <q-item-section>{{ lien.libelle }}</q-item-section>
-              <q-item-section v-if="lien.badge" side><q-badge color="negative">{{ lien.badge }}</q-badge></q-item-section>
-            </q-item>
-            <q-separator class="q-my-sm" />
-          </template>
-          <q-expansion-item v-for="groupe in rubriquesVisibles" :key="groupe.id"
-            :label="groupe.titre" :icon="groupe.icone"
-            :model-value="!!rechercheMenu || rubriqueOuverte === groupe.id"
-            @update:model-value="ouvrirRubrique(groupe.id, $event)"
-            header-class="index__titre">
-            <template v-for="(lien, indexLien) in groupe.liens" :key="lien.to">
-              <q-item-label v-if="lien.section && (indexLien === 0 || groupe.liens[indexLien - 1].section !== lien.section)" header class="index__section">{{ lien.section }}</q-item-label>
-              <q-item
-              clickable
+            <q-item
+              v-for="lien in raccourcisVisibles"
+              :key="lien.to"
               :to="lien.to"
-              :exact="lien.exact" :active="familles[lien.to]?.includes(route.path) || undefined"
+              :exact="lien.exact"
+              :active="familles[lien.to]?.includes(route.path) || undefined"
               class="index__lien"
               @click="avantNavigationMenu"
             >
               <q-item-section avatar><q-icon :name="lien.icone" /></q-item-section>
               <q-item-section>{{ lien.libelle }}</q-item-section>
-              <q-item-section v-if="services.pilote(lien.to)" side><q-badge color="warning" text-color="dark">{{ t('servicesActifs.pilotShort') }}<q-tooltip>{{ t('servicesActifs.pilot') }}</q-tooltip></q-badge></q-item-section>
-              <q-item-section v-if="lien.badge" side>
-                <q-badge color="negative">{{ lien.badge }}</q-badge>
-              </q-item-section>
+              <q-item-section v-if="lien.badge" side
+                ><q-badge color="negative">{{ lien.badge }}</q-badge></q-item-section
+              >
             </q-item>
+            <q-separator class="q-my-sm" />
+          </template>
+          <q-expansion-item
+            v-for="groupe in rubriquesVisibles"
+            :key="groupe.id"
+            :label="groupe.titre"
+            :icon="groupe.icone"
+            :model-value="!!rechercheMenu || rubriqueOuverte === groupe.id"
+            @update:model-value="ouvrirRubrique(groupe.id, $event)"
+            header-class="index__titre"
+          >
+            <template v-for="(lien, indexLien) in groupe.liens" :key="lien.to">
+              <q-item-label
+                v-if="lien.section && (indexLien === 0 || groupe.liens[indexLien - 1].section !== lien.section)"
+                header
+                class="index__section"
+                >{{ lien.section }}</q-item-label
+              >
+              <q-item
+                clickable
+                :to="lien.to"
+                :exact="lien.exact"
+                :active="familles[lien.to]?.includes(route.path) || undefined"
+                class="index__lien"
+                @click="avantNavigationMenu"
+              >
+                <q-item-section avatar><q-icon :name="lien.icone" /></q-item-section>
+                <q-item-section>{{ lien.libelle }}</q-item-section>
+                <q-item-section v-if="services.pilote(lien.to)" side
+                  ><q-badge color="warning" text-color="dark"
+                    >{{ t('servicesActifs.pilotShort') }}<q-tooltip>{{ t('servicesActifs.pilot') }}</q-tooltip></q-badge
+                  ></q-item-section
+                >
+                <q-item-section v-if="lien.badge" side>
+                  <q-badge color="negative">{{ lien.badge }}</q-badge>
+                </q-item-section>
+              </q-item>
             </template>
           </q-expansion-item>
-          <div v-if="!raccourcisVisibles.length && !rubriquesVisibles.length" class="index__vide" role="status">{{ t('layout.noModule') }}</div>
+          <div v-if="!raccourcisVisibles.length && !rubriquesVisibles.length" class="index__vide" role="status">
+            {{ t('layout.noModule') }}
+          </div>
         </q-list>
       </q-scroll-area>
     </q-drawer>
 
     <q-page-container>
-      <q-banner v-if="pointages.ancienneFile && auth.peutPointer" class="bg-orange-1 text-dark">{{ t('filePointages.legacy') }}</q-banner>
+      <q-banner v-if="pointages.ancienneFile && auth.peutPointer" class="bg-orange-1 text-dark">{{
+        t('filePointages.legacy')
+      }}</q-banner>
       <router-view />
     </q-page-container>
 
@@ -177,13 +207,13 @@ import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import { useAuthStore } from '../stores/auth';
 import { useServicesActifsStore } from '../stores/servicesActifs';
-import PointagesEnAttente from '../components/PointagesEnAttente.vue';
+import PointagesEnAttente from '@/features/presence/components/PointagesEnAttente.vue';
 import { usePointagesStore } from '../stores/pointages';
 import { useSeancesStore } from '../stores/seances';
-import { LIBELLE_ROLE } from '../utils/libelles';
-import { surAndroid } from '../services/empreinte';
+import { LIBELLE_ROLE } from '@/shared/utils/libelles';
+import { surAndroid } from '@/shared/services/empreinte';
 import { api } from '../boot/axios';
-import { titreRoute } from '../utils/titreRoute';
+import { titreRoute } from '@/shared/utils/titreRoute';
 import { FAMILLES, menuPour, raccourcisPour } from '../navigation/menu';
 import { getAppLocale, setAppLocale, type AppLocale } from '../boot/i18n';
 
@@ -207,9 +237,7 @@ const enregistrement = ref(false);
 const justificatifsEnAttente = ref(0);
 const installable = ref(false);
 
-const proposerApk = computed(
-  () => /android/i.test(navigator.userAgent) && !surAndroid(),
-);
+const proposerApk = computed(() => /android/i.test(navigator.userAgent) && !surAndroid());
 let invite: any = null;
 
 const { t } = useI18n();
@@ -232,35 +260,53 @@ function changerLangue(code: AppLocale) {
  * et la route porte les mêmes rôles, si bien qu'un lien ne peut pas renvoyer
  * l'utilisateur à son accueil.
  */
-const menu = computed(() => menuPour(auth.utilisateur?.role ?? null, services.services, cle => t(cle)).map(rubrique => ({
-  id: rubrique.id,
-  titre: t(rubrique.titre),
-  icone: rubrique.icone,
-  liens: rubrique.liens.map(lien => ({
-    to: lien.path,
-    icone: lien.icone,
-    libelle: titreRoute(lien.titre),
-    badge: lien.path === '/justificatifs' ? justificatifsEnAttente.value || undefined : undefined,
-    exact: lien.exact,
-    section: lien.section ? t(lien.section) : '',
+const menu = computed(() =>
+  menuPour(auth.utilisateur?.role ?? null, services.services, (cle) => t(cle)).map((rubrique) => ({
+    id: rubrique.id,
+    titre: t(rubrique.titre),
+    icone: rubrique.icone,
+    liens: rubrique.liens.map((lien) => ({
+      to: lien.path,
+      icone: lien.icone,
+      libelle: titreRoute(lien.titre),
+      badge: lien.path === '/justificatifs' ? justificatifsEnAttente.value || undefined : undefined,
+      exact: lien.exact,
+      section: lien.section ? t(lien.section) : '',
+    })),
   })),
-})));
+);
 
 const raccourcis = computed(() => {
-  const tous = menu.value.flatMap(groupe => groupe.liens);
-  return raccourcisPour(auth.utilisateur?.role ?? null).flatMap(to => tous.filter(lien => lien.to === to));
+  const tous = menu.value.flatMap((groupe) => groupe.liens);
+  return raccourcisPour(auth.utilisateur?.role ?? null).flatMap((to) => tous.filter((lien) => lien.to === to));
 });
 const familles = FAMILLES;
-const normaliserRecherche = (texte: string) => texte.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase().trim();
+const normaliserRecherche = (texte: string) =>
+  texte
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLocaleLowerCase()
+    .trim();
 const rechercheNormalisee = computed(() => normaliserRecherche(rechercheMenu.value || ''));
-const raccourcisVisibles = computed(() => raccourcis.value.filter(lien => normaliserRecherche(lien.libelle).includes(rechercheNormalisee.value)));
+const raccourcisVisibles = computed(() =>
+  raccourcis.value.filter((lien) => normaliserRecherche(lien.libelle).includes(rechercheNormalisee.value)),
+);
 const rubriquesVisibles = computed(() => {
-  const rapides = new Set(raccourcis.value.map(lien => lien.to));
-  return menu.value.map(groupe => ({ ...groupe, liens: groupe.liens.filter(lien => !rapides.has(lien.to)
-    && normaliserRecherche(`${groupe.titre} ${lien.libelle}`).includes(rechercheNormalisee.value)) })).filter(groupe => groupe.liens.length);
+  const rapides = new Set(raccourcis.value.map((lien) => lien.to));
+  return menu.value
+    .map((groupe) => ({
+      ...groupe,
+      liens: groupe.liens.filter(
+        (lien) =>
+          !rapides.has(lien.to) &&
+          normaliserRecherche(`${groupe.titre} ${lien.libelle}`).includes(rechercheNormalisee.value),
+      ),
+    }))
+    .filter((groupe) => groupe.liens.length);
 });
 function ouvrirRubrique(id: string, ouverte: boolean) {
-  if (!rechercheMenu.value) rubriqueOuverte.value = ouverte ? id : rubriqueOuverte.value === id ? null : rubriqueOuverte.value;
+  if (!rechercheMenu.value)
+    rubriqueOuverte.value = ouverte ? id : rubriqueOuverte.value === id ? null : rubriqueOuverte.value;
 }
 function fermerMenuMobile() {
   if ($q.screen.lt.md) menuOuvert.value = false;
@@ -269,13 +315,22 @@ function avantNavigationMenu() {
   rechercheMenu.value = '';
   fermerMenuMobile();
 }
-watch(() => route.path, path => {
-  rechercheMenu.value = '';
-  const lienActif = menu.value.flatMap(groupe => groupe.liens)
-    .filter(lien => path === lien.to || familles[lien.to]?.includes(path) || (!lien.exact && path.startsWith(`${lien.to}/`)))
-    .sort((a, b) => b.to.length - a.to.length)[0];
-  rubriqueOuverte.value = rubriquesVisibles.value.find(groupe => groupe.liens.some(lien => lien.to === lienActif?.to))?.id ?? null;
-}, { immediate: true });
+watch(
+  () => route.path,
+  (path) => {
+    rechercheMenu.value = '';
+    const lienActif = menu.value
+      .flatMap((groupe) => groupe.liens)
+      .filter(
+        (lien) =>
+          path === lien.to || familles[lien.to]?.includes(path) || (!lien.exact && path.startsWith(`${lien.to}/`)),
+      )
+      .sort((a, b) => b.to.length - a.to.length)[0];
+    rubriqueOuverte.value =
+      rubriquesVisibles.value.find((groupe) => groupe.liens.some((lien) => lien.to === lienActif?.to))?.id ?? null;
+  },
+  { immediate: true },
+);
 
 async function changerMotDePasse() {
   enregistrement.value = true;
@@ -412,10 +467,22 @@ onMounted(async () => {
   padding: var(--up-2) var(--up-3);
 }
 
-.index__recherche { padding: var(--up-1) var(--up-2) var(--up-2); }
-.index__section { color: var(--up-encre-douce); }
-.index__repere { padding: var(--up-2) var(--up-3); font-size: 12px; color: var(--up-encre-douce); font-weight: 600; }
-.index__vide { padding: var(--up-3); color: var(--up-encre-douce); }
+.index__recherche {
+  padding: var(--up-1) var(--up-2) var(--up-2);
+}
+.index__section {
+  color: var(--up-encre-douce);
+}
+.index__repere {
+  padding: var(--up-2) var(--up-3);
+  font-size: 12px;
+  color: var(--up-encre-douce);
+  font-weight: 600;
+}
+.index__vide {
+  padding: var(--up-3);
+  color: var(--up-encre-douce);
+}
 
 // Un lien d'index n'est pas cerné : il est une pastille qui se remplit au
 // survol, comme dans une barre latérale de Réglages.
@@ -423,9 +490,15 @@ onMounted(async () => {
   border-bottom: 0;
   font-weight: 400;
 
-  &:hover { background: rgba(0, 0, 0, 0.04); }
+  &:hover {
+    background: rgba(0, 0, 0, 0.04);
+  }
 }
 
-body.body--dark .index__lien:hover { background: rgba(255, 255, 255, 0.06); }
-body.body--dark .index__lien.q-item--active { color: var(--up-encre); }
+body.body--dark .index__lien:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+body.body--dark .index__lien.q-item--active {
+  color: var(--up-encre);
+}
 </style>

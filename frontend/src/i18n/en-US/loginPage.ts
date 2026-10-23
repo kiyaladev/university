@@ -18,8 +18,7 @@ export default {
   },
   access: {
     title: 'Sign in',
-    intro:
-      'Reserved for university staff — controllers, registrar, teachers, management. Are you a student?',
+    intro: 'Reserved for university staff — controllers, registrar, teachers, management. Are you a student?',
     studentPortalLink: 'Enter through the student portal',
   },
   form: {

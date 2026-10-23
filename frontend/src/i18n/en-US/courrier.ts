@@ -8,9 +8,11 @@ export default {
   },
   registrationDialog: {
     department: 'Recipient department (optional)',
-    departmentHint: 'Only the head of the selected department can read and countersign. Without a department, no department head receives this item.',
+    departmentHint:
+      'Only the head of the selected department can read and countersign. Without a department, no department head receives this item.',
     ownDepartment: 'This mail item is addressed to your department.',
-    subtitle: 'If no routing is entered, the default route (secretariat → department chair → archives) is created automatically.',
+    subtitle:
+      'If no routing is entered, the default route (secretariat → department chair → archives) is created automatically.',
     number: 'Number (COUR-YYYY-XXXXX)',
     incoming: 'Incoming',
     outgoing: 'Outgoing',
@@ -64,7 +66,13 @@ export default {
     noWorkflow: 'No approval workflow defined',
     stampStep: 'Countersign step {order}',
     signatureHash: 'Countersignature hash (SHA-256, optional)',
-    status: { received: 'Received', inWorkflow: 'In workflow', processed: 'Processed', filed: 'Filed', archived: 'Archived' },
+    status: {
+      received: 'Received',
+      inWorkflow: 'In workflow',
+      processed: 'Processed',
+      filed: 'Filed',
+      archived: 'Archived',
+    },
     stamped: 'Countersignature recorded',
     stampOnStep: 'Countersigning is performed on a workflow step',
     closeMessage: 'Close “{number}” and move it to {next}?',

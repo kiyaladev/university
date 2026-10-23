@@ -28,8 +28,7 @@ export default {
     },
     verifiedAt: 'Verified on {date} — this check has been recorded in the card log.',
   },
-  footer:
-    'Verification is free and requires no account. A revoked card or an unknown ID proves nothing — be cautious.',
+  footer: 'Verification is free and requires no account. A revoked card or an unknown ID proves nothing — be cautious.',
   messages: {
     verificationFailed:
       'The verification could not be completed: the service is temporarily unavailable. Please try again shortly.',

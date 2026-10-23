@@ -42,8 +42,7 @@ export default {
   },
   deleteDialog: {
     title: 'Supprimer la matière',
-    message:
-      'Supprimer « {intitule} » ? Les charges d’enseignement qui la portent seront également supprimées.',
+    message: 'Supprimer « {intitule} » ? Les charges d’enseignement qui la portent seront également supprimées.',
   },
   messages: {
     saved: 'Matière enregistrée',

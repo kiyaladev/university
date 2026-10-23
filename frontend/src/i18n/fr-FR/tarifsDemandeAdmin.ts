@@ -2,17 +2,18 @@
 export default {
   title: 'Tarifs des demandes',
   subtitle:
-    'Chaque type de document (attestation de scolarité, relevé de notes, duplicata…) est facturé au tarif paramétré ici. Le montant et le délai annoncés à l\'étudiant au moment de sa demande en dépendent.',
+    "Chaque type de document (attestation de scolarité, relevé de notes, duplicata…) est facturé au tarif paramétré ici. Le montant et le délai annoncés à l'étudiant au moment de sa demande en dépendent.",
   actions: {
     document_requests: 'Demandes de documents',
     new_tariff: 'Nouveau tarif',
     all_types_have_tariff: 'Tous les types de document ont déjà un tarif : modifiez-le.',
   },
   errors: {
-    role_forbidden: 'Cette page est réservée à l\'administrateur. Vous êtes connecté en {role}.',
+    role_forbidden: "Cette page est réservée à l'administrateur. Vous êtes connecté en {role}.",
   },
   table: {
-    empty: 'Aucun tarif enregistré. Tant qu\'un type n\'a pas de tarif, les demandes des étudiants sont créées sans frais et passent directement en traitement.',
+    empty:
+      "Aucun tarif enregistré. Tant qu'un type n'a pas de tarif, les demandes des étudiants sont créées sans frais et passent directement en traitement.",
     columns: {
       delay: 'Délai',
     },

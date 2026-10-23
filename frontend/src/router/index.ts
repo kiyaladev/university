@@ -1,16 +1,11 @@
 import { defineRouter } from '#q-app/wrappers';
-import {
-  createMemoryHistory,
-  createRouter,
-  createWebHashHistory,
-  createWebHistory,
-} from 'vue-router';
+import { createMemoryHistory, createRouter, createWebHashHistory, createWebHistory } from 'vue-router';
 import { Notify } from 'quasar';
 import routes from './routes';
 import { useAuthStore } from '../stores/auth';
 import { i18n } from '../boot/i18n';
-import { titreRoute } from '../utils/titreRoute';
-import { accueilParRole } from '../utils/accueil';
+import { titreRoute } from '@/shared/utils/titreRoute';
+import { accueilParRole } from '@/shared/utils/accueil';
 import type { Role } from '../types';
 import { useServicesActifsStore } from '../stores/servicesActifs';
 import { verifierManifeste } from '../navigation/menu';
@@ -76,8 +71,11 @@ export default defineRouter(function () {
       return accueil(auth.utilisateur.role);
     }
     if (to.name === 'suivi-presences') {
-      return ['ADMIN', 'DIRECTION', 'CHEF_DEPARTEMENT'].includes(auth.utilisateur.role) ? '/synthese-presences'
-        : auth.utilisateur.role === 'CONTROLEUR' ? '/statistiques' : '/rapports';
+      return ['ADMIN', 'DIRECTION', 'CHEF_DEPARTEMENT'].includes(auth.utilisateur.role)
+        ? '/synthese-presences'
+        : auth.utilisateur.role === 'CONTROLEUR'
+          ? '/statistiques'
+          : '/rapports';
     }
     if (to.name === 'documents') return auth.utilisateur.role === 'DIRECTION' ? '/attestations' : '/demandes-docs';
     return true;

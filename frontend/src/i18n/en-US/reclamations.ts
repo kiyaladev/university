@@ -20,7 +20,8 @@ export default {
       priorityHint: 'High or urgent for blockers; low for information requests',
       department: 'Department concerned',
       anonymous: 'Submit anonymously',
-      anonymousHint: 'Your case stays separate: your name and student number will not be associated with this complaint.',
+      anonymousHint:
+        'Your case stays separate: your name and student number will not be associated with this complaint.',
       contactName: 'Contact name',
       contactHint: 'For contacting you outside the application',
       contactEmail: 'Contact email',
@@ -96,8 +97,7 @@ export default {
     messagesCount: '{count} message(s)',
   },
   emptyState: {
-    message:
-      'No complaint for these criteria. Reset the filters or open a complaint on behalf of a student.',
+    message: 'No complaint for these criteria. Reset the filters or open a complaint on behalf of a student.',
   },
   tooltips: {
     detail: 'Detail, message thread and assignment',

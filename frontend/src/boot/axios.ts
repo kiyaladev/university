@@ -2,7 +2,7 @@ import { defineBoot } from '#q-app/wrappers';
 import axios from 'axios';
 import { Notify } from 'quasar';
 import { getAppLocale, i18n } from './i18n';
-import { effacerToken, lireToken } from '../services/session';
+import { effacerToken, lireToken } from '@/shared/services/session';
 
 /**
  * Option maison lue par l'intercepteur : une requête « silencieuse » n'affiche

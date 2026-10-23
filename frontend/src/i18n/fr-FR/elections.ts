@@ -88,8 +88,7 @@ export default {
     transitions: {
       open: {
         title: 'Ouvrir le scrutin',
-        message:
-          'Le scrutin devient accessible aux électeurs et la liste des candidats se fige. Continuer ?',
+        message: 'Le scrutin devient accessible aux électeurs et la liste des candidats se fige. Continuer ?',
         button: 'Ouvrir',
         success: 'Scrutin ouvert.',
       },
@@ -121,8 +120,7 @@ export default {
       title: 'Résultats — {title}',
       loading: 'Dépouillement en cours…',
       unavailable: 'Résultats indisponibles pour ce scrutin.',
-      provisionalBanner:
-        'Résultats provisoires : ils ne deviennent officiels qu’à la proclamation.',
+      provisionalBanner: 'Résultats provisoires : ils ne deviennent officiels qu’à la proclamation.',
       ballots: 'Bulletins',
       votesExpressed: 'Voix exprimées',
       seatsToFill: 'Sièges à pourvoir',

@@ -8,9 +8,11 @@ export default {
   },
   registrationDialog: {
     department: 'Département destinataire (facultatif)',
-    departmentHint: 'Seul le chef du département choisi peut consulter et parapher. Sans département, aucun chef ne reçoit ce courrier.',
+    departmentHint:
+      'Seul le chef du département choisi peut consulter et parapher. Sans département, aucun chef ne reçoit ce courrier.',
     ownDepartment: 'Ce courrier est adressé à votre département.',
-    subtitle: "Si aucun circuit n'est saisi, le circuit par défaut (secrétariat → chef département → archives) est créé automatiquement.",
+    subtitle:
+      "Si aucun circuit n'est saisi, le circuit par défaut (secrétariat → chef département → archives) est créé automatiquement.",
     number: 'Numéro (COUR-AAAA-XXXXX)',
     incoming: 'Entrant',
     outgoing: 'Sortant',
@@ -82,14 +84,12 @@ export default {
     typeTitle: 'Aucun courrier {type}',
     archiveHint:
       'Un courrier rejoint les archives une fois classé puis clôturé. Élargissez la période, ou suivez les circuits encore ouverts dans les onglets Entrants et Sortants.',
-    typeHint:
-      'Aucun courrier {type} {periode}. Élargissez la période ou retirez les filtres avancés.',
+    typeHint: 'Aucun courrier {type} {periode}. Élargissez la période ou retirez les filtres avancés.',
   },
   dialogs: {
     close: {
       title: 'Clôturer le courrier',
-      message:
-        'Confirmer la clôture de « {numero} » ? Cette transition avance vers les archives (CLASSE → ARCHIVE).',
+      message: 'Confirmer la clôture de « {numero} » ? Cette transition avance vers les archives (CLASSE → ARCHIVE).',
     },
   },
   messages: {

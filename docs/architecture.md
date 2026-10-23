@@ -136,16 +136,65 @@ ou sa transaction.
 | Numérotation | `common/numero.ts` | `prochainNumero()` / `prochainNumeroTx()` ; `anneeNumero(libelle, borne)` — les règles d’année diffèrent selon les modules (voir [décisions en attente](suivi.md#décisions-en-attente)). |
 | Autres | `common/` | `crud.service.ts` (CRUD générique), `guards.ts`, `annee.ts`, `coffre.ts` (chiffrement des gabarits), `jeton-imprimable.ts`, `sensitive-data.interceptor.ts`. |
 
+## Organisation du frontend
+
+Le code de `frontend/src/` est rangé par domaine, aligné sur les cinq
+rubriques du menu (`navigation/manifeste.ts`) :
+
+```
+src/
+├── features/
+│   ├── accueil/         accueil de l’université (/, /suivi-presences, /documents), page introuvable
+│   ├── presence/        rubrique Présences : contrôle, séances, emploi du temps, justificatifs, statistiques, rapports
+│   ├── scolarite/       rubrique Scolarité : étudiants, inscriptions, évaluations, examens, délibérations, documents, réclamations, stages, espace étudiant
+│   ├── finances/        rubrique Finances : paiements, recettes, paie
+│   ├── campus/          rubrique Campus : VOD, élections, badges, cités, restauration, bibliothèque, formations, réservations, assistance, patrimoine
+│   ├── administration/  rubrique Administration : organisation, plagiat, audit, rectorat, courrier, notifications, utilisateurs, paramètres
+│   └── public/          écrans sans compte : connexion, portail, inscription, vérifications, bibliothèque et formations publiques
+│       (chaque domaine : pages/, components/, et selon le besoin services/, types.ts)
+├── shared/
+│   ├── components/      briques d’interface communes (BarreFiltres, BarrePagination, EnTetePage, DialogueFormulaire…)
+│   ├── composables/     useListePaginee, useConfirmation, usePresentationListe, useImpressionFicheEnseignant
+│   ├── services/        http, session, impression, empreinte, file-chiffree, bibliotheque, formations
+│   └── utils/           libelles/, statuts, format, csv, xlsx, titreRoute, accueil, biometrie…
+├── boot/  css/  i18n/  layouts/  navigation/  router/  stores/  types/
+└── App.vue
+```
+
+Règles :
+
+- **Domaine** : un écran va dans le domaine de sa rubrique au menu. L’accueil
+  commun (servi sous `/`, `/suivi-presences` et `/documents`) a son propre
+  domaine `accueil` ; les écrans publics (`meta.public`) vont dans `public`.
+- **Composant** : utilisé par un seul domaine, il reste dans ce domaine
+  (`features/<domaine>/components/`) ; utilisé par plusieurs, il va dans
+  `shared/components/`. Même règle pour les services. Les stores Pinia,
+  `navigation/`, `router/`, `layouts/`, `boot/`, `css/` et `i18n/` restent à la racine.
+- **Types** : `types/` garde les types partagés et `types/index.ts` réexporte
+  tout (y compris `features/scolarite/types.ts`, réclamations et demandes de
+  documents) : `import type { … } from '@/types'` reste la règle.
+- **Imports** : `@/` désigne `src/` (déclaré dans `quasar.config.ts`, que Quasar
+  recopie dans `.quasar/tsconfig.json` pour vue-tsc, et dans `vitest.config.ts`).
+  On l’emploie dès qu’on sort de son domaine (ou de son dossier `shared/*`) ;
+  à l’intérieur d’un domaine, les chemins relatifs courts (`../components/…`).
+  Les feuilles SCSS des composants importent `@use '@/css/mixins'`.
+- **Nommage** : composants en français et en PascalCase ; les pages finissent par
+  `Page` (`TableauBordPage`, `AssistancePage`), les dialogues commencent par
+  `Dialogue` (`DialogueEtudiant`) ; les composables commencent par `use`.
+  Renommer un fichier ne change ni l’adresse ni le nom d’une route : les
+  adresses (`/helpdesk`, `/synthese-presences`…) et les espaces de noms i18n
+  (`helpdesk`, `dashboard`…) restent ceux d’avant.
+
 ## Briques communes du frontend (lots 1 et 2)
 
 | Brique | Fichier | Rôle |
 | --- | --- | --- |
-| Accès HTTP | `services/http.ts` | `lister`, `lire`, `creer`, `modifier`, `supprimer` : rendent directement le corps typé de la réponse, au-dessus de l’instance `api` de `boot/axios.ts`. Les erreurs sont notifiées une seule fois par l’intercepteur axios, sauf option `silencieux`. |
-| Listes | `composables/useListePaginee.ts` | état d’une liste (lignes, total, page, chargement), rechargement quand un filtre change (retour en page 1, anti-rebond de 300 ms sur les champs texte), filtres mémorisés dans l’URL (`syncUrl`), `chargerTout()` pour l’export ; helpers `pageApi()` et `texteApi()`. |
-| Dialogues de saisie | `components/DialogueFormulaire.vue` | coquille commune : titre, `q-form`, Annuler / Enregistrer ; `valider` n’est émis que si les règles des champs passent ; tailles s, m, l. |
-| Confirmations | `composables/useConfirmation.ts` | `confirmer()` (promesse booléenne), `confirmerAvecSaisie()` (motif libre), `supprimerAvecConfirmation(url, libelle, recharger)` (demande, DELETE, notification, rechargement). |
+| Accès HTTP | `shared/services/http.ts` | `lister`, `lire`, `creer`, `modifier`, `supprimer` : rendent directement le corps typé de la réponse, au-dessus de l’instance `api` de `boot/axios.ts`. Les erreurs sont notifiées une seule fois par l’intercepteur axios, sauf option `silencieux`. |
+| Listes | `shared/composables/useListePaginee.ts` | état d’une liste (lignes, total, page, chargement), rechargement quand un filtre change (retour en page 1, anti-rebond de 300 ms sur les champs texte), filtres mémorisés dans l’URL (`syncUrl`), `chargerTout()` pour l’export ; helpers `pageApi()` et `texteApi()`. |
+| Dialogues de saisie | `shared/components/DialogueFormulaire.vue` | coquille commune : titre, `q-form`, Annuler / Enregistrer ; `valider` n’est émis que si les règles des champs passent ; tailles s, m, l. |
+| Confirmations | `shared/composables/useConfirmation.ts` | `confirmer()` (promesse booléenne), `confirmerAvecSaisie()` (motif libre), `supprimerAvecConfirmation(url, libelle, recharger)` (demande, DELETE, notification, rechargement). |
 | Référentiels | `stores/referentiels.ts` | store Pinia des années, promotions, départements, enseignants, salles, matières : chargement paresseux (`?all=1`), requêtes dédoublonnées, `rafraichir()` après mutation, `vider()` à la connexion et la déconnexion (listes dépendantes du compte). |
-| Autres | `components/EtatVide.vue`, `PageHeader.vue`, `PaginationBar.vue`, `FilterBar.vue` ; `composables/presentationListe.ts` (tableau ou cartes selon la largeur) ; `utils/libelles.ts` (libellés traduits, formats de date, durée, montant) ; `types/` (types découpés par domaine). |
+| Autres | `shared/components/EtatVide.vue`, `EnTetePage.vue`, `BarrePagination.vue`, `BarreFiltres.vue` ; `shared/composables/usePresentationListe.ts` (tableau ou cartes selon la largeur) ; `shared/utils/libelles/` (libellés traduits, formats de date, durée, montant) ; `types/` (types découpés par domaine). |
 
 ## Internationalisation
 

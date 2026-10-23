@@ -12,14 +12,15 @@ export default {
     validityLabel: 'Validity date',
     photoLabel: 'Photo (URL)',
     revokeHint: 'Revoke the card from the list. Revocation requires a reason and immediately invalidates its QR code.',
-    pinHint: 'Students normally set their PIN from “My student card.” You can initialize a 4 to 6 digit PIN; only the student can change it afterwards.',
+    pinHint:
+      'Students normally set their PIN from “My student card.” You can initialize a 4 to 6 digit PIN; only the student can change it afterwards.',
     initialPinLabel: 'Initial PIN (4 to 6 digits)',
     pinHintOptional: 'Optional: the student can reset it from their portal.',
     updated: 'Card updated.',
     issued: 'Card issued.',
   },
   studentBanner: {
-    message: 'List restricted to a single student\'s cards (incoming link).',
+    message: "List restricted to a single student's cards (incoming link).",
     seeAll: 'See all cards',
   },
   filters: {
@@ -33,7 +34,7 @@ export default {
     },
   },
   emptyState: {
-    message: 'No card matches these criteria. Issue one from an enrolled student\'s record.',
+    message: "No card matches these criteria. Issue one from an enrolled student's record.",
   },
   card: {
     issuedOn: 'Issued on {date}',
@@ -60,7 +61,7 @@ export default {
   },
   detailDialog: {
     title: 'Verification QR code',
-    scanHint: 'Scan this QR code to verify the card\'s authenticity. Every check is logged.',
+    scanHint: "Scan this QR code to verify the card's authenticity. Every check is logged.",
     copyLink: 'Copy link',
     openVerification: 'Open verification',
   },

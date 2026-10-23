@@ -37,7 +37,7 @@ vi.mock('vue-i18n', () => ({
 }));
 vi.mock('../../src/boot/axios', () => ({ api }));
 
-import { useConfirmation } from '../../src/composables/useConfirmation';
+import { useConfirmation } from '../../src/shared/composables/useConfirmation';
 
 function repondre(r: Reponse) {
   etat.reponse = r;
@@ -69,7 +69,11 @@ describe('useConfirmation', () => {
     await confirmer({ titre: 'Valider', message: '…' });
     await confirmer({ titre: 'Voter', message: '…', couleur: 'positive', libelleAnnuler: 'Revenir', persistent: true });
     await confirmer({ titre: 'Purger', message: '…', couleur: 'positive', danger: true });
-    const [defaut, vote, purge] = etat.dialogues as Array<{ ok: { color: string }; cancel: { label: string }; persistent: boolean }>;
+    const [defaut, vote, purge] = etat.dialogues as Array<{
+      ok: { color: string };
+      cancel: { label: string };
+      persistent: boolean;
+    }>;
     expect(defaut!.ok.color).toBe('primary');
     expect(defaut!.cancel.label).toBe('common.actions.cancel');
     expect(defaut!.persistent).toBe(false);
@@ -89,7 +93,9 @@ describe('useConfirmation', () => {
 
   it('confirmerAvecSaisie rend le texte saisi, ou null si annulé', async () => {
     const { confirmerAvecSaisie } = useConfirmation();
-    await expect(confirmerAvecSaisie({ titre: 'Rejeter', message: '…', libelleSaisie: 'Motif' })).resolves.toBe('motif saisi');
+    await expect(confirmerAvecSaisie({ titre: 'Rejeter', message: '…', libelleSaisie: 'Motif' })).resolves.toBe(
+      'motif saisi',
+    );
     repondre('annuler');
     await expect(confirmerAvecSaisie({ titre: 'Rejeter', message: '…', libelleSaisie: 'Motif' })).resolves.toBeNull();
   });

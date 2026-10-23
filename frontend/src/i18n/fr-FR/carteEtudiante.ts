@@ -12,7 +12,8 @@ export default {
     validityLabel: 'Date de validité',
     photoLabel: 'Photo (URL)',
     revokeHint: 'La révocation se fait depuis la liste : elle exige un motif et invalide immédiatement le QR.',
-    pinHint: 'L’étudiant définit normalement son NIP depuis « Ma carte étudiante ». Vous pouvez initialiser un NIP de 4 à 6 chiffres ; lui seul pourra ensuite le changer.',
+    pinHint:
+      'L’étudiant définit normalement son NIP depuis « Ma carte étudiante ». Vous pouvez initialiser un NIP de 4 à 6 chiffres ; lui seul pourra ensuite le changer.',
     initialPinLabel: 'NIP initial (4 à 6 chiffres)',
     pinHintOptional: 'Facultatif : l’étudiant pourra le redéfinir depuis son portail.',
     updated: 'Carte mise à jour.',
@@ -53,7 +54,7 @@ export default {
   revokeDialog: {
     title: 'Révoquer la carte',
     warning:
-      'Action irréversible : la carte devient inutilisable et tout scan de son QR affichera « carte non valable ». L\'étudiant en est informé sur « Ma carte étudiante ».',
+      "Action irréversible : la carte devient inutilisable et tout scan de son QR affichera « carte non valable ». L'étudiant en est informé sur « Ma carte étudiante ».",
     motifLabel: 'Motif de révocation',
     motifHint: "3 caractères minimum — il sera affiché à l'étudiant.",
     confirm: 'Révoquer définitivement',

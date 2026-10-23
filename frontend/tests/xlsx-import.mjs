@@ -28,8 +28,8 @@ try {
   await page.goto(`${base}/#/connexion`, { waitUntil: 'networkidle' });
   const result = await page.evaluate(async ({ base64, malformed }) => {
     const decoder = (value) => Uint8Array.from(atob(value), (char) => char.charCodeAt(0));
-    const { convertirXlsxEnCsv } = await import('/src/utils/xlsx.ts');
-    const { decoderCsv } = await import('/src/utils/csv.ts');
+    const { convertirXlsxEnCsv } = await import('/src/shared/utils/xlsx.ts');
+    const { decoderCsv } = await import('/src/shared/utils/csv.ts');
     const csv = await convertirXlsxEnCsv(new File([decoder(base64)], 'modele.xlsx'));
     const utf8 = decoderCsv(new TextEncoder().encode('Prénom;Nom\r\n'));
     const legacy = decoderCsv(new Uint8Array([0x50, 0x72, 0xe9, 0x6e, 0x6f, 0x6d, 0x3b, 0x4e, 0x6f, 0x6d]));

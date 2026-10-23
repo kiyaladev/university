@@ -12,7 +12,8 @@ export default {
     role_forbidden: 'This page is reserved for administrators. You are logged in as {role}.',
   },
   table: {
-    empty: 'No fee registered. As long as a type has no fee, student requests are created free of charge and go directly into processing.',
+    empty:
+      'No fee registered. As long as a type has no fee, student requests are created free of charge and go directly into processing.',
     columns: {
       delay: 'Delay',
     },

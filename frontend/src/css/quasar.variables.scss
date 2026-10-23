@@ -10,14 +10,14 @@
 
 // ------------------------------------------------------------ encre et gris
 // Les seules teintes des surfaces, de la structure et du texte.
-$encre:           #1D1D1F; // --sk-body-text-color : titres, texte principal
-$encre-douce:     #59595F; // --sk-fill-gray-secondary : texte secondaire
-$encre-tertiaire: #59595F; // légendes, mentions, texte inerte
-$gris-fond:       #F5F5F7; // --sk-fill-gray : le gris de section d'Apple
-$gris-surface:    #FAFAFC; // --sk-fill-secondary
-$gris-filet:      #D2D2D7; // --sk-fill-gray-tertiary : le filet d'un cheveu
-$gris-inerte:     #E8E8ED; // --sk-fill-gray-quaternary : fond des états inertes
-$blanc:           #FFFFFF;
+$encre: #1d1d1f; // --sk-body-text-color : titres, texte principal
+$encre-douce: #59595f; // --sk-fill-gray-secondary : texte secondaire
+$encre-tertiaire: #59595f; // légendes, mentions, texte inerte
+$gris-fond: #f5f5f7; // --sk-fill-gray : le gris de section d'Apple
+$gris-surface: #fafafc; // --sk-fill-secondary
+$gris-filet: #d2d2d7; // --sk-fill-gray-tertiary : le filet d'un cheveu
+$gris-inerte: #e8e8ed; // --sk-fill-gray-quaternary : fond des états inertes
+$blanc: #ffffff;
 
 // ------------------------------------------------- rouge, jaune, vert
 // Les trois couleurs du drapeau guinéen — rouge #CE1126, jaune #FCD116,
@@ -32,18 +32,18 @@ $blanc:           #FFFFFF;
 // Une seule couleur d'action dans toute l'application : le vert du drapeau.
 // #009460 tel quel ne donne que 3,88:1 avec du texte blanc — insuffisant pour
 // un libellé de bouton. On le descend d'un cran : #007A4D, 5,40:1.
-$vert-action: #007A4D; // le bouton plein, le lien, l'anneau de focus
+$vert-action: #007a4d; // le bouton plein, le lien, l'anneau de focus
 $vert-survol: #008856;
-$vert-appui:  #006B43;
-$vert-lien:   #007A4D;
-$vert-nuit:   #35C88A; // le même lien en thème sombre, sur fond noir
+$vert-appui: #006b43;
+$vert-lien: #007a4d;
+$vert-nuit: #35c88a; // le même lien en thème sombre, sur fond noir
 
 // ----------------------------------------------------------------- états
 // Chaque état porte sa couleur dans le texte, sur un fond très dilué — jamais
 // en aplat saturé pleine surface.
-$vert:   #007A4D; // séance assurée — même vert que l'action, autre traitement
-$jaune:  #FCD116; // jaune du drapeau : repère coloré, jamais du texte
-$rouge:  #CE1126; // absence, refus
+$vert: #007a4d; // séance assurée — même vert que l'action, autre traitement
+$jaune: #fcd116; // jaune du drapeau : repère coloré, jamais du texte
+$rouge: #ce1126; // absence, refus
 
 // Les teintes officielles du drapeau, réservées au filet décoratif : elles ne
 // portent jamais de texte, donc rien ne les oblige à tenir un contraste.
@@ -51,31 +51,31 @@ $vert-drapeau: #009460;
 
 // Le jaune ne peut pas porter de texte : #FCD116 sur blanc tombe à 1,4:1.
 // Toute mention « retard / en attente » s'écrit donc dans cet ocre.
-$jaune-texte: #8A6300; // 5,43:1 sur blanc
+$jaune-texte: #8a6300; // 5,43:1 sur blanc
 
 // Fonds dilués correspondants, à peine teintés.
-$vert-fond:  #EFF7F2;
-$jaune-fond: #FFF8E1;
-$rouge-fond: #FDF0F2;
+$vert-fond: #eff7f2;
+$jaune-fond: #fff8e1;
+$rouge-fond: #fdf0f2;
 
 // Variantes : une nuance de la même famille, jamais une quatrième teinte.
-$vert-clair:  #2E9E70; // séance assurée par un remplaçant
-$jaune-fonce: #8A6300; // départ anticipé
-$rouge-clair: #E05A6B; // absence excusée
+$vert-clair: #2e9e70; // séance assurée par un remplaçant
+$jaune-fonce: #8a6300; // départ anticipé
+$rouge-clair: #e05a6b; // absence excusée
 
 // --------------------------------------------------------------- rôles Quasar
 // L'action primaire est le vert du drapeau ; l'encre reste au texte et aux titres.
-$primary:   $vert-action;
+$primary: $vert-action;
 $secondary: $encre;
-$accent:    $vert-lien;
+$accent: $vert-lien;
 
-$dark:      #1D1D1F;
+$dark: #1d1d1f;
 $dark-page: #000000;
 
-$positive:  $vert;
-$negative:  $rouge;
-$info:      $encre-douce;
-$warning:   $jaune-texte;
+$positive: $vert;
+$negative: $rouge;
+$info: $encre-douce;
+$warning: $jaune-texte;
 
 // ------------------------------------------------------------------ formes
 // Le rayon d'Apple : la pilule pour un bouton, 12px pour un champ, 18px pour
@@ -91,9 +91,9 @@ $card-border-radius: 18px;
 // platform's system font »). Ailleurs — Android, Windows — Inter prend le
 // relais : même grotesque néo, même hauteur d'x, embarquée dans le bundle pour
 // un campus sans réseau.
-$typography-font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display',
-  'SF Pro Text', 'Inter Variable', 'Inter', 'Helvetica Neue', Helvetica, Arial,
-  sans-serif;
+$typography-font-family:
+  -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter Variable', 'Inter', 'Helvetica Neue',
+  Helvetica, Arial, sans-serif;
 
 // -------------------------------------------------------------- anciens noms
 // Le monde précédent (panneau émaillé) nommait ses peintures dans une
@@ -101,19 +101,19 @@ $typography-font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display',
 // famille `$orange` / `$bleu`. Plutôt que de rouvrir chaque feuille scoped, ces
 // noms restent vivants et pointent vers la palette du drapeau : rien d'oublié
 // ne fait échouer la compilation, et rien d'oublié ne réintroduit du bleu.
-$chaux:        $gris-fond;
+$chaux: $gris-fond;
 $chaux-claire: $blanc;
-$blanc-craie:  $blanc;
+$blanc-craie: $blanc;
 
 // L'orange de la première bascule est devenu le jaune du drapeau.
-$orange:       $jaune;
-$orange-fond:  $jaune-fond;
+$orange: $jaune;
+$orange-fond: $jaune-fond;
 $orange-fonce: $jaune-texte;
 
 // Le bleu d'action est devenu le vert du drapeau.
-$bleu:        $vert-action;
+$bleu: $vert-action;
 $bleu-survol: $vert-survol;
-$bleu-appui:  $vert-appui;
-$bleu-lien:   $vert-lien;
-$bleu-nuit:   $vert-nuit;
-$bleu-fond:   $vert-fond;
+$bleu-appui: $vert-appui;
+$bleu-lien: $vert-lien;
+$bleu-nuit: $vert-nuit;
+$bleu-fond: $vert-fond;

@@ -1,15 +1,13 @@
 /** Namespace `parametres`. */
 export default {
   title: 'Paramètres',
-  subtitle:
-    'Règles appliquées lors du pointage : tolérance de retard, preuves exigées, en-tête des états',
+  subtitle: 'Règles appliquées lors du pointage : tolérance de retard, preuves exigées, en-tête des états',
   actions: {
     discard: 'Annuler mes modifications',
     save: 'Enregistrer les paramètres',
   },
   banner: {
-    unsavedChanges:
-      'Modifications non enregistrées — elles ne s’appliqueront qu’après enregistrement.',
+    unsavedChanges: 'Modifications non enregistrées — elles ne s’appliqueront qu’après enregistrement.',
   },
   groups: {
     etablissement: {

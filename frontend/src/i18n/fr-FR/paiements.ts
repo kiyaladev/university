@@ -12,7 +12,7 @@ export default {
     failed: 'Échoués',
   },
   summary:
-    'Calculé sur les {count} paiement{plural} affiché{plural} sur {total} — « Charger tout » pour porter le calcul sur l\'ensemble du registre.',
+    "Calculé sur les {count} paiement{plural} affiché{plural} sur {total} — « Charger tout » pour porter le calcul sur l'ensemble du registre.",
   filters: {
     searchPlaceholder: 'Rechercher (référence, nom étudiant)…',
     mode: 'Mode',
@@ -59,8 +59,7 @@ export default {
   },
   emptyState: {
     filtered: 'Aucun paiement ne correspond à ces critères.',
-    default:
-      'Aucun paiement enregistré : encaissez depuis un dossier d’inscription ou créez un paiement libre.',
+    default: 'Aucun paiement enregistré : encaissez depuis un dossier d’inscription ou créez un paiement libre.',
   },
   context: {
     enrollment: 'Paiements du dossier {numero}{who}.',

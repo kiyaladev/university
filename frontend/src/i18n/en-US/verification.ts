@@ -18,8 +18,7 @@ export default {
   result: {
     valid: 'Genuine certificate',
     invalid: 'Invalid certificate',
-    intro:
-      'Certificate {numero} does indeed exist in the institution\'s register. Verified details:',
+    intro: "Certificate {numero} does indeed exist in the institution's register. Verified details:",
     table: {
       attestation: 'Certificate',
       attestationValue: '— no. {numero}',
@@ -27,8 +26,7 @@ export default {
       parcours: 'Program',
       reference: 'Verification reference',
     },
-    checkedAt:
-      'Verified on {date} — this check has been recorded in the document log.',
+    checkedAt: 'Verified on {date} — this check has been recorded in the document log.',
   },
   footer:
     'Verification is free and requires no account. A revoked certificate or an unknown number proves nothing — be cautious.',

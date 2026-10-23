@@ -32,8 +32,7 @@ export default {
   },
   emptyState: {
     title: 'No bookings for this period.',
-    description:
-      'Widen the dates, or submit a request: it starts as "pending" until the registrar arbitrates.',
+    description: 'Widen the dates, or submit a request: it starts as "pending" until the registrar arbitrates.',
   },
   chips: {
     room: 'Room: {code}',

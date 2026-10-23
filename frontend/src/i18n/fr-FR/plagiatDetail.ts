@@ -32,8 +32,7 @@ export default {
     alreadyTaken: "Décision déjà prise — la suspicion n'est plus modifiable.",
     acquit: 'Acquitter la suspicion',
     confirm: 'Confirmer le plagiat',
-    confirmWarning:
-      'Confirmer ouvre une procédure disciplinaire — le motif sera inscrit au journal.',
+    confirmWarning: 'Confirmer ouvre une procédure disciplinaire — le motif sera inscrit au journal.',
     motifLabel: 'Motif / commentaire',
     motifRequired: 'Motif obligatoire',
     acquitAction: 'Acquitter',

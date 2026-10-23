@@ -90,7 +90,8 @@ export default {
       noKeywords: 'No keywords. Suggested: “machine learning”, “Conakry”, “sustainability”.',
     },
     file: {
-      description: 'PDF up to {max}: converted to a base64 data URL and stored on the server, where its text is extracted for full-text search and plagiarism analysis.',
+      description:
+        'PDF up to {max}: converted to a base64 data URL and stored on the server, where its text is extracted for full-text search and plagiarism analysis.',
       attachment: 'Attached PDF',
       maxSize: 'Maximum {max}',
       maxSizeValue: '{count} MB',

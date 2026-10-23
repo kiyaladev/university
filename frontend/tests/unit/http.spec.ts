@@ -9,7 +9,7 @@ const api = vi.hoisted(() => ({
 
 vi.mock('../../src/boot/axios', () => ({ api }));
 
-import { creer, lire, lister, modifier, supprimer } from '../../src/services/http';
+import { creer, lire, lister, modifier, supprimer } from '../../src/shared/services/http';
 
 beforeEach(() => {
   api.get.mockReset();
@@ -18,7 +18,7 @@ beforeEach(() => {
   api.delete.mockReset();
 });
 
-describe('services/http', () => {
+describe('shared/services/http', () => {
   it('lister passe filtres et options, et rend le corps paginé', async () => {
     const page = { data: [{ id: 'a' }], total: 1, page: 1, pageSize: 50 };
     api.get.mockResolvedValue({ data: page });

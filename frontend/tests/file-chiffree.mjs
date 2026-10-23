@@ -5,7 +5,7 @@ import { pathToFileURL } from 'node:url';
 import ts from 'typescript';
 import { chromium } from 'playwright';
 
-const fichier = new URL('../src/services/file-chiffree.ts', import.meta.url);
+const fichier = new URL('../src/shared/services/file-chiffree.ts', import.meta.url);
 const source = fs.readFileSync(fichier, 'utf8');
 const javascript = ts.transpile(source, { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext });
 const moduleBase64 = Buffer.from(javascript).toString('base64');

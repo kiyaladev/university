@@ -28,8 +28,7 @@ export default {
     },
     deliberationResults: {
       title: 'Résultats de délibération',
-      help:
-        'Chaque étudiant ADMIS ou AJOURNÉ inscrit dans la délibération reçoit sa moyenne et sa décision par SMS, sur le numéro de sa fiche. Seules les délibérations validées par le jury peuvent être diffusées.',
+      help: 'Chaque étudiant ADMIS ou AJOURNÉ inscrit dans la délibération reçoit sa moyenne et sa décision par SMS, sur le numéro de sa fiche. Seules les délibérations validées par le jury peuvent être diffusées.',
       selectLabel: 'Délibération validée',
       submit: 'Diffuser les résultats',
     },
@@ -68,8 +67,7 @@ export default {
         envoyes: 'Envoyés',
         echoues: 'Échoués',
       },
-      summaryAria:
-        'Répartition des envois sur 30 jours : {envoyes} envoyé(s), {echoues} échoué(s), {attente} en file.',
+      summaryAria: 'Répartition des envois sur 30 jours : {envoyes} envoyé(s), {echoues} échoué(s), {attente} en file.',
     },
     table: {
       columns: {

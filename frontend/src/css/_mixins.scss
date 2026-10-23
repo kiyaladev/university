@@ -22,12 +22,7 @@
   width: $largeur;
   height: 4px;
   border-radius: 980px;
-  background: linear-gradient(
-    90deg,
-    #{$rouge} 0 33.34%,
-    #{$jaune} 33.34% 66.67%,
-    #{$vert-drapeau} 66.67% 100%
-  );
+  background: linear-gradient(90deg, #{$rouge} 0 33.34%, #{$jaune} 33.34% 66.67%, #{$vert-drapeau} 66.67% 100%);
 }
 
 @mixin enseignePlaque($centrer: true) {
@@ -43,7 +38,9 @@
   }
 
   // Le filet du drapeau ouvre l'enseigne, sans rien demander au gabarit.
-  &::before { @include filetDrapeau; }
+  &::before {
+    @include filetDrapeau;
+  }
 
   // Les trois bandes pleine largeur ont été retirées des gabarits. Si l'une
   // survit quelque part, elle se lit comme un filet gris et non comme une

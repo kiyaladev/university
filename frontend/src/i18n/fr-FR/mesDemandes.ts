@@ -47,14 +47,12 @@ export default {
     delivered: 'Remise',
   },
   statusExplanations: {
-    EN_ATTENTE_PAIEMENT:
-      'Réglez les frais pour lancer le traitement. Sans paiement, la demande reste en attente.',
+    EN_ATTENTE_PAIEMENT: 'Réglez les frais pour lancer le traitement. Sans paiement, la demande reste en attente.',
     PAYEE: 'Frais reçus. La scolarité va prendre votre demande en charge.',
     EN_TRAITEMENT: 'La scolarité prépare votre document.',
     PRETE: 'Votre document est prêt : présentez-vous au guichet de la scolarité avec votre carte.',
     REMISE: 'Document remis. Rien de plus à faire.',
-    REJETEE:
-      'Demande rejetée. Le motif est indiqué ci-dessous ; vous pouvez en déposer une nouvelle.',
+    REJETEE: 'Demande rejetée. Le motif est indiqué ci-dessous ; vous pouvez en déposer une nouvelle.',
   },
   paymentOptions: {
     mobileMoney: 'Mobile Money',
@@ -75,7 +73,8 @@ export default {
     rejectionReason: 'Motif du rejet',
   },
   paymentDialog: {
-    mobileMoneyNote: 'Validez la demande sur votre téléphone. Le paiement reste en attente jusqu’à confirmation de l’encaissement ; votre document sera ensuite traité.',
+    mobileMoneyNote:
+      'Validez la demande sur votre téléphone. Le paiement reste en attente jusqu’à confirmation de l’encaissement ; votre document sera ensuite traité.',
     title: 'Payer la demande',
     mode: 'Mode de paiement',
     phoneLabel: 'Numéro Mobile Money',
@@ -85,7 +84,8 @@ export default {
   },
   messages: {
     phoneRequired: 'Indiquez un numéro Mobile Money valide.',
-    mobileMoneyPending: 'Demande de paiement enregistrée. Attendez la confirmation de l’encaissement avant le traitement du document.',
+    mobileMoneyPending:
+      'Demande de paiement enregistrée. Attendez la confirmation de l’encaissement avant le traitement du document.',
     paymentInitiatedPending: 'Paiement initié : présentez-vous au guichet, la scolarité confirmera.',
     paymentFailed: 'Paiement impossible',
   },

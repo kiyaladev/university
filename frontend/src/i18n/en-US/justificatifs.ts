@@ -6,8 +6,7 @@ export default {
     record: 'Record an excuse',
   },
   banner: {
-    info:
-      'An excuse is recorded with the registrar’s office, upon presentation of the supporting document. Here you can track the status of your requests.',
+    info: 'An excuse is recorded with the registrar’s office, upon presentation of the supporting document. Here you can track the status of your requests.',
   },
   filters: {
     sessionsFrom: 'Sessions from',
@@ -49,8 +48,7 @@ export default {
   dialogs: {
     validateTitle: 'Approve the excuse',
     rejectTitle: 'Reject the excuse',
-    validateMessage:
-      'The session will become an "excused absence" in the statistics. Comment (optional):',
+    validateMessage: 'The session will become an "excused absence" in the statistics. Comment (optional):',
     rejectMessage: 'The absence will remain recorded as is. Reason for rejection (optional):',
     doNothing: 'Do nothing',
   },

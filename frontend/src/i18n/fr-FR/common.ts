@@ -199,7 +199,7 @@ export default {
   },
   search: {
     noResults: 'Aucun résultat',
-    advanced: "Filtres",
+    advanced: 'Filtres',
     hideAdvanced: 'Masquer les filtres',
     defaultPlaceholder: 'Rechercher (matricule, nom, référence…)',
   },

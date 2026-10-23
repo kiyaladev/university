@@ -99,7 +99,7 @@ export default {
     emptyState: {
       title: "Aucune charge d'enseignement sur la période",
       message:
-        "Le volume horaire compare les heures réalisées au contrat de chaque affectation. Sans affectation, rien à comparer.",
+        'Le volume horaire compare les heures réalisées au contrat de chaque affectation. Sans affectation, rien à comparer.',
       action: "Ouvrir les charges d'enseignement",
     },
   },
@@ -117,7 +117,8 @@ export default {
     },
     emptyState: {
       title: 'Aucune heure payable sur la période',
-      message: "Seules les heures constatées lors d'un contrôle sont payables. Vérifiez la période, ou le filtre de statut ci-dessus.",
+      message:
+        "Seules les heures constatées lors d'un contrôle sont payables. Vérifiez la période, ou le filtre de statut ci-dessus.",
       action: 'Ouvrir le contrôle des séances',
     },
   },
@@ -135,7 +136,8 @@ export default {
     },
     emptyState: {
       title: 'Registre vide sur la période',
-      message: 'Le registre transcrit les séances programmées, contrôlées ou non. Élargissez la période pour retrouver des lignes.',
+      message:
+        'Le registre transcrit les séances programmées, contrôlées ou non. Élargissez la période pour retrouver des lignes.',
       action: 'Ouvrir les séances',
     },
   },

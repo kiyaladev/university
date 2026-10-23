@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-// `utils/libelles` lit la langue et les traductions dans boot/i18n, qui dépend
+// `shared/utils/libelles` lit la langue et les traductions dans boot/i18n, qui dépend
 // de l'application Quasar : on le remplace par un catalogue minimal.
 const etat = vi.hoisted(() => ({
   locale: 'fr-FR' as 'fr-FR' | 'en-US',
@@ -25,8 +25,8 @@ import {
   montantLisible,
   optionsDepuis,
   pourcentLisible,
-} from '../../src/utils/libelles';
-import { accueilParRole } from '../../src/utils/accueil';
+} from '../../src/shared/utils/libelles';
+import { accueilParRole } from '../../src/shared/utils/accueil';
 
 /** Les séparateurs de milliers varient (espace fine insécable…) : on les unifie. */
 const espaces = (s: string) => s.replace(/\s/g, ' ');

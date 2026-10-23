@@ -49,8 +49,7 @@ export default {
   },
   deleteDialog: {
     title: 'Supprimer l’affectation',
-    message:
-      '« {subject} » confiée à {teacher} : les séances liées seront également supprimées. Continuer ?',
+    message: '« {subject} » confiée à {teacher} : les séances liées seront également supprimées. Continuer ?',
   },
   messages: {
     saved: 'Affectation enregistrée',
