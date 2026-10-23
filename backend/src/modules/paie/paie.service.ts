@@ -469,7 +469,7 @@ export class PaieService {
       <th>Enseignant</th><th>Taux horaire</th><th>Heures réalisées</th>
       <th>Volume prévu</th><th>Brut</th><th>Retenue</th><th>Net</th><th>Commentaire</th>
     </tr></thead>
-    <tbody>${lignesHtml || `<tr><td colspan="8" style="color:${P.encreTertiaire}">Aucune ligne — feuille non calculée</td></tr>`}</tbody>
+    <tbody>${lignesHtml || `<tr><td colspan="8" style="color:${P.encreDouce}">Aucune ligne — feuille non calculée</td></tr>`}</tbody>
     <tfoot><tr>
       <td colspan="6">Montant total à payer</td>
       <td class="num">${feuille.montantTotal.toLocaleString('fr-FR')}</td>

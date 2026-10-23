@@ -67,7 +67,7 @@ export class DocumentsCarte {
 
     const photo = c.photoUrl
       ? `<img class="photo" src="${echapper(c.photoUrl)}" alt="photo" />`
-      : `<div class="photo" style="display:flex;align-items:center;justify-content:center;color:${P.encreTertiaire};">Photo</div>`;
+      : `<div class="photo" style="display:flex;align-items:center;justify-content:center;color:${P.encreDouce};">Photo</div>`;
 
     const revoquee =
       c.statut === StatutAttestation.REVOQUEE
