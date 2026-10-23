@@ -1,9 +1,8 @@
-import { Controller, Get, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerModule } from '@nestjs/throttler';
-import { ApiTags } from '@nestjs/swagger';
 import {
   AcceptLanguageResolver,
   HeaderResolver,
@@ -20,7 +19,7 @@ import { PrismaExceptionFilter } from './common/prisma-exception.filter';
 import { JwtConfigModule } from './common/jwt-config.module';
 import { validerConfiguration } from './common/configuration';
 import { SensitiveDataInterceptor } from './common/sensitive-data.interceptor';
-import { Public } from './common/decorators';
+import { HealthController } from './common/health.controller';
 import { AuthModule } from './modules/auth/auth.module';
 import { ReferentielModule } from './modules/referentiel/referentiel.module';
 import { PlanificationModule } from './modules/planification/planification.module';
@@ -55,16 +54,6 @@ import { CarteEtudianteModule } from './modules/carte-etudiante/carte-etudiante.
 import { BadgesModule } from './modules/badges/badges.module';
 import { VodModule } from './modules/vod/vod.module';
 import { ServicesActifsGuard } from './modules/parametres/services-actifs.guard';
-
-@ApiTags('Santé')
-@Controller()
-export class HealthController {
-  @Public()
-  @Get('health')
-  health() {
-    return { status: 'ok', service: 'university-api', date: new Date().toISOString() };
-  }
-}
 
 @Module({
   imports: [
