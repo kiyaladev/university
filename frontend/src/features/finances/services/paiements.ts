@@ -1,7 +1,6 @@
 import { creer, lister, lire } from '@/shared/services/http';
 import { paiementsApi } from '@/shared/services/paiements';
-import { elements, type Collection } from '@/shared/utils/collections';
-import type { Etudiant, Inscription, Paiement } from '@/types';
+import type { Etudiant, Paiement } from '@/types';
 
 /**
  * Registre des paiements (`/paiements`).

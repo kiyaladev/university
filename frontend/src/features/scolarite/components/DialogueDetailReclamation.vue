@@ -378,18 +378,17 @@ async function changerStatut(cible: StatutReclamation) {
   if (cible === 'REJETE') {
     // Le motif est celui saisi dans l'invite : il arrive par le callback,
     // jamais en relisant le DOM d'un dialogue déjà fermé.
+    // Le motif est obligatoire (3 caractères au moins), comme côté API : le
+    // bouton de validation reste désactivé en dessous.
     const motif = await confirmerAvecSaisie({
       titre: $t('reclamations.dialog.detail.rejectTitle'),
       message: $t('reclamations.dialog.detail.rejectPrompt'),
       ok: $t('common.actions.reject'),
       danger: true,
+      minLength: 3,
+      multiligne: true,
     });
     if (motif === null) return;
-    // Le motif est obligatoire (3 caractères au moins), comme côté API.
-    if (motif.trim().length < 3) {
-      $q.notify({ type: 'warning', message: $t('common.messages.errors.tooShort') });
-      return;
-    }
     commentaire = motif.trim();
   }
   enCours.value = 'statut';
@@ -458,13 +457,12 @@ function cloturer() {
     message: $t('reclamations.dialog.detail.closingNotePrompt'),
     ok: $t('reclamations.dialog.detail.record'),
     couleur: 'positive',
+    // La note de clôture est obligatoire (3 caractères au moins), comme côté
+    // API : le bouton de validation reste désactivé en dessous.
+    minLength: 3,
+    multiligne: true,
   }).then(async (noteClotureValue) => {
     if (!props.reclamation || noteClotureValue === null) return;
-    // La note de clôture est obligatoire (3 caractères au moins), comme côté API.
-    if (noteClotureValue.trim().length < 3) {
-      $q.notify({ type: 'warning', message: $t('common.messages.errors.tooShort') });
-      return;
-    }
     enCours.value = 'cloturer';
     try {
       const data = await reclamationsService.cloturer(props.reclamation.id, noteClotureValue.trim());

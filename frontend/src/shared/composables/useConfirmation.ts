@@ -17,6 +17,10 @@ import { supprimer } from '@/shared/services/http';
  * En cas d'échec du DELETE, l'intercepteur axios affiche le motif : on ne
  * notifie ici que le succès.
  *
+ * `confirmerAvecSaisie` ouvre un champ de texte : `minLength` désactive le
+ * bouton de validation tant que la saisie est trop courte, `multiligne` donne
+ * un champ sur plusieurs lignes.
+ *
  * Couleur du bouton : `danger` (rouge) pour détruire, sinon `couleur` —
  * 'positive' pour une validation qui engage (feuille de paie, encaissement…),
  * 'warning' pour une étape solennelle (proclamation). Par défaut 'primary'.
@@ -44,6 +48,13 @@ export interface OptionsSaisie extends OptionsConfirmation {
   libelleSaisie?: string;
   /** Texte proposé dans le champ à l'ouverture (vide par défaut). */
   valeurInitiale?: string | null | undefined;
+  /**
+   * Longueur minimale de la saisie : le bouton de validation reste désactivé
+   * tant que le texte est plus court (espaces compris).
+   */
+  minLength?: number;
+  /** Champ de saisie sur plusieurs lignes (un motif, une note…). */
+  multiligne?: boolean;
 }
 
 export interface OptionsSuppression {
@@ -88,11 +99,19 @@ export function useConfirmation() {
 
   /** Variante avec un champ texte libre (motif…) : rend la saisie, ou `null` si annulé. */
   function confirmerAvecSaisie(o: OptionsSaisie): Promise<string | null> {
+    const minLength = o.minLength ?? 0;
     return new Promise((resolve) => {
       $q.dialog({
         title: o.titre,
         message: o.message,
-        prompt: { model: o.valeurInitiale ?? '', type: 'text', ...(o.libelleSaisie ? { label: o.libelleSaisie } : {}) },
+        prompt: {
+          model: o.valeurInitiale ?? '',
+          type: o.multiligne ? 'textarea' : 'text',
+          ...(o.libelleSaisie ? { label: o.libelleSaisie } : {}),
+          // Quasar désactive le bouton de validation tant que la saisie est
+          // trop courte : le seuil est vérifié avant l'envoi, pas après.
+          ...(minLength > 0 ? { isValid: (saisie: string) => (saisie ?? '').trim().length >= minLength } : {}),
+        },
         cancel: annuler(o),
         ok: bouton(o),
         persistent: o.persistent ?? false,
