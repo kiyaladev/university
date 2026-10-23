@@ -1,3 +1,15 @@
 {
-  "valeurInvalide": "The value in column “{champ}” is invalid or missing."
+  "valeurInvalide": "The value in column “{champ}” is invalid or missing.",
+  "guillemetsNonRefermes": "Unclosed CSV quotes near line {ligne}.",
+  "fichierVide": "The file is empty.",
+  "colonnesEnDouble": "Duplicate columns after normalization: {colonnes}.",
+  "tropDeLignes": "A file may contain at most 2,000 data rows.",
+  "aucuneLigne": "No data row after the header.",
+  "colonnesObligatoiresAbsentes": "Missing required columns: {colonnes}.",
+  "doublonDansLeFichier": "Duplicate in the file: this key already appears on an earlier row.",
+  "enregistrementExistant": "A record with this key already exists.",
+  "departementIntrouvable": "The department entered does not exist.",
+  "affectationIntrouvable": "The assignment entered does not exist.",
+  "salleIntrouvable": "The room entered does not exist.",
+  "creneauHorsRegles": "The slot does not comply with the scheduling rules."
 }

@@ -1,3 +1,5 @@
+import { t } from '../../common/i18n';
+
 export interface LigneCsv {
   numero: number;
   donnees: Record<string, string>;
@@ -192,13 +194,13 @@ export function lireCsv(contenuBrut: string): ResultatCsv {
       entetes: [],
       colonnesIgnorees: [],
       lignes: [],
-      erreurs: [`Guillemets CSV non refermés près de la ligne ${ligne}.`],
+      erreurs: [t('imports.guillemetsNonRefermes', { ligne })],
     };
   if (champ.length || valeurs.length) {
     valeurs.push(champ);
     if (valeurs.some((v) => v.trim() !== '')) table.push({ valeurs, ligne: debutLigne });
   }
-  if (!table.length) return { entetes: [], colonnesIgnorees: [], lignes: [], erreurs: ['Le fichier est vide.'] };
+  if (!table.length) return { entetes: [], colonnesIgnorees: [], lignes: [], erreurs: [t('imports.fichierVide')] };
 
   const indexEnteteTable =
     ligneEntete === null
@@ -220,7 +222,7 @@ export function lireCsv(contenuBrut: string): ResultatCsv {
     if (entete) vues.add(entete);
   }
   const erreurs = colonnesDupliquees.size
-    ? [`Colonnes en double après normalisation : ${[...colonnesDupliquees].join(', ')}.`]
+    ? [t('imports.colonnesEnDouble', { colonnes: [...colonnesDupliquees].join(', ') })]
     : [];
   const lignes = table.slice(indexEnteteTable + 1).map(({ valeurs: cellules, ligne: numero }) => {
     const donnees: Record<string, string> = {};
