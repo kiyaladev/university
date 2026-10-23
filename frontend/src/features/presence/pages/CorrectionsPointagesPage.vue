@@ -11,13 +11,7 @@
           type="date"
           :label="$t('correctionsPointages.filters.from')"
         />
-        <q-input
-          v-model="filtres.dateFin"
-          outlined
-          dense
-          type="date"
-          :label="$t('correctionsPointages.filters.to')"
-        />
+        <q-input v-model="filtres.dateFin" outlined dense type="date" :label="$t('correctionsPointages.filters.to')" />
         <q-select
           v-model="filtres.statut"
           :options="optionsStatut"
@@ -73,9 +67,7 @@
       <template #body-cell-seance="p">
         <q-td :props="p">
           <div>{{ p.row.seance?.date ? dateLisible(p.row.seance.date) : '—' }}</div>
-          <div class="text-caption text-grey-7">
-            {{ p.row.seance?.heureDebut }}–{{ p.row.seance?.heureFin }}
-          </div>
+          <div class="text-caption text-grey-7">{{ p.row.seance?.heureDebut }}–{{ p.row.seance?.heureFin }}</div>
         </q-td>
       </template>
 
@@ -166,12 +158,7 @@ import BarreFiltres from '@/shared/components/BarreFiltres.vue';
 import BarrePagination from '@/shared/components/BarrePagination.vue';
 import { useListePaginee } from '@/shared/composables/useListePaginee';
 import { useConfirmation } from '@/shared/composables/useConfirmation';
-import {
-  ICONE_STATUT_PRESENCE,
-  LIBELLE_STATUT_PRESENCE,
-  dateLisible,
-  optionsDepuis,
-} from '@/shared/utils/libelles';
+import { ICONE_STATUT_PRESENCE, LIBELLE_STATUT_PRESENCE, dateLisible, optionsDepuis } from '@/shared/utils/libelles';
 import DialogueCorrectionPointage from '../components/DialogueCorrectionPointage.vue';
 import { peutCorriger, pointagesService, type ParametresPointages } from '../services/pointages';
 import type { Controle, ChipFiltre } from '@/types';
@@ -208,9 +195,7 @@ const liste = reactive(
   }),
 );
 
-const optionsStatut = computed(() =>
-  optionsDepuis(LIBELLE_STATUT_PRESENCE).filter((o) => o.value !== 'NON_CONTROLE'),
-);
+const optionsStatut = computed(() => optionsDepuis(LIBELLE_STATUT_PRESENCE).filter((o) => o.value !== 'NON_CONTROLE'));
 
 const optionsMethode = computed(() => [
   { value: 'MANUEL', label: t('correctionsPointages.methods.MANUEL') },

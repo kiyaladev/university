@@ -73,10 +73,7 @@ export const attestationService = {
 
   /** Moyens d'attestation d'un enseignant, pour la séance en cours. */
   moyens: (enseignantId: string, seanceId?: string) =>
-    lire<MoyensAttestation>(
-      `/attestation/enseignants/${enseignantId}/moyens`,
-      seanceId ? { seanceId } : undefined,
-    ),
+    lire<MoyensAttestation>(`/attestation/enseignants/${enseignantId}/moyens`, seanceId ? { seanceId } : undefined),
 
   /**
    * Gabarit biométrique de l'enseignant, pour la comparaison en salle.
@@ -84,11 +81,9 @@ export const attestationService = {
    * Silencieux : l'écran de pointage affiche l'échec dans son propre bandeau.
    */
   gabarit: (enseignantId: string, seanceId?: string) =>
-    lire<GabaritEmpreinte>(
-      `/attestation/enseignants/${enseignantId}/gabarit`,
-      seanceId ? { seanceId } : undefined,
-      { silencieux: true },
-    ),
+    lire<GabaritEmpreinte>(`/attestation/enseignants/${enseignantId}/gabarit`, seanceId ? { seanceId } : undefined, {
+      silencieux: true,
+    }),
 
   /** Fixe le code personnel de l'enseignant (4 à 6 chiffres). */
   definirCodePin: (enseignantId: string, code: string) =>

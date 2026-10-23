@@ -1,10 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  dureeHeuresCreneau,
-  libellePeriodeCreneau,
-  minutes,
-} from '../../src/features/presence/utils/creneaux';
+import { dureeHeuresCreneau, libellePeriodeCreneau, minutes } from '../../src/features/presence/utils/creneaux';
 import type { Creneau } from '../../src/types';
 
 const creneau: Creneau = {
@@ -40,12 +36,8 @@ describe('features/presence/utils/creneaux', () => {
     const t = (cle: string, params?: Record<string, unknown>) =>
       params ? `${cle}:${Object.values(params).join('-')}` : cle;
 
-    expect(libellePeriodeCreneau({ ...creneau, dateDebut: '2026-01-05' }, t)).toBe(
-      'emploiDuTemps.period.from:05/01',
-    );
-    expect(libellePeriodeCreneau({ ...creneau, dateFin: '2026-03-31' }, t)).toBe(
-      'emploiDuTemps.period.until:31/03',
-    );
+    expect(libellePeriodeCreneau({ ...creneau, dateDebut: '2026-01-05' }, t)).toBe('emploiDuTemps.period.from:05/01');
+    expect(libellePeriodeCreneau({ ...creneau, dateFin: '2026-03-31' }, t)).toBe('emploiDuTemps.period.until:31/03');
   });
 
   it('n’affiche rien quand le créneau vaut toute l’année', () => {

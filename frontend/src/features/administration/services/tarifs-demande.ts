@@ -44,6 +44,5 @@ export const tarifsDemandeService = {
   creer: (corps: TarifSaisie) => creer<TarifDemande>('/documents-demande/tarifs', corps),
 
   /** Modification d'un tarif. */
-  modifier: (id: string, corps: TarifModification) =>
-    modifier<TarifDemande>(`/documents-demande/tarifs/${id}`, corps),
+  modifier: (id: string, corps: TarifModification) => modifier<TarifDemande>(`/documents-demande/tarifs/${id}`, corps),
 };

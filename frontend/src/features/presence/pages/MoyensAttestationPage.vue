@@ -43,7 +43,9 @@
           <q-td :props="p">
             <q-badge
               :color="appareilActif(p.row) ? 'positive' : 'grey-6'"
-              :label="appareilActif(p.row) ? $t('moyensAttestation.devices.active') : $t('moyensAttestation.devices.revoked')"
+              :label="
+                appareilActif(p.row) ? $t('moyensAttestation.devices.active') : $t('moyensAttestation.devices.revoked')
+              "
             />
           </q-td>
         </template>
@@ -94,12 +96,19 @@
               <div class="col-12 col-sm-6">
                 <q-item dense class="bg-grey-1 rounded-borders">
                   <q-item-section avatar>
-                    <q-icon :name="moyens.codePin ? 'check_circle' : 'cancel'" :color="moyens.codePin ? 'positive' : 'grey-6'" />
+                    <q-icon
+                      :name="moyens.codePin ? 'check_circle' : 'cancel'"
+                      :color="moyens.codePin ? 'positive' : 'grey-6'"
+                    />
                   </q-item-section>
                   <q-item-section>
                     <q-item-label>{{ $t('moyensAttestation.teacher.codePin') }}</q-item-label>
                     <q-item-label caption>
-                      {{ moyens.codePin ? $t('moyensAttestation.teacher.codePinSet') : $t('moyensAttestation.teacher.codePinUnset') }}
+                      {{
+                        moyens.codePin
+                          ? $t('moyensAttestation.teacher.codePinSet')
+                          : $t('moyensAttestation.teacher.codePinUnset')
+                      }}
                     </q-item-label>
                   </q-item-section>
                 </q-item>
@@ -107,14 +116,19 @@
               <div class="col-12 col-sm-6">
                 <q-item dense class="bg-grey-1 rounded-borders">
                   <q-item-section avatar>
-                    <q-icon :name="moyens.empreinte ? 'check_circle' : 'cancel'" :color="moyens.empreinte ? 'positive' : 'grey-6'" />
+                    <q-icon
+                      :name="moyens.empreinte ? 'check_circle' : 'cancel'"
+                      :color="moyens.empreinte ? 'positive' : 'grey-6'"
+                    />
                   </q-item-section>
                   <q-item-section>
                     <q-item-label>{{ $t('moyensAttestation.teacher.empreinte') }}</q-item-label>
                     <q-item-label caption>
-                      {{ moyens.empreinte
-                        ? moyens.empreinteDoigt || $t('moyensAttestation.teacher.empreinteSet')
-                        : $t('moyensAttestation.teacher.empreinteUnset') }}
+                      {{
+                        moyens.empreinte
+                          ? moyens.empreinteDoigt || $t('moyensAttestation.teacher.empreinteSet')
+                          : $t('moyensAttestation.teacher.empreinteUnset')
+                      }}
                     </q-item-label>
                   </q-item-section>
                 </q-item>
@@ -254,7 +268,12 @@ const peutGererMoyens = computed(() => auth.peut('attestation.moyens'));
 
 const colonnesAppareils = computed<QTableColumn[]>(() => [
   { name: 'libelle', label: t('moyensAttestation.devices.columns.device'), field: 'libelle', align: 'left' },
-  { name: 'dernierUsage', label: t('moyensAttestation.devices.columns.lastUsed'), field: 'dernierUsage', align: 'left' },
+  {
+    name: 'dernierUsage',
+    label: t('moyensAttestation.devices.columns.lastUsed'),
+    field: 'dernierUsage',
+    align: 'left',
+  },
   { name: 'etat', label: t('moyensAttestation.devices.columns.status'), field: 'actif', align: 'left' },
   { name: 'actions', label: '', field: 'id', align: 'right' },
 ]);

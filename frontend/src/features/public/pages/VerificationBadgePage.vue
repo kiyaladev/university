@@ -149,10 +149,7 @@ import { useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import LecteurQr from '@/shared/components/LecteurQr.vue';
 import { LIBELLE_TYPE_BADGE, dateHeureLisible, dateLisible } from '@/shared/utils/libelles';
-import {
-  verificationService,
-  type ResultatVerificationBadge,
-} from '@/features/public/services/verification';
+import { verificationService, type ResultatVerificationBadge } from '@/features/public/services/verification';
 
 /**
  * Page publique de vérification d'un badge d'accès, jumelle de celle des

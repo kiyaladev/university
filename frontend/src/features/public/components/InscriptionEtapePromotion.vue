@@ -123,9 +123,7 @@ const endpointPromotions = computed(() => cheminPromotions(form.value.anneeId));
  * par identifiant : c'est la page qui connaît l'année, elle en donne le
  * libellé au sélecteur.
  */
-const libelleAnneeCourante = computed(
-  () => props.annees.find((a) => a.id === form.value.anneeId)?.libelle ?? '',
-);
+const libelleAnneeCourante = computed(() => props.annees.find((a) => a.id === form.value.anneeId)?.libelle ?? '');
 
 const labelPromotion = (p: PromotionOuverte) =>
   `${p.filiere ? p.filiere.nom + ' — ' : ''}${p.nom}${

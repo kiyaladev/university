@@ -73,9 +73,5 @@ export const verificationService = {
 
   /** Vérifie un badge d'accès d'après son numéro et sa clé de lecture. */
   badge: (badge: string, k: string) =>
-    lire<ResultatVerificationBadge>(
-      '/badges/verifier',
-      { badge: badge.trim(), k: k.trim() },
-      { silencieux: true },
-    ),
+    lire<ResultatVerificationBadge>('/badges/verifier', { badge: badge.trim(), k: k.trim() }, { silencieux: true }),
 };

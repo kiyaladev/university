@@ -259,8 +259,7 @@ export const rapportsService = {
   salles: (params: ParametresRapports = {}) => lire<RapportSalles>('/rapports/salles', params),
 
   /** Volume horaire : le contrat face au réalisé, par affectation. */
-  volumeHoraire: (params: ParametresRapports = {}) =>
-    lire<RapportVolumeHoraire>('/rapports/volume-horaire', params),
+  volumeHoraire: (params: ParametresRapports = {}) => lire<RapportVolumeHoraire>('/rapports/volume-horaire', params),
 
   /** État de paiement des enseignants vacataires. */
   etatPaiement: (params: ParametresRapports = {}) => lire<RapportPaiement>('/rapports/etat-paiement', params),

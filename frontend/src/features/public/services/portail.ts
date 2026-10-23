@@ -16,6 +16,5 @@ export interface DemandeCodeOtp {
 
 export const portailService = {
   /** Demande l'envoi du code par SMS. */
-  demanderCode: (corps: DemandeCodeOtp) =>
-    creer<{ message?: string }>('/portail/otp', corps, { silencieux: true }),
+  demanderCode: (corps: DemandeCodeOtp) => creer<{ message?: string }>('/portail/otp', corps, { silencieux: true }),
 };

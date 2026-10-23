@@ -48,10 +48,7 @@
         />
       </div>
       <div class="col-12 col-sm-8">
-        <champ-date
-          v-model="form.dateNaissance"
-          :label="$t('inscriptionPublique.form.step1.dateNaissance.label')"
-        />
+        <champ-date v-model="form.dateNaissance" :label="$t('inscriptionPublique.form.step1.dateNaissance.label')" />
       </div>
     </div>
 
@@ -77,8 +74,7 @@
           :hint="$t('inscriptionPublique.form.step1.telephone.hint')"
           :rules="[
             (v) => !!v?.trim() || $t('inscriptionPublique.form.step1.telephone.required'),
-            (v) =>
-              !v || v.replace(/\D/g, '').length >= 8 || $t('inscriptionPublique.form.step1.telephone.minLength'),
+            (v) => !v || v.replace(/\D/g, '').length >= 8 || $t('inscriptionPublique.form.step1.telephone.minLength'),
           ]"
           lazy-rules
         />

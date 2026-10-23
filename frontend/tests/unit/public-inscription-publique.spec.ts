@@ -53,9 +53,7 @@ describe('features/public/services/inscription-publique', () => {
   it('accepte un tarif enveloppé dans `data`', async () => {
     api.get.mockResolvedValue({ data: { data: [{ montant: 1000, devise: 'GNF' }] } });
 
-    await expect(inscriptionPubliqueService.frais('a1', 'p1')).resolves.toEqual([
-      { montant: 1000, devise: 'GNF' },
-    ]);
+    await expect(inscriptionPubliqueService.frais('a1', 'p1')).resolves.toEqual([{ montant: 1000, devise: 'GNF' }]);
   });
 
   it('dépose le dossier en silence', async () => {

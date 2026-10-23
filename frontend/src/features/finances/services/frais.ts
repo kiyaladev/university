@@ -61,8 +61,7 @@ export const fraisService = {
   creer: (corps: FraisSaisie) => creer<FraisAvecLibelles>('/frais', corps),
 
   /** Modification d'un tarif. */
-  modifier: (id: string, corps: Partial<FraisSaisie>) =>
-    modifier<FraisAvecLibelles>(`/frais/${id}`, corps),
+  modifier: (id: string, corps: Partial<FraisSaisie>) => modifier<FraisAvecLibelles>(`/frais/${id}`, corps),
 
   /** Suppression d'un tarif. */
   supprimer: (id: string) => supprimer(`/frais/${id}`),

@@ -118,8 +118,7 @@ export const electionsService = {
   voter: (payload: { electionId: string; bulletin: Array<{ candidatId: string }> }, silencieux = false) =>
     creer<{ scrutinId: string; nbVotes: number }>('/elections/vote', payload, { silencieux }),
 
-  transition: (id: string, action: 'ouvrir' | 'clore' | 'proclamer') =>
-    creer<Election>(`/elections/${id}/${action}`),
+  transition: (id: string, action: 'ouvrir' | 'clore' | 'proclamer') => creer<Election>(`/elections/${id}/${action}`),
 
   supprimerCandidat: (electionId: string, candidatId: string) =>
     supprimer(`/elections/${electionId}/candidats/${candidatId}`),

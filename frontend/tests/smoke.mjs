@@ -11,7 +11,9 @@ const FRONTEND_URL = process.argv[2] ?? 'http://localhost:5029';
 const frontend = new URL(FRONTEND_URL);
 const hostLocal = ['localhost', '127.0.0.1', '::1'].includes(frontend.hostname);
 if (!hostLocal && process.env.QA_ALLOW_REMOTE !== 'true') {
-  throw new Error('Ce scénario écrit dans les dossiers QA : une cible distante exige QA_ALLOW_REMOTE=true. Ne jamais le lancer sur la production.');
+  throw new Error(
+    'Ce scénario écrit dans les dossiers QA : une cible distante exige QA_ALLOW_REMOTE=true. Ne jamais le lancer sur la production.',
+  );
 }
 if (!hostLocal && !process.env.API_URL) {
   throw new Error('Pour une recette distante, définissez API_URL vers l’API QA correspondante.');
@@ -91,10 +93,7 @@ async function attester() {
   await page.mouse.move(boite.x + 20, boite.y + boite.height / 2);
   await page.mouse.down();
   for (let i = 1; i <= 6; i++) {
-    await page.mouse.move(
-      boite.x + 20 + i * (boite.width - 50) / 6,
-      boite.y + boite.height / 2 + (i % 2 ? -18 : 18),
-    );
+    await page.mouse.move(boite.x + 20 + (i * (boite.width - 50)) / 6, boite.y + boite.height / 2 + (i % 2 ? -18 : 18));
   }
   await page.mouse.up();
   await page.waitForTimeout(200);

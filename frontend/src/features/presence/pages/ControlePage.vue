@@ -446,4 +446,5 @@ onMounted(async () => {
   .filtres {
     padding-inline: var(--up-4);
   }
-}</style>
+}
+</style>

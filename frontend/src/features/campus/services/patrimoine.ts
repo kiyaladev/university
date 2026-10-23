@@ -79,8 +79,7 @@ export const patrimoineService = {
   listeCategories: () =>
     lire<CategoriePatrimoine[] | Liste<CategoriePatrimoine>>('/patrimoine/categories', { all: '1' }),
 
-  creerCategorie: (payload: Record<string, unknown>) =>
-    creer<CategoriePatrimoine>('/patrimoine/categories', payload),
+  creerCategorie: (payload: Record<string, unknown>) => creer<CategoriePatrimoine>('/patrimoine/categories', payload),
 
   modifierCategorie: (id: string, payload: Record<string, unknown>) =>
     modifier<CategoriePatrimoine>(`/patrimoine/categories/${id}`, payload),

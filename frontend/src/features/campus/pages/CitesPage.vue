@@ -315,7 +315,8 @@ async function decider(statut: 'ACCORDE' | 'REFUSE', commentaire?: string) {
     await citesService.deciderAttribution(decision.value.id, { statut, commentaire });
     $q.notify({
       type: statut === 'ACCORDE' ? 'positive' : 'info',
-      message: statut === 'ACCORDE' ? t('cites.attributions.dialogs.accorded') : t('cites.attributions.dialogs.refused'),
+      message:
+        statut === 'ACCORDE' ? t('cites.attributions.dialogs.accorded') : t('cites.attributions.dialogs.refused'),
     });
     decisionDialog.value = false;
     await rechargerParc();

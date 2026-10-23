@@ -131,10 +131,7 @@ import { useI18n } from 'vue-i18n';
 import { dateHeureLisible, dateLongueLisible } from '@/shared/utils/format';
 import LecteurQr from '@/shared/components/LecteurQr.vue';
 import { LIBELLE_TYPE_ATTESTATION } from '@/shared/utils/libelles';
-import {
-  verificationService,
-  type ResultatVerificationAttestation,
-} from '@/features/public/services/verification';
+import { verificationService, type ResultatVerificationAttestation } from '@/features/public/services/verification';
 
 /**
  * Page publique de vérification : atteinte par le QR imprimé sur le document

@@ -56,12 +56,7 @@
       />
 
       <div class="vitrine__grille">
-        <carte-formation-publique
-          v-for="f in formations"
-          :key="f.id"
-          :formation="f"
-          @inscrire="ouvrirInscription(f)"
-        />
+        <carte-formation-publique v-for="f in formations" :key="f.id" :formation="f" @inscrire="ouvrirInscription(f)" />
       </div>
     </section>
 

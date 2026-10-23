@@ -115,11 +115,7 @@
       </q-btn>
     </div>
 
-    <releve-emploi-du-temps
-      :creneaux="totalCreneaux"
-      :heures="totalHeures"
-      :jour-charge="jourLePlusCharge"
-    />
+    <releve-emploi-du-temps :creneaux="totalCreneaux" :heures="totalHeures" :jour-charge="jourLePlusCharge" />
 
     <!-- Sur téléphone, une grille de six jours est illisible : on choisit le jour -->
     <nav-jours-semaine v-if="ecranEtroit" v-model:jour-actif="jourActif" :semaine="semaine" />

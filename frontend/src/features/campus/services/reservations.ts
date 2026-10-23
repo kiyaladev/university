@@ -52,8 +52,7 @@ export const reservationsService = {
    * Seule route qui filtre vraiment sur une période — la liste `/reservations`
    * n'accepte qu'un `dateJour`.
    */
-  calendrier: (params: ParametresCalendrier = {}) =>
-    lire<CalendrierReservations>('/reservations/calendrier', params),
+  calendrier: (params: ParametresCalendrier = {}) => lire<CalendrierReservations>('/reservations/calendrier', params),
 
   /** Détail d'une réservation. */
   detail: (id: string) => lire<ReservationDetail>(`/reservations/${id}`),

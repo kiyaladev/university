@@ -2,23 +2,11 @@
   <q-page class="q-pa-md">
     <en-tete-page :title="$t('frais.title')" :subtitle="$t('frais.subtitle')">
       <template v-if="peutGerer" #actions>
-        <q-btn
-          unelevated
-          color="primary"
-          no-caps
-          icon="add"
-          :label="$t('frais.actions.new')"
-          @click="ouvrirCreation"
-        />
+        <q-btn unelevated color="primary" no-caps icon="add" :label="$t('frais.actions.new')" @click="ouvrirCreation" />
       </template>
     </en-tete-page>
 
-    <barre-filtres
-      v-model="filtres"
-      :recherche="false"
-      :chips="chips"
-      @reinitialiser="liste.reinitialiser([])"
-    >
+    <barre-filtres v-model="filtres" :recherche="false" :chips="chips" @reinitialiser="liste.reinitialiser([])">
       <template #principaux>
         <q-select
           v-model="filtres.anneeId"
@@ -141,12 +129,7 @@ import { useListePaginee } from '@/shared/composables/useListePaginee';
 import { useConfirmation } from '@/shared/composables/useConfirmation';
 import { montantLisible } from '@/shared/utils/libelles';
 import DialogueFrais from '../components/DialogueFrais.vue';
-import {
-  fraisService,
-  filtresFrais,
-  ligneFrais,
-  type FraisAvecLibelles,
-} from '../services/frais';
+import { fraisService, filtresFrais, ligneFrais, type FraisAvecLibelles } from '../services/frais';
 import type { ChipFiltre } from '@/types';
 
 const auth = useAuthStore();
@@ -211,8 +194,7 @@ const chips = computed<ChipFiltre[]>(() => {
   if (filtres.value.promotionId) {
     liste.push({
       label: t('frais.chips.promotion', {
-        promotion:
-          promotions.value.find((p) => p.id === filtres.value.promotionId)?.nom ?? filtres.value.promotionId,
+        promotion: promotions.value.find((p) => p.id === filtres.value.promotionId)?.nom ?? filtres.value.promotionId,
       }),
       value: filtres.value.promotionId,
       cle: 'promotionId',
