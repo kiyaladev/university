@@ -1,7 +1,7 @@
 /** Espace commun — chaînes partagées entre pages. */
 export default {
   app: {
-    name: 'UniPrésence',
+    name: 'University',
   },
   actions: {
     add: 'Ajouter',

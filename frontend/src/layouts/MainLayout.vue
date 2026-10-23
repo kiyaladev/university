@@ -361,7 +361,7 @@ function preparerInstallation() {
   window.addEventListener('appinstalled', () => {
     installable.value = false;
     invite = null;
-    $q.notify({ type: 'positive', message: 'UniPrésence est installée sur cet appareil' });
+    $q.notify({ type: 'positive', message: 'L’application University est installée sur cet appareil' });
   });
 }
 
@@ -434,7 +434,7 @@ onMounted(async () => {
   font-size: 1.0625rem;
   font-weight: 600;
   letter-spacing: -0.021em;
-  line-height: 1.3; // laisse respirer l'accent de « UniPrésence »
+  line-height: 1.3; // laisse respirer les lettres de « University »
   color: var(--up-craie-fixe);
 }
 

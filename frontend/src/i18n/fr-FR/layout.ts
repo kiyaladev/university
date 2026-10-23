@@ -33,7 +33,7 @@ export default {
   publicNav: {
     services: 'Services publics',
     menu: 'Services',
-    footer: 'UniPrésence — services publics de l’université',
+    footer: 'University — services publics de l’université',
     personalArea: 'Espace personnel',
     staffLogin: 'Connexion',
     staffLoginHelp: 'Personnel de l’université',

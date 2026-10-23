@@ -85,11 +85,11 @@ export default defineRouter(function () {
    * `meta.titre` nomme déjà la rubrique dans le bandeau : il nomme désormais
    * aussi l'onglet du navigateur. Sans cela, un agent qui garde le registre,
    * les paiements et les délibérations ouverts côte à côte lit trois fois
-   * « UniPrésence » et ne retrouve rien.
+   * « University » et ne retrouve rien.
    */
   Router.afterEach((to) => {
     const titre = titreRoute(to.meta.titre);
-    document.title = titre ? `${titre} — UniPrésence` : 'UniPrésence';
+    document.title = titre ? `${titre} — University` : 'University';
   });
 
   return Router;

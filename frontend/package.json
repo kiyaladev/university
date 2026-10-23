@@ -1,9 +1,9 @@
 {
-  "name": "unipresence-frontend",
+  "name": "university-frontend",
   "version": "1.0.0",
-  "description": "UniPrésence — contrôle numérique de présence des enseignants",
-  "productName": "UniPrésence",
-  "author": "UniPrésence",
+  "description": "University — plateforme de gestion universitaire : présences, scolarité, finances, campus et documents",
+  "productName": "University",
+  "author": "University",
   "type": "module",
   "packageManager": "bun@1.4.2",
   "private": true,

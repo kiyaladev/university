@@ -1,7 +1,7 @@
 /** Shared common namespace — strings used across multiple pages. */
 export default {
   app: {
-    name: 'UniPrésence',
+    name: 'University',
   },
   actions: {
     add: 'Add',
