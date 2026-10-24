@@ -25,6 +25,10 @@ import {
   sourcePaiement,
   transmettreMobileMoney,
 } from '../../../common/finances/index';
+import {
+  type EffetConfirmationPaiement,
+  confirmerPaiement,
+} from '../../../common/finances/confirmation';
 import { MobileMoneyService } from './mobile-money.service';
 import { AnnulerPaiementDto, CreatePaiementDto, PaiementQueryDto, SimulerPaiementDto } from './inscription.dto';
 
@@ -140,9 +144,28 @@ function instantanePaiement(paiement: PaiementAudit | null) {
   };
 }
 
+/** Paiement renvoyé par la confirmation : sélection de l'affichage. */
+type PaiementScolarite = Prisma.PaiementGetPayload<{ include: typeof PAIEMENT_INCLUDE }>;
+
+/** Même paiement, avec les liens vers les autres portefeuilles. */
+type PaiementScolariteSource = Prisma.PaiementGetPayload<{ include: typeof PAIEMENT_AVEC_SOURCE_INCLUDE }>;
+
+/** Ce que l'effet de confirmation rend à l'appelant. */
+type EffetScolarite = {
+  /** Le paiement confirmé. */
+  paiement: PaiementScolarite | PaiementScolariteSource;
+  /** Trace du solde du dossier, quand il a été soldé. */
+  inscription: { avant: unknown; apres: unknown } | null;
+};
+
+/** Ce que l'effet prépare avant la transition du paiement. */
+type PreparationScolarite = {
+  /** Le paiement avant la transition. */
+  paiementAvant: PaiementScolariteSource;
+};
+
 @Injectable()
-export class PaiementsService {
-  private readonly logger = new Logger(PaiementsService.name);
+export class PaiementsService {  private readonly logger = new Logger(PaiementsService.name);
 
   constructor(
     private prisma: PrismaService,
@@ -313,11 +336,41 @@ export class PaiementsService {
    * Confirmation pilote : l'agent comptable / le DAF répercute la réponse de
    * l'opérateur (guichet). À un paiement réussi, si le cumul des paiements
    * réussis du dossier atteint les frais, l'inscription passe en PAYE.
+   *
+   * La transaction, le verrou optimiste et le journal sont portés par le
+   * moteur commun (common/finances/confirmation) ; ce module n'apporte que
+   * son effet : solder le dossier quand les frais sont couverts.
    */
   async simulerPaiement(id: string, dto: SimulerPaiementDto, user: AuthUser) {
     const reussi = dto.statut === 'REUSSI';
-    return this.prisma.$transaction(
-      async (tx) => {
+    const resultat = await confirmerPaiement<EffetScolarite, PreparationScolarite>({
+      prisma: this.prisma,
+      user,
+      statut: reussi ? StatutPaiement.REUSSI : StatutPaiement.ECHOUE,
+      effet: this.effetScolarite(id, reussi),
+      journal: {
+        action: 'PAIEMENT_SIMULE',
+        entite: 'Paiement',
+        entiteId: id,
+        details: ({ preparation, resultat: effet }) => ({
+          avant: instantanePaiement(preparation.objet.paiementAvant),
+          apres: instantanePaiement(effet.valeur.paiement),
+          inscription: effet.valeur.inscription,
+        }),
+      },
+      transaction: { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    });
+    return resultat.paiement;
+  }
+
+  /**
+   * Effet de confirmation d'un paiement de scolarité : le dossier est soldé
+   * (PAYÉ) quand le cumul des paiements réussis de sa devise atteint les
+   * frais. Ni frais documentaires, ni montants d'une autre devise.
+   */
+  private effetScolarite(id: string, reussi: boolean): EffetConfirmationPaiement<EffetScolarite, PreparationScolarite> {
+    return {
+      async preparer({ tx }) {
         const paiement = await tx.paiement.findUnique({ where: { id }, include: PAIEMENT_AVEC_SOURCE_INCLUDE });
         if (!paiement) throw new NotFoundException(t('inscription.paiement_introuvable'));
         // Les paiements des autres portefeuilles ont leur propre confirmation.
@@ -326,35 +379,39 @@ export class PaiementsService {
         if (paiement.statut === StatutPaiement.ANNULE || paiement.statut === StatutPaiement.REMBOURSE) {
           throw new BadRequestException(t('inscription.ce_paiement_est_clos_il_ne_peut_plus_etre_confirme'));
         }
-        if (paiement.statut === StatutPaiement.REUSSI && dto.statut !== 'REUSSI') {
+        if (paiement.statut === StatutPaiement.REUSSI && !reussi) {
           throw new BadRequestException(t('inscription.ce_paiement_est_deja_reussi_impossible_de_le_faire_echouer'));
         }
-        if (paiement.statut === StatutPaiement.REUSSI && dto.statut === 'REUSSI') return paiement;
-
-        const transition = await tx.paiement.updateMany({
-          where: { id, statut: paiement.statut },
-          data: {
-            statut: reussi ? StatutPaiement.REUSSI : StatutPaiement.ECHOUE,
-            completeLe: reussi ? new Date() : null,
+        return {
+          transition: {
+            modele: 'paiement',
+            id,
+            statutAttendu: paiement.statut,
+            erreur: () => new ConflictException(t('inscription.ce_paiement_est_clos_il_ne_peut_plus_etre_confirme')),
           },
-        });
-        if (transition.count !== 1) {
-          throw new ConflictException(t('inscription.ce_paiement_est_clos_il_ne_peut_plus_etre_confirme'));
-        }
-        const p = await tx.paiement.findUnique({ where: { id }, include: PAIEMENT_INCLUDE });
-        if (!p) throw new NotFoundException(t('inscription.paiement_introuvable'));
+          objet: { paiementAvant: paiement },
+          // Déjà encaissé : on renvoie l'état, l'effet n'est pas rejoué.
+          confirme: paiement.statut === StatutPaiement.REUSSI,
+        };
+      },
+
+      async dejaConfirme({ preparation }) {
+        return { paiement: preparation.objet.paiementAvant, inscription: null };
+      },
+
+      async appliquer({ tx }) {
+        const paiement = await tx.paiement.findUnique({ where: { id }, include: PAIEMENT_INCLUDE });
+        if (!paiement) throw new NotFoundException(t('inscription.paiement_introuvable'));
 
         let inscriptionAudit: { avant: unknown; apres: unknown } | null = null;
-        if (reussi && p?.inscriptionId) {
+        if (reussi && paiement.inscriptionId) {
           const dossier = await tx.inscription.findUnique({
-            where: { id: p.inscriptionId },
+            where: { id: paiement.inscriptionId },
             select: { statut: true, montantFrais: true, anneeId: true, promotionId: true },
           });
-          // Seuls les paiements de scolarité, dans la devise du tarif, soldent
-          // le dossier : ni frais documentaires, ni montants d'une autre devise.
           const cumul = await tx.paiement.aggregate({
             where: {
-              inscriptionId: p.inscriptionId,
+              inscriptionId: paiement.inscriptionId,
               statut: StatutPaiement.REUSSI,
               devise: dossier ? await deviseDossier(tx, dossier) : 'GNF',
               ...PAIEMENT_SCOLARITE,
@@ -369,14 +426,18 @@ export class PaiementsService {
             toMontant(cumul._sum.montant) >= toMontant(dossier.montantFrais)
           ) {
             const changement = await tx.inscription.updateMany({
-              where: { id: p.inscriptionId, statut: dossier.statut },
+              where: { id: paiement.inscriptionId, statut: dossier.statut },
               data: { statut: StatutInscription.PAYE },
             });
             if (changement.count === 1) {
               inscriptionAudit = {
-                avant: { id: p.inscriptionId, statut: dossier.statut, montantFrais: toMontant(dossier.montantFrais) },
+                avant: {
+                  id: paiement.inscriptionId,
+                  statut: dossier.statut,
+                  montantFrais: toMontant(dossier.montantFrais),
+                },
                 apres: {
-                  id: p.inscriptionId,
+                  id: paiement.inscriptionId,
                   statut: StatutInscription.PAYE,
                   montantFrais: toMontant(dossier.montantFrais),
                 },
@@ -384,15 +445,9 @@ export class PaiementsService {
             }
           }
         }
-        await journaliser(tx, user, 'PAIEMENT_SIMULE', 'Paiement', id, {
-          avant: instantanePaiement(paiement),
-          apres: instantanePaiement(p),
-          inscription: inscriptionAudit,
-        });
-        return p;
+        return { valeur: { paiement, inscription: inscriptionAudit } };
       },
-      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
-    );
+    };
   }
 
   /**
