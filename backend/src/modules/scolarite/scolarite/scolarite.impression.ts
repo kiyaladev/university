@@ -3,9 +3,58 @@
  * bulletin individuel. Le contenu métier est composé ici, l'enveloppe A4
  * (style, en-tête, pied de page) vient de `common/impression`.
  */
-import { DecisionJury, StatutDeliberation } from '@prisma/client';
-import { blocIndicateurs, echapper, Etablissement, pageA4, PALETTE_IMPRESSION as P } from '../../../common/impression/index';
+import { DecisionJury, Prisma, StatutDeliberation, StatutEvaluation } from '@prisma/client';
+import {
+  blocIndicateurs,
+  echapper,
+  Etablissement,
+  pageA4,
+  PALETTE_IMPRESSION as P,
+} from '../../../common/impression/index';
 import { noteLisible } from './calcul.service';
+
+/**
+ * Chargement de la délibération servie au PV et au bulletin : lignes du jury
+ * et étudiant de chaque ligne. Le service s'en sert pour lire exactement ces
+ * données (même include, même requête).
+ */
+export const DELIBERATION_DETAIL_INCLUDE = {
+  annee: true,
+  promotion: { include: { filiere: true } },
+  creePar: { select: { id: true, nom: true, prenom: true } },
+  valideePar: { select: { id: true, nom: true, prenom: true } },
+  lignes: {
+    include: {
+      inscription: {
+        include: { etudiant: { select: { nom: true, prenom: true, matricule: true } } },
+      },
+    },
+  },
+} satisfies Prisma.DeliberationInclude;
+
+/** Délibération détaillée : lignes du jury, chacune avec son inscrit. */
+export type DeliberationDetail = Prisma.DeliberationGetPayload<{ include: typeof DELIBERATION_DETAIL_INCLUDE }>;
+
+/** Ligne du jury (résultat d'un étudiant) telle qu'imprimée. */
+export type LigneDeliberation = DeliberationDetail['lignes'][number];
+
+/** Matière (UE) d'un étudiant avec ses épreuves, calculée par le service. */
+export interface MatiereEtudiant {
+  matiereId: string;
+  matiereIntitule: string;
+  credits: number;
+  matiere: { id: string; code: string; intitule: string; credits: number };
+  moyenne: number | null;
+  enDefaut: boolean;
+  absenceCloturee: boolean;
+  epreuves: Array<{
+    intitule: string;
+    coefficient: number;
+    statut: StatutEvaluation;
+    note: number | null;
+    present: boolean;
+  }>;
+}
 
 /** Règles propres aux états de délibération ; le reste vient de `pageA4`. */
 const STYLE = `
@@ -48,12 +97,12 @@ function page(etablissement: Etablissement, titre: string, sousTitre: string, co
 }
 
 /** Procès-verbal de délibération (PV du jury). */
-export function pvDeliberationHtml(deliberation: any, etablissement: Etablissement): string {
+export function pvDeliberationHtml(deliberation: DeliberationDetail, etablissement: Etablissement): string {
   const { promotion, annee, session, statut, tauxReussite, lignes, valideePar } = deliberation;
 
   const lignesHtml = lignes
     .map(
-      (l: any) => `<tr>
+      (l) => `<tr>
         <td>${l.rang ?? '—'}</td>
         <td>${echapper(l.inscription?.numero ?? '')}</td>
         <td>${echapper(l.inscription?.etudiant?.matricule ?? '')}</td>
@@ -72,9 +121,9 @@ export function pvDeliberationHtml(deliberation: any, etablissement: Etablisseme
     </div>
     ${blocIndicateurs([
       ['Étudiants délibérés', lignes.length],
-      ['Admis', lignes.filter((l: any) => l.decision === DecisionJury.ADMIS).length],
-      ['Ajournés', lignes.filter((l: any) => l.decision === DecisionJury.AJOURNE).length],
-      ['Défaillants', lignes.filter((l: any) => l.decision === DecisionJury.DEFAILLANT).length],
+      ['Admis', lignes.filter((l) => l.decision === DecisionJury.ADMIS).length],
+      ['Ajournés', lignes.filter((l) => l.decision === DecisionJury.AJOURNE).length],
+      ['Défaillants', lignes.filter((l) => l.decision === DecisionJury.DEFAILLANT).length],
       ['Taux de réussite', tauxReussite !== null && tauxReussite !== undefined ? `${tauxReussite} %` : '—'],
       ['Statut', statut === StatutDeliberation.VALIDE ? 'Validée par le jury' : 'Brouillon'],
     ])}
@@ -108,20 +157,20 @@ export function pvDeliberationHtml(deliberation: any, etablissement: Etablisseme
 
 /** Bulletin individuel de notes (relevé), une page A4 par étudiant. */
 export function bulletinDeliberationHtml(
-  { delib, ligne, matieres }: { delib: any; ligne: any; matieres: any[] },
+  { delib, ligne, matieres }: { delib: DeliberationDetail; ligne: LigneDeliberation; matieres: MatiereEtudiant[] },
   etablissement: Etablissement,
 ): string {
   const etudiant = ligne?.inscription?.etudiant;
 
   const matieresHtml = matieres
     .map(
-      (m: any) =>
+      (m) =>
         `<tr>
         <td>${echapper(m.matiereIntitule)}</td>
         <td>${m.credits}</td>
         <td>${m.epreuves
           .map(
-            (e: any) =>
+            (e) =>
               `${echapper(e.intitule)} (c. ${echapper(e.coefficient)}) : ${e.note !== null ? echapper(e.note) : e.present ? 'non noté' : 'absent'}`,
           )
           .join('<br>')}</td>
