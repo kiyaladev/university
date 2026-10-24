@@ -84,6 +84,17 @@ describe('shared/services/bibliotheque', () => {
     expect(api.put).toHaveBeenCalledWith('/documents/d1', { public: true });
   });
 
+  it('lit les documents populaires de la vitrine publique', async () => {
+    const populaires = [{ id: 'd1', titre: 'Mémoire', telechargements: 12 }];
+    api.get.mockResolvedValue({ data: populaires });
+
+    // Le service rend l'enveloppe axios, comme les autres méthodes du fonds.
+    const reponse = await bibliothequeService.populaires(true);
+
+    expect(reponse.data).toBe(populaires);
+    expect(api.get).toHaveBeenCalledWith('/documents/populaires', { silencieux: true });
+  });
+
   it('supprime un document et relance le calcul anti-plagiat', async () => {
     api.delete.mockResolvedValue({ data: null });
     api.post.mockResolvedValue({ data: { total: 3 } });

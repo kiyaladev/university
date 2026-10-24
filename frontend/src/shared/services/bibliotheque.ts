@@ -48,6 +48,12 @@ export const bibliothequeService = {
       : bibliothequeService.liste(params, silencieux);
   },
 
+  /**
+   * Les documents les plus téléchargés de l'année : la vitrine publique les
+   * propose en tête de page, quand le visiteur n'a encore rien cherché.
+   */
+  populaires: (silencieux = false) => api.get<DocumentDepot[]>('/documents/populaires', { silencieux }),
+
   detail: (id: string) => api.get<DocumentDepot>(`/documents/${id}`),
 
   /** Téléchargement du fichier joint (compte un téléchargement côté serveur). */

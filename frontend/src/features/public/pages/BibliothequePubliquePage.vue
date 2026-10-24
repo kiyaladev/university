@@ -30,6 +30,47 @@
           </q-input>
         </div>
 
+        <!-- Les plus téléchargés : une porte d'entrée quand le visiteur n'a
+             encore rien cherché. Ils disparaissent dès qu'un filtre parle. -->
+        <section v-if="!filtrageActif && populaires.length" class="q-mb-md">
+          <h2 class="lettrage biblio-populaires-titre">{{ $t('bibliothequePublique.populaires.title') }}</h2>
+          <p class="text-caption text-grey-7 q-mb-sm">{{ $t('bibliothequePublique.populaires.subtitle') }}</p>
+          <div class="row q-col-gutter-sm">
+            <div v-for="doc in populaires" :key="doc.id" class="col-12 col-sm-6 col-md-4">
+              <q-card flat bordered class="carte biblio-populaire">
+                <q-card-section class="q-pb-none">
+                  <q-chip
+                    dense
+                    outline
+                    color="primary"
+                    class="q-ma-none"
+                    :label="LIBELLE_TYPE_DOCUMENT[doc.type] ?? doc.type"
+                  />
+                  <span v-if="doc.telechargements > 0" class="text-caption text-grey-7 q-ml-sm">
+                    <q-icon name="download" size="15px" class="q-mr-xs" />{{ doc.telechargements }}
+                  </span>
+                </q-card-section>
+                <q-card-section>
+                  <q-item-label class="doc-titre">{{ doc.titre }}</q-item-label>
+                  <q-item-label v-if="doc.auteurs" caption>{{ doc.auteurs }}</q-item-label>
+                </q-card-section>
+                <q-card-actions align="right">
+                  <q-btn
+                    v-if="aUnFichier(doc)"
+                    flat
+                    dense
+                    no-caps
+                    color="primary"
+                    icon="download"
+                    :label="$t('common.actions.download')"
+                    @click="telecharger(doc)"
+                  />
+                </q-card-actions>
+              </q-card>
+            </div>
+          </div>
+        </section>
+
         <div class="row q-col-gutter-sm q-mb-md items-center">
           <div class="col-12 col-sm-3">
             <q-select
@@ -258,6 +299,8 @@ const { t } = useI18n();
 const departements = ref<Departement[]>([]);
 const chargementDepartements = ref(false);
 const mode = usePresentationListe();
+/** Les documents les plus téléchargés : une porte d'entrée pour le visiteur. */
+const populaires = ref<DocumentDepot[]>([]);
 
 /** `clearable` remet la recherche à null : le type l'assume. */
 const filtre = ref<{
@@ -331,6 +374,14 @@ function anneeDocument(doc: DocumentDepot): number {
 }
 
 /**
+ * Le serveur n'envoie jamais la charge utile du fichier (elle pèse trop) :
+ * les métadonnées disent seules si le document est téléchargeable.
+ */
+function aUnFichier(doc: DocumentDepot): boolean {
+  return !!doc.typeMime || (doc.tailleKo ?? 0) > 0;
+}
+
+/**
  * Surligne toutes les occurrences du terme de recherche dans l'extrait. On
  * opère côté client (le texte est déjà extrait par le backend) pour ne pas
  * réintroduire de HTML non échappé.
@@ -374,6 +425,14 @@ onMounted(async () => {
   } finally {
     chargementDepartements.value = false;
   }
+
+  // Les plus téléchargés : la vitrine ne crie pas si la route échoue.
+  try {
+    const { data } = await bibliothequeService.populaires(true);
+    populaires.value = Array.isArray(data) ? data : [];
+  } catch {
+    populaires.value = [];
+  }
 });
 </script>
 
@@ -390,6 +449,13 @@ onMounted(async () => {
   font-size: 1.08rem;
   line-height: 1.3;
   color: var(--up-encre);
+}
+.biblio-populaires-titre {
+  font-size: 1.15rem;
+  margin: 0;
+}
+.biblio-populaire {
+  height: 100%;
 }
 /* Un extrait cité est une plaque cernée, pas une carte à bandeau latéral :
    le monde « panneau peint » trace des filets entiers. */
