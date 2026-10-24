@@ -57,6 +57,7 @@ export default {
     publish: 'Publish the resource',
     edit: 'Edit the resource',
     archive: 'Archive the resource',
+    stats: 'View viewing statistics',
   },
   emptyState: {
     filtered: 'No resource matches these criteria.',
@@ -68,6 +69,20 @@ export default {
       title: 'Archive this resource?',
       message: '"{title}" will be removed from the catalog: no one will be able to watch it anymore.',
     },
+  },
+  stats: {
+    title: 'Viewing statistics',
+    loading: 'Loading statistics…',
+    unavailable: 'Statistics are unavailable.',
+    views: 'Views',
+    completions: 'Completed views',
+    completionRate: 'Completion rate',
+    averageDuration: 'Average viewing time',
+    recentViews: 'Recent views',
+    noViews: 'This resource has not been opened yet.',
+    anonymous: 'Unidentified viewer',
+    completed: 'Finished',
+    inProgress: 'In progress',
   },
   messages: {
     published: 'Resource published.',

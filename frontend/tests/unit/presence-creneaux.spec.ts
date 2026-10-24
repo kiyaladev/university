@@ -87,4 +87,12 @@ describe('features/presence/services/creneaux', () => {
       { silencieux: true },
     );
   });
+
+  it('supprime un créneau en silence : le motif s’affiche dans le bandeau', async () => {
+    api.delete.mockResolvedValue({ data: null });
+
+    await creneauxService.supprimer('c1');
+
+    expect(api.delete).toHaveBeenCalledWith('/creneaux/c1', { silencieux: true });
+  });
 });

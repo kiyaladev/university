@@ -23,12 +23,6 @@ export class RectoratController {
   constructor(private readonly service: RectoratService) {}
 
   @Roles(...ROLES_RECTORAT)
-  @Get('dashboard')
-  dashboard() {
-    return this.service.dashboardRapide();
-  }
-
-  @Roles(...ROLES_RECTORAT)
   @Get('chiffres')
   chiffres(@Query() query: RectoratQueryDto) {
     return this.service.chiffres(query.anneeId);

@@ -57,6 +57,7 @@ export default {
     publish: 'Mettre la ressource en ligne',
     edit: 'Modifier la ressource',
     archive: 'Archiver la ressource',
+    stats: 'Voir les statistiques de consultation',
   },
   emptyState: {
     filtered: 'Aucune ressource ne correspond à ces critères.',
@@ -68,6 +69,20 @@ export default {
       title: 'Archiver cette ressource ?',
       message: '« {title} » sortira du catalogue : plus personne ne pourra la lire.',
     },
+  },
+  stats: {
+    title: 'Statistiques de consultation',
+    loading: 'Chargement des statistiques…',
+    unavailable: 'Statistiques indisponibles.',
+    views: 'Vues',
+    completions: 'Lectures complètes',
+    completionRate: 'Taux de complétion',
+    averageDuration: 'Durée moyenne de lecture',
+    recentViews: 'Dernières vues',
+    noViews: 'Cette ressource n’a encore été ouverte par personne.',
+    anonymous: 'Lecteur non identifié',
+    completed: 'Terminé',
+    inProgress: 'En cours',
   },
   messages: {
     published: 'Ressource mise en ligne.',

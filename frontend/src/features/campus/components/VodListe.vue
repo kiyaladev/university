@@ -32,6 +32,7 @@ const emit = defineEmits<{
   'ouvrir-edition': [v: RessourceCatalogue];
   publier: [v: RessourceCatalogue];
   archiver: [v: RessourceCatalogue];
+  statistiques: [v: RessourceCatalogue];
 }>();
 
 const auth = useAuthStore();
@@ -179,6 +180,17 @@ function avancement(v: RessourceCatalogue): number {
           <q-tooltip>{{ $t('common.actions.edit') }}</q-tooltip>
         </q-btn>
         <q-btn
+          v-if="peutGererRessource(p.row)"
+          flat
+          round
+          dense
+          icon="bar_chart"
+          :aria-label="$t('vodPage.aria.stats')"
+          @click="emit('statistiques', p.row)"
+        >
+          <q-tooltip>{{ $t('vodPage.stats.title') }}</q-tooltip>
+        </q-btn>
+        <q-btn
           v-if="peutGererRessource(p.row) && p.row.statut !== 'ARCHIVE'"
           flat
           round
@@ -258,6 +270,16 @@ function avancement(v: RessourceCatalogue): number {
             @click="emit('ouvrir-edition', v)"
           >
             <q-tooltip>{{ $t('common.actions.edit') }}</q-tooltip>
+          </q-btn>
+          <q-btn
+            v-if="peutGererRessource(v)"
+            flat
+            icon="bar_chart"
+            no-caps
+            :aria-label="$t('vodPage.aria.stats')"
+            @click="emit('statistiques', v)"
+          >
+            <q-tooltip>{{ $t('vodPage.stats.title') }}</q-tooltip>
           </q-btn>
           <q-btn
             v-if="peutGererRessource(v) && ['BROUILLON', 'HORS_LIGNE'].includes(v.statut ?? '')"

@@ -33,23 +33,6 @@ export class RestoController {
     return this.service.listePortefeuilles(query);
   }
 
-  /**
-   * Le portefeuille de l'étudiant connecté (portail). Déclaré avant
-   * `portefeuille/:etudiantId` pour que le mot « me » ne soit pas capturé
-   * comme identifiant.
-   */
-  @Roles(Role.ETUDIANT)
-  @Get('portefeuille/me')
-  monPortefeuille(@CurrentUser() user: AuthUser) {
-    return this.service.monPortefeuille(user);
-  }
-
-  @Roles(...GESTIONNAIRES)
-  @Get('portefeuille/:etudiantId')
-  lire(@Param('etudiantId') etudiantId: string) {
-    return this.service.detailPortefeuille(etudiantId);
-  }
-
   @Roles(...GESTIONNAIRES)
   @Get('consommations')
   consommations(@Query() query: ConsommationsQueryDto) {

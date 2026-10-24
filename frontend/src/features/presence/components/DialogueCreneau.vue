@@ -100,6 +100,21 @@
       <template #avatar><q-icon name="warning" /></template>
       {{ erreur }}
     </q-banner>
+
+    <!-- Suppression : elle retire la ligne de l'emploi du temps, d'où la
+         confirmation explicite avant d'envoyer la requête. -->
+    <template #actions>
+      <q-btn
+        v-if="creneau"
+        flat
+        no-caps
+        color="negative"
+        icon="delete"
+        :label="t('common.actions.delete')"
+        :loading="suppression"
+        @click="supprimerCreneau"
+      />
+    </template>
   </dialogue-formulaire>
 </template>
 
@@ -112,6 +127,7 @@ import { creneauxService } from '../services/creneaux';
 import { TYPES_COURS } from '@/shared/utils/libelles';
 import ChampDate from '@/shared/components/ChampDate.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
+import { useConfirmation } from '@/shared/composables/useConfirmation';
 import type { Affectation, Creneau, Salle } from '@/types';
 import { messageErreurApi } from '@/shared/utils/erreur-http';
 
@@ -121,7 +137,9 @@ const emit = defineEmits<{ enregistre: [] }>();
 
 const $q = useQuasar();
 const { t } = useI18n();
+const { confirmer } = useConfirmation();
 const enregistrement = ref(false);
+const suppression = ref(false);
 const erreur = ref('');
 const affectations = ref<Affectation[]>([]);
 const optionsAffectations = ref<{ label: string; value: string }[]>([]);
@@ -225,6 +243,39 @@ async function enregistrer() {
     erreur.value = messageErreurApi(e) ?? t('emploiDuTemps.slotDialog.saveFailed');
   } finally {
     enregistrement.value = false;
+  }
+}
+
+/**
+ * Suppression du créneau. Le serveur refuse quand l'année est close : le
+ * motif est alors affiché dans le bandeau, comme pour l'enregistrement.
+ */
+async function supprimerCreneau() {
+  const c = props.creneau;
+  if (!c) return;
+  const ok = await confirmer({
+    titre: t('emploiDuTemps.slotDialog.deleteTitle'),
+    message: t('emploiDuTemps.slotDialog.deleteMessage', {
+      day: t(`common.days.${c.jourSemaine}`).toLowerCase(),
+      start: c.heureDebut,
+      end: c.heureFin,
+    }),
+    ok: t('common.actions.yes_delete'),
+    danger: true,
+  });
+  if (!ok) return;
+
+  suppression.value = true;
+  erreur.value = '';
+  try {
+    await creneauxService.supprimer(c.id);
+    $q.notify({ type: 'positive', message: t('emploiDuTemps.slotDialog.deleted') });
+    emit('enregistre');
+    ouvert.value = false;
+  } catch (e: unknown) {
+    erreur.value = messageErreurApi(e) ?? t('emploiDuTemps.slotDialog.deleteFailed');
+  } finally {
+    suppression.value = false;
   }
 }
 </script>

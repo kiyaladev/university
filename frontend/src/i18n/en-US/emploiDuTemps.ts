@@ -67,5 +67,9 @@ export default {
     active: 'Time slot active',
     saved: 'Time slot saved',
     saveFailed: 'Unable to save the time slot',
+    deleteTitle: 'Delete this time slot?',
+    deleteMessage: 'The slot on {day}, from {start} to {end}, will disappear from the schedule.',
+    deleted: 'Time slot deleted',
+    deleteFailed: 'Unable to delete the time slot',
   },
 };

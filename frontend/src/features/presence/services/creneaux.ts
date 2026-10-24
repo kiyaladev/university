@@ -1,4 +1,4 @@
-import { creer, lire, modifier } from '@/shared/services/http';
+import { creer, lire, modifier, supprimer } from '@/shared/services/http';
 import type { Creneau } from '@/types';
 
 /**
@@ -52,4 +52,7 @@ export const creneauxService = {
 
   /** Modifie un créneau. */
   modifier: (id: string, corps: CreneauSaisi) => modifier<Creneau>(`/creneaux/${id}`, corps, { silencieux: true }),
+
+  /** Supprime un créneau : la ligne hebdomadaire disparaît de l'emploi du temps. */
+  supprimer: (id: string) => supprimer(`/creneaux/${id}`, { silencieux: true }),
 };

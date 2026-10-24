@@ -22,6 +22,11 @@ export default {
     downloadsTitle: '{count} download(s)',
     sizeMo: '{size} MB',
   },
+  populaires: {
+    title: 'Most downloaded',
+    subtitle: 'The documents the public collection makes most accessible this year.',
+    empty: 'No document has been downloaded yet this year.',
+  },
   table: {
     columns: {
       document: 'Document',
