@@ -30,7 +30,7 @@ const DOCUMENT_INCLUDE = {
   enseignant: { select: { id: true, matricule: true, nom: true, prenom: true, departement: true } },
   etudiant: { select: { id: true, matricule: true, nom: true, prenom: true } },
   deposePar: { select: { id: true, nom: true, prenom: true, role: true } },
-};
+} as const satisfies Prisma.DocumentDepotInclude;
 
 /** Projection de mutation : évite de charger le data-url (jusqu'à 8 Mo) dans
  * la transaction tout en gardant les champs requis pour l'autorisation et la
@@ -49,7 +49,46 @@ const DOCUMENT_MUTATION_SELECT = {
   etudiantId: true,
   contenuTexte: true,
   empreinteHash: true,
-};
+} as const;
+
+/**
+ * Document du dépôt avec ses relations : c'est le format renvoyé au front.
+ * Le fichier et le texte extrait sont chargés par la requête selon le besoin,
+ * mais ne doivent jamais figurer dans une réponse.
+ */
+type DocumentComplet = Prisma.DocumentDepotGetPayload<{ include: typeof DOCUMENT_INCLUDE }>;
+
+/** Document du dépôt privé du fichier stocké (data-url base64). */
+type DocumentSansFichier = Omit<DocumentComplet, 'fichier'>;
+
+/** Document du dépôt tel que le CRUD le relit : ni fichier, ni texte extrait. */
+type DocumentLeger = Omit<DocumentComplet, 'fichier' | 'contenuTexte'>;
+
+/** Document chargé avec son fichier : réservé à la route de téléchargement. */
+type DocumentAvecFichier = Omit<DocumentComplet, 'contenuTexte'>;
+
+/**
+ * Document projeté pour un visiteur sans jeton : la projection publique
+ * retire le déclarant, l'étudiant et les identifiants internes, le résultat
+ * est donc une carte libre.
+ */
+type DocumentPublique = Record<string, unknown>;
+
+/** Document réduit à ses champs de mutation : ni relations, ni texte intégral. */
+type DocumentMutation = Prisma.DocumentDepotGetPayload<{ select: typeof DOCUMENT_MUTATION_SELECT }>;
+
+/** Champs lus par l'instantané d'audit. */
+interface SourceAudit {
+  type?: string | null;
+  public?: boolean | null;
+  anneeEdition?: number | null;
+  typeMime?: string | null;
+  tailleKo?: number | null;
+  motsClefs?: string[] | null;
+  departementId?: string | null;
+  enseignantId?: string | null;
+  etudiantId?: string | null;
+}
 
 export interface FichierDocument {
   octets: Buffer;
@@ -58,7 +97,7 @@ export interface FichierDocument {
 }
 
 @Injectable()
-export class BibliothequeService extends CrudService {
+export class BibliothequeService extends CrudService<DocumentLeger | DocumentPublique> {
   constructor(
     prisma: PrismaService,
     private readonly plagiat: PlagiatService,
@@ -79,9 +118,9 @@ export class BibliothequeService extends CrudService {
 
   /** Le JSON de réponse ne transporte jamais le fichier : la lourde charge
    *  base64 ne circule que sur la route de téléchargement dédiée. */
-  private sansFichier<T extends { fichier?: unknown }>(doc: T): Omit<T, 'fichier'> {
-    if (!doc) return doc;
-    const { fichier: _fichier, ...reste } = doc as any;
+  private sansFichier(doc: DocumentComplet | DocumentLeger): DocumentSansFichier | DocumentLeger {
+    if (!('fichier' in doc)) return doc;
+    const { fichier: _fichier, ...reste } = doc;
     return reste;
   }
 
@@ -125,11 +164,11 @@ export class BibliothequeService extends CrudService {
    * Retourne systématiquement un objet avec `typeMime` et `tailleKo` (nuls si
    * pas de fichier) pour faciliter l'appel en aval.
    */
-  private preparerFichier(
-    dto: CreateDocumentDto | UpdateDocumentDto,
-  ): (CreateDocumentDto | UpdateDocumentDto) & { typeMime: string | null; tailleKo: number | null } {
+  private preparerFichier<T extends CreateDocumentDto | UpdateDocumentDto>(
+    dto: T,
+  ): T & { typeMime: string | null; tailleKo: number | null } {
     if (!dto.fichier) {
-      return { ...(dto as any), typeMime: null, tailleKo: null } as any;
+      return { ...dto, typeMime: null, tailleKo: null };
     }
     const longueur = Buffer.byteLength(dto.fichier, 'utf8');
     if (longueur >= LIMITE_DATA_URL_OCTETS) {
@@ -140,10 +179,10 @@ export class BibliothequeService extends CrudService {
     }
     const { mime, octets } = this.decouperDataUrl(dto.fichier);
     return {
-      ...(dto as any),
+      ...dto,
       typeMime: mime ?? null,
       tailleKo: Math.max(1, Math.round(octets.length / 1024)),
-    } as any;
+    };
   }
 
   /**
@@ -157,7 +196,7 @@ export class BibliothequeService extends CrudService {
 
   /** Instantané volontairement réduit : aucun titre, texte, fichier, hash,
    * mot-clé ni identifiant d'étudiant/enseignant ne doit entrer au journal. */
-  private instantaneAudit(doc: any) {
+  private instantaneAudit(doc: SourceAudit | null) {
     if (!doc) return null;
     return {
       type: doc.type,
@@ -189,25 +228,34 @@ export class BibliothequeService extends CrudService {
     const resultat = await super.lister(query, where);
     return {
       ...resultat,
-      data: (resultat.data as any[]).map((d) => {
-        const sansFichier = this.sansFichier(d);
-        return fondsComplet(utilisateur) ? sansFichier : projectionPubliqueDocument(sansFichier);
-      }),
+      data: resultat.data.map((d) => (fondsComplet(utilisateur) ? d : projectionPubliqueDocument(d))),
     };
   }
 
-  private async trouverAccessible(id: string, utilisateur: AuthUser | null, avecFichier = false) {
+  /** Document accessible à l'utilisateur, sans les colonnes lourdes. */
+  private async trouverAccessible(id: string, utilisateur: AuthUser | null): Promise<DocumentLeger> {
     const document = await this.prisma.documentDepot.findFirst({
       where: { id, ...(!fondsComplet(utilisateur) ? { public: true } : {}) },
       include: DOCUMENT_INCLUDE,
-      omit: avecFichier ? { contenuTexte: true } : { fichier: true, contenuTexte: true },
+      omit: { fichier: true, contenuTexte: true },
+    });
+    if (!document) throw new NotFoundException(t('bibliotheque.document_introuvable'));
+    return document;
+  }
+
+  /** Document chargé avec son fichier : réservé au téléchargement. */
+  private async trouverAvecFichier(id: string, utilisateur: AuthUser | null): Promise<DocumentAvecFichier> {
+    const document = await this.prisma.documentDepot.findFirst({
+      where: { id, ...(!fondsComplet(utilisateur) ? { public: true } : {}) },
+      include: DOCUMENT_INCLUDE,
+      omit: { contenuTexte: true },
     });
     if (!document) throw new NotFoundException(t('bibliotheque.document_introuvable'));
     return document;
   }
 
   async detailPour(id: string, user: AuthUser) {
-    const document = this.sansFichier(await this.trouverAccessible(id, user));
+    const document = await this.trouverAccessible(id, user);
     return fondsComplet(user) ? document : projectionPubliqueDocument(document);
   }
 
@@ -224,7 +272,7 @@ export class BibliothequeService extends CrudService {
       include: DOCUMENT_INCLUDE,
       omit: { fichier: true, contenuTexte: true },
     });
-    return (docs as any[]).map((d) => projectionPubliqueDocument(this.sansFichier(d)));
+    return docs.map((d) => projectionPubliqueDocument(d));
   }
 
   /**
@@ -244,7 +292,7 @@ export class BibliothequeService extends CrudService {
           contenuTexte: contenuTexte ?? null,
           empreinteHash: empreinteHash ?? null,
           deposeParId: utilisateur.id,
-        } as any,
+        },
         include: DOCUMENT_INCLUDE,
         omit: { fichier: true, contenuTexte: true },
       });
@@ -259,7 +307,7 @@ export class BibliothequeService extends CrudService {
       return cree;
     });
     void this.analyserDoublons(document.id);
-    return this.sansFichier(document as any);
+    return this.sansFichier(document);
   }
 
   async modifier(id: string, dto: UpdateDocumentDto, utilisateur: AuthUser) {
@@ -278,7 +326,7 @@ export class BibliothequeService extends CrudService {
     }
     const miseAJour = await this.prisma.$transaction(
       async (tx) => {
-        const document: any = await tx.documentDepot.findUnique({
+        const document: DocumentMutation | null = await tx.documentDepot.findUnique({
           where: { id },
           select: DOCUMENT_MUTATION_SELECT,
         });
@@ -312,13 +360,13 @@ export class BibliothequeService extends CrudService {
       { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
     );
     void this.analyserDoublons(id);
-    return this.sansFichier(miseAJour as any);
+    return this.sansFichier(miseAJour);
   }
 
   async supprimer(id: string, utilisateur: AuthUser) {
     return this.prisma.$transaction(
       async (tx) => {
-        const document: any = await tx.documentDepot.findUnique({
+        const document: DocumentMutation | null = await tx.documentDepot.findUnique({
           where: { id },
           select: DOCUMENT_MUTATION_SELECT,
         });
@@ -347,7 +395,7 @@ export class BibliothequeService extends CrudService {
    * publié n'est accessible qu'à un porteur de jeton valide.
    */
   async fichier(id: string, utilisateur: AuthUser | null): Promise<FichierDocument> {
-    const document: any = await this.trouverAccessible(id, utilisateur, true);
+    const document = await this.trouverAvecFichier(id, utilisateur);
     if (!document.fichier) {
       throw new NotFoundException(t('bibliotheque.ce_document_est_depose_sans_fichier_metadonnees_seules'));
     }

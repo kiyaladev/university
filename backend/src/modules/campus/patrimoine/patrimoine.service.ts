@@ -15,7 +15,13 @@
  *     depuis l'écran n'envoie pas l'en-tête Authorization.
  */
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma, StatutReparation } from '@prisma/client';
+import {
+  CategoriePatrimoine,
+  EquipementPatrimoine,
+  Prisma,
+  ReparationMateriel,
+  StatutReparation,
+} from '@prisma/client';
 import { randomBytes } from 'node:crypto';
 import { AuthUser } from '../../../common/decorators';
 import { CrudService } from '../../../common/crud.service';
@@ -62,6 +68,41 @@ const REPARATION_INCLUDE = {
   resoluPar: { select: { id: true, nom: true, prenom: true } },
 } satisfies Prisma.ReparationMaterielInclude;
 
+/**
+ * Champs lus par les instantanés d'audit : le typage suit le modèle Prisma,
+ * la projection reste minimale. Les relations ne sont jamais recopiées.
+ */
+type CategorieAudit = Pick<CategoriePatrimoine, 'id' | 'code' | 'libelle' | 'dureeAmortissement'>;
+
+type EquipementAudit = Pick<
+  EquipementPatrimoine,
+  | 'id'
+  | 'numeroInventaire'
+  | 'numeroSerie'
+  | 'libelle'
+  | 'categorieId'
+  | 'departementId'
+  | 'salleId'
+  | 'dateAcquisition'
+  | 'valeurAcquisition'
+  | 'actif'
+  | 'enReparation'
+  | 'obsolescenceMois'
+>;
+
+type ReparationAudit = Pick<
+  ReparationMateriel,
+  | 'id'
+  | 'equipementId'
+  | 'statut'
+  | 'cout'
+  | 'dateDeclaration'
+  | 'dateResolution'
+  | 'declareParId'
+  | 'resoluParId'
+  | 'prestataire'
+>;
+
 @Injectable()
 export class PatrimoineService {
   constructor(private prisma: PrismaService) {}
@@ -78,7 +119,7 @@ export class PatrimoineService {
   }
 
   async listeCategories() {
-    return this.categoriesService.lister({ all: '1' } as any, {});
+    return this.categoriesService.lister({ all: '1' }, {});
   }
 
   async detailCategorie(id: string) {
@@ -139,11 +180,11 @@ export class PatrimoineService {
   async supprimerCategorie(id: string, user: AuthUser) {
     await this.prisma.$transaction(async (tx) => {
       const cat = await this.categorieCourante(tx, id);
-      if (cat._count && (cat._count as any).equipements > 0) {
+      if (cat._count && cat._count.equipements > 0) {
         throw new ConflictException(
-          t('patrimoine.categorie_cat_libelle_cat_count_as_any_equipements_equipemen', {
+          t('patrimoine.categorie_cat_libelle_cat_count_equipements_equipemen', {
             'cat.libelle': cat.libelle,
-            '(cat._count as any).equipements': (cat._count as any).equipements,
+            '(cat._count).equipements': cat._count.equipements,
           }),
         );
       }
@@ -727,7 +768,7 @@ export class PatrimoineService {
    * permettent de reconstituer l'histoire d'un équipement, pas son
    * étiquette ni les commentaires de l'agent.
    */
-  private instantaneCategorie(categorie: any) {
+  private instantaneCategorie(categorie: CategorieAudit) {
     return {
       id: categorie.id,
       code: categorie.code,
@@ -736,7 +777,7 @@ export class PatrimoineService {
     };
   }
 
-  private instantaneEquipement(equipement: any) {
+  private instantaneEquipement(equipement: EquipementAudit) {
     return {
       id: equipement.id,
       numeroInventaire: equipement.numeroInventaire,
@@ -754,7 +795,7 @@ export class PatrimoineService {
   }
 
   /** Description, notes et nom libre du prestataire restent dans la fiche. */
-  private instantaneReparation(reparation: any) {
+  private instantaneReparation(reparation: ReparationAudit) {
     return {
       id: reparation.id,
       equipementId: reparation.equipementId,

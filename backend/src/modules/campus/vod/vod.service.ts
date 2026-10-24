@@ -17,7 +17,7 @@
  * la description, l'URL du média, le nom de l'enseignant, ni qui a regardé.
  */
 import { BadRequestException, Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
-import { Prisma, Role, StatutVOD } from '@prisma/client';
+import { CoursVOD, Prisma, Role, StatutVOD } from '@prisma/client';
 import { t } from '../../../common/i18n';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { AuthUser } from '../../../common/decorators';
@@ -41,6 +41,34 @@ const VOD_INCLUDE = {
 
 const SEUIL_COMPLET = 0.9;
 
+/**
+ * Champs lus par l'instantané d'audit d'une ressource VOD. Le typage suit le
+ * modèle Prisma : la ressource peut être relue sans ses relations, la
+ * projection ne dépend donc que de ces champs.
+ */
+type VodAudit = Pick<
+  CoursVOD,
+  | 'id'
+  | 'type'
+  | 'statut'
+  | 'public'
+  | 'matiereId'
+  | 'seanceId'
+  | 'enseignantId'
+  | 'inscriptionId'
+  | 'creeParId'
+  | 'dateMiseEnLigne'
+  | 'createdAt'
+  | 'updatedAt'
+  | 'dureeSecondes'
+  | 'tailleKo'
+  | 'titre'
+  | 'description'
+  | 'transcription'
+  | 'url'
+  | 'thumbnailUrl'
+>;
+
 /** Les dates du journal sont des ISO : lisibles dans l'écran Journal, comparables. */
 function isoOuNull(v: Date | string | null | undefined): string | null {
   if (!v) return null;
@@ -62,7 +90,7 @@ function isoOuNull(v: Date | string | null | undefined): string | null {
  * de ceux qui regardent n'ont pas leur place ici : elles restent dans leurs
  * propres tables, jamais dans le journal d'audit.
  */
-function instantaneVod(vod: any) {
+function instantaneVod(vod: VodAudit | null) {
   if (!vod) return null;
   return {
     id: vod.id,

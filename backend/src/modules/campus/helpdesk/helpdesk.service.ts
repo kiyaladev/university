@@ -7,7 +7,7 @@
  * ne correspond à aucun équipement.
  */
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma, Role, StatutTicket } from '@prisma/client';
+import { CategorieIncident, PrioriteTicket, Prisma, Role, StatutTicket } from '@prisma/client';
 import { randomBytes } from 'node:crypto';
 import { AuthUser } from '../../../common/decorators';
 import { CrudService } from '../../../common/crud.service';
@@ -78,8 +78,41 @@ const TICKET_AUDIT = {
   declarantTelephone: true,
 } satisfies Prisma.TicketSupportSelect;
 
+/**
+ * Colonnes lues pour l'instantané d'audit d'un équipement : ni code QR, ni
+ * jeton d'enrôlement, aucune donnée personnelle.
+ */
+type EquipementAudit = {
+  id: string;
+  libelle: string;
+  emplacement: string | null;
+  actif: boolean;
+  createdAt: Date | null;
+};
+
+/**
+ * Colonnes lues pour l'instantané d'audit d'un ticket : catégorie, priorité,
+ * statut, affectation et horodatages de traitement.
+ */
+type TicketAudit = {
+  id: string;
+  numero: string;
+  categorie: CategorieIncident;
+  priorite: PrioriteTicket;
+  statut: StatutTicket;
+  equipementId: string | null;
+  utilisateurId: string | null;
+  traiteParId: string | null;
+  traiteLe: Date | null;
+  clicheLe: Date | null;
+  description: string;
+  declarantNom: string | null;
+  declarantEmail: string | null;
+  declarantTelephone: string | null;
+};
+
 /** Inventaire projeté : ni code QR, ni jeton, aucune donnée personnelle. */
-function instantaneEquipement(equipement: any) {
+function instantaneEquipement(equipement: EquipementAudit) {
   return {
     id: equipement.id,
     libelle: equipement.libelle,
@@ -95,7 +128,7 @@ function instantaneEquipement(equipement: any) {
  * l'identité de contact du déclarant restent hors journal — leur présence
  * seule est notée.
  */
-function instantaneTicket(ticket: any) {
+function instantaneTicket(ticket: TicketAudit) {
   return {
     id: ticket.id,
     numero: ticket.numero,

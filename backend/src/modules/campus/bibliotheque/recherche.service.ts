@@ -42,11 +42,9 @@ function construireTsQuery(saisie: string): string {
  * volumineux) avant de renvoyer la ligne au front : ces colonnes ne sont utiles
  * qu'au téléchargement et à la détection locale, jamais à l'affichage.
  */
-function sansLourdePayload<T extends { fichier?: unknown; contenuTexte?: unknown }>(
-  doc: T,
-): Omit<T, 'fichier' | 'contenuTexte'> {
-  const { fichier: _f, contenuTexte: _c, ...reste } = doc as any;
-  return reste;
+function sansLourdePayload<T extends object>(doc: T): Omit<T, 'fichier' | 'contenuTexte'> {
+  const { fichier: _f, contenuTexte: _c, ...reste } = doc as T & { fichier?: unknown; contenuTexte?: unknown };
+  return reste as Omit<T, 'fichier' | 'contenuTexte'>;
 }
 
 interface LigneFts {
@@ -134,13 +132,13 @@ export class RechercheService {
 
     const docs = await this.prisma.documentDepot.findMany({
       where: { id: { in: ids.map((l) => l.id) } },
-      include: DOCUMENT_INCLUDE as any,
+      include: DOCUMENT_INCLUDE,
       omit: { fichier: true, contenuTexte: true },
     });
     const rangParId = new Map<string, number>(ids.map((l) => [l.id, l.rank]));
     const ordonnes: DocumentAvecRang[] = docs
       .map((d) => {
-        const nettoye = sansLourdePayload(d as any) as Record<string, unknown>;
+        const nettoye = sansLourdePayload(d) as Record<string, unknown>;
         const projete = fondsComplet(utilisateur) ? nettoye : projectionPubliqueDocument(nettoye);
         projete.rang = rangParId.get(d.id) ?? 0;
         return projete as DocumentAvecRang;
