@@ -1,11 +1,18 @@
 {
-  "name": "unipresence-biometrie",
+  "name": "university-biometrie",
   "version": "1.0.0",
   "private": true,
-  "description": "Passerelle locale entre le lecteur d'empreintes et UniPrésence",
+  "description": "Passerelle locale entre le lecteur d'empreintes et University",
   "type": "module",
   "scripts": {
     "start": "bun run src/index.ts",
-    "dev": "bun --watch src/index.ts"
+    "dev": "bun --watch src/index.ts",
+    "test": "bun test",
+    "enroler": "bun run scripts/enroler-appareil.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "devDependencies": {
+    "@types/bun": "1.3.4",
+    "typescript": "5.9.3"
   }
 }

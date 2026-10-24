@@ -74,7 +74,7 @@ export default {
       month: 'Month *',
       year: 'Year *',
       periodHint:
-        'The “{label}” sheet covers the first through the last day of the month. Checked hours from UniPrésence are then aggregated line by line.',
+        'The “{label}” sheet covers the first through the last day of the month. Checked hours from University are then aggregated line by line.',
       create: 'Create sheet',
       draftHint:
         'The sheet is a draft: recalculate it to aggregate checked hours, then have it approved by management.',
@@ -85,7 +85,7 @@ export default {
     recalculate: {
       title: 'Recalculate',
       message:
-        'Aggregate the hours checked by UniPrésence for sheet “{libelle}”? The lines will be recreated (comments are kept).',
+        'Aggregate the hours checked by University for sheet “{libelle}”? The lines will be recreated (comments are kept).',
       ok: 'Recalculate',
     },
     validate: {

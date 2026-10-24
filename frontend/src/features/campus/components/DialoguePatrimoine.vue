@@ -49,6 +49,8 @@
           v-model="form.categorieId"
           :label="$t('patrimoine.equipmentDialog.fields.category')"
           endpoint="/patrimoine/categories"
+          :endpoint-detail="false"
+          :libelle-initial="libelleCategorie"
           :label-fn="(c) => `${c.libelle} (${c.code})`"
           :clearable="false"
         />
@@ -113,13 +115,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useQuasar } from 'quasar';
-import { api } from '@/boot/axios';
 import ChampRecherche from '@/shared/components/ChampRecherche.vue';
 import ChampDate from '@/shared/components/ChampDate.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
+import { patrimoineService, type CorpsEquipementPatrimoine } from '../services/patrimoine';
 import type { EquipementPatrimoine } from '@/types';
 
 const ouvert = defineModel<boolean>({ required: true });
@@ -130,6 +132,16 @@ const $q = useQuasar();
 const { t } = useI18n();
 
 const enregistrement = ref(false);
+
+/**
+ * Libellé de la catégorie de l'équipement édité. L'API n'expose pas
+ * `/patrimoine/categories/{id}` : c'est l'équipement qui porte le nom de sa
+ * catégorie, on le passe donc au sélecteur.
+ */
+const libelleCategorie = computed(() => {
+  const categorie = props.equipement?.categorie;
+  return categorie ? `${categorie.libelle} (${categorie.code})` : '';
+});
 
 const form = ref({
   libelle: '',
@@ -164,11 +176,13 @@ watch(ouvert, (o) => {
 async function enregistrer() {
   enregistrement.value = true;
   try {
-    const payload: Record<string, unknown> = {
+    const payload: CorpsEquipementPatrimoine = {
       libelle: form.value.libelle.trim(),
       numeroSerie: form.value.numeroSerie.trim(),
       numeroInventaire: form.value.numeroInventaire.trim(),
-      categorieId: form.value.categorieId,
+      // La catégorie est obligatoire : le bouton de validation reste désactivé
+      // tant qu'elle n'est pas choisie.
+      categorieId: form.value.categorieId ?? '',
       departementId: form.value.departementId ?? undefined,
       salleId: form.value.salleId ?? undefined,
       dateAcquisition: form.value.dateAcquisition || undefined,
@@ -177,10 +191,10 @@ async function enregistrer() {
       actif: form.value.actif ? 'true' : 'false',
     };
     if (props.equipement) {
-      await api.put(`/patrimoine/equipements/${props.equipement.id}`, payload);
+      await patrimoineService.modifierEquipement(props.equipement.id, payload);
       $q.notify({ type: 'positive', message: t('patrimoine.equipmentDialog.messages.updated') });
     } else {
-      await api.post('/patrimoine/equipements', payload);
+      await patrimoineService.creerEquipement(payload);
       $q.notify({ type: 'positive', message: t('patrimoine.equipmentDialog.messages.created') });
     }
     ouvert.value = false;

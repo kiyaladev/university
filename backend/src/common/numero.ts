@@ -26,7 +26,9 @@
  * série reste une séquence SQL par préfixe, pas un raccourci sur cette
  * fonction.
  */
+import { ConflictException } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
+import { t } from './i18n';
 
 /** Délègue Prisma minimal : un `findMany` avec `where`, `orderBy` et `select`. */
 export interface Numerotable {
@@ -158,9 +160,15 @@ export const SERIES_NUMERO = {
     largeur: 4,
     millesime: 'civile',
   },
-  /** Réclamation : « REC-2026-00001 ». */
+  /**
+   * Réclamation : « RCL-2026-00001 ».
+   *
+   * Pas « REC- » : les numéros de recettes externes, saisis à la main d'après
+   * le reçu, commencent souvent par « REC- ». Les réclamations déjà numérotées
+   * (« REC-… ») gardent leur numéro.
+   */
   RECLAMATION: {
-    prefixe: 'REC-',
+    prefixe: 'RCL-',
     modele: 'reclamation',
     champ: 'numero',
     largeur: 5,
@@ -316,4 +324,99 @@ export function anneeNumero(libelleAnnee?: string | null, borne: 'debut' | 'fin'
   const partie = libelleAnnee?.split('-')[borne === 'debut' ? 0 : 1]?.trim();
   if (partie && /^\d{4}$/.test(partie)) return partie;
   return String(new Date().getFullYear());
+}
+
+/**
+ * Options de {@link avecNumeroUnique}.
+ */
+export interface OptionsNumeroUnique {
+  /**
+   * Nombre total de tentatives : la première création, plus les relances.
+   * Défaut : 3.
+   */
+  tentatives?: number;
+  /**
+   * Colonnes dont la collision doit être relancée — le champ porté par la
+   * série (`numero`, `reference`, `matricule`).
+   *
+   * Une collision sur une autre contrainte (un e-mail en double, par exemple)
+   * n'est pas une course sur le compteur : elle doit remonter telle quelle.
+   * Sans cette précision, la relance masquait le vrai doublon derrière un
+   * « numéro temporairement indisponible ».
+   */
+  colonnes?: string[];
+  /**
+   * Erreur levée quand toutes les tentatives ont échoué. Défaut : un conflit
+   * (« Cette valeur existe déjà »).
+   */
+  erreur?: (cause: unknown) => Error;
+}
+
+/**
+ * Colonnes en cause dans une violation d'unicité Prisma (P2002).
+ *
+ * Renvoie `null` si l'erreur n'est pas une P2002, et un tableau **vide** si la
+ * contrainte visée n'est pas nommée : dans ce cas on ne peut pas distinguer
+ * une course sur le compteur d'un vrai doublon.
+ */
+function cibleViolationUnique(reur: unknown): string[] | null {
+  if (!reur || typeof reur !== 'object') return null;
+  if ((reur as { code?: unknown }).code !== 'P2002') return null;
+  const cible = (reur as { meta?: { target?: unknown } }).meta?.target;
+  if (typeof cible === 'string') return [cible];
+  if (Array.isArray(cible)) return cible.filter((colonne): colonne is string => typeof colonne === 'string');
+  return [];
+}
+
+/**
+ * L'erreur est-elle une collision de numéro, c'est-à-dire une course entre
+ * deux créations qui ont lu le même « maximum + 1 » ?
+ *
+ * La course se reconnaît à sa signature : violation d'unicité (P2002) portant
+ * sur une colonne de numéro. Tout le reste — un e-mail déjà pris, une
+ * contrainte étrangère — est un vrai conflit métier et doit remonter.
+ */
+export function estCollisionNumero(reur: unknown, colonnes?: string[]): boolean {
+  const cible = cibleViolationUnique(reur);
+  if (cible === null) return false;
+  // La contrainte visée n'est pas nommée : impossible de trancher, on relance
+  // (comportement historique des modules qui rattrapaient P2002).
+  if (!cible.length) return true;
+  if (!colonnes?.length) return true;
+  return cible.some((colonne) => colonnes.includes(colonne));
+}
+
+/**
+ * Crée une ligne numérotée en enkasant les collisions de numéro.
+ *
+ * Le numéro est calculé par « maximum + 1 » : deux créations simultanées
+ * lisent le même maximum et la seconde se heurte à la contrainte d'unicité.
+ * Plutôt que de laisser l'erreur remonter, on recommence : le numéro est
+ * recalculé, la transaction est rouverte, et la ligne est créée.
+ *
+ * `creer` doit recalculer le numéro à chaque appel (il encapsule la
+ * transaction) : c'est la condition pour que la relance produise un numéro
+ * différent.
+ *
+ * ```ts
+ * return avecNumeroUnique(
+ *   () => this.prisma.$transaction(async (tx) => {
+ *     await tx.demandeDocument.create({ data: { numero: await prochainNumeroSerie(tx, serie, annee) } });
+ *   }),
+ *   { colonnes: ['numero'] },
+ * );
+ * ```
+ */
+export async function avecNumeroUnique<T>(creer: () => Promise<T>, options: OptionsNumeroUnique = {}): Promise<T> {
+  const tentatives = Math.max(1, options.tentatives ?? 3);
+  let cause: unknown;
+  for (let tentative = 1; tentative <= tentatives; tentative++) {
+    try {
+      return await creer();
+    } catch (reur) {
+      if (!estCollisionNumero(reur, options.colonnes)) throw reur;
+      cause = reur;
+    }
+  }
+  throw options.erreur ? options.erreur(cause) : new ConflictException(t('common.duplicateRecord'));
 }

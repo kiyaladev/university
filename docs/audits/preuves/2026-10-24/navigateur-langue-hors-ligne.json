@@ -1,0 +1,71 @@
+{
+  "date": "2026-10-24T11:01:37.469Z",
+  "build": "/tmp/mc/l7/build-nav",
+  "front": "http://127.0.0.1:5029",
+  "totaux": {
+    "scenarios": 10,
+    "ok": 9,
+    "ko": 1
+  },
+  "resultats": [
+    {
+      "scenario": "langue — écran français",
+      "statut": "OK",
+      "detail": "« fr », menu en français"
+    },
+    {
+      "scenario": "langue — passage en anglais",
+      "statut": "OK",
+      "detail": "« en », menu en anglais, titre « Accueil de l’université — University »"
+    },
+    {
+      "scenario": "langue — persistance après rechargement",
+      "statut": "OK",
+      "detail": "html lang « en », stockage « en-US »"
+    },
+    {
+      "scenario": "langue — retour au français",
+      "statut": "OK",
+      "detail": "html lang « fr »"
+    },
+    {
+      "scenario": "titre « University » — écrans publics",
+      "statut": "OK",
+      "detail": "/connexion → « Connexion — University » | /bibliotheque → « Bibliothèque numérique — University » | /formations → « Formation continue — University » | /verification → « Vérification d’attestation — University »"
+    },
+    {
+      "scenario": "hors ligne — service worker",
+      "statut": "OK",
+      "detail": "coque mise en cache et page contrôlée après 6007 ms"
+    },
+    {
+      "scenario": "hors ligne — mise en file d’une séance",
+      "statut": "OK",
+      "detail": "séance en file (6f048df0-c006-428a-a312-96c3e0ae9d62)"
+    },
+    {
+      "scenario": "hors ligne — file des séances chiffrée",
+      "statut": "OK",
+      "detail": "clé « university_file_seances_070c0e2f-e7b9-4b09-8f6b-eaa8dc4070d6 » chiffrée (878 caractères, préfixe « upf1: »)"
+    },
+    {
+      "scenario": "hors ligne — aucune donnée en clair dans localStorage",
+      "statut": "KO",
+      "detail": "données en clair : university_salles_tournee_070c0e2f-e7b9-4b09-8f6b-eaa8dc4070d6 → Salle recette en clair | university_affectations_tournee_070c0e2f-e7b9-4b09-8f6b-eaa8dc4070d6 → Recette navigateur",
+      "capture": "/opt/apps/university-mc/l7-navigateur/docs/audits/preuves/2026-10-24/navigateur-hors-ligne-en-clair.png"
+    },
+    {
+      "scenario": "hors ligne — rechargement et restitution de la file",
+      "statut": "OK",
+      "detail": "une séance restituée après rechargement hors ligne, écran 850 caractères"
+    }
+  ],
+  "anomalies": [
+    {
+      "scenario": "hors ligne — aucune donnée en clair dans localStorage",
+      "attendu": "le parcours aboutit sans erreur",
+      "obtenu": "données en clair : university_salles_tournee_070c0e2f-e7b9-4b09-8f6b-eaa8dc4070d6 → Salle recette en clair | university_affectations_tournee_070c0e2f-e7b9-4b09-8f6b-eaa8dc4070d6 → Recette navigateur",
+      "capture": "/opt/apps/university-mc/l7-navigateur/docs/audits/preuves/2026-10-24/navigateur-hors-ligne-en-clair.png"
+    }
+  ]
+}

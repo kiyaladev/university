@@ -2,19 +2,38 @@
 
 import type { AnneeAcademique, Enseignant, Matiere, Promotion } from './referentiels';
 
-export type StatutInscription = 'BROUILLON' | 'EN_ATTENTE_PAIEMENT' | 'PAYEE' | 'VALIDEE' | 'ANNULEE';
+/** Énumérations générées depuis le schéma Prisma (voir `types/generated/enums.ts`). */
+import type {
+  DecisionJury,
+  ModePaiement,
+  OperateurPaiement,
+  SessionDeliberation,
+  StatutAttestation,
+  StatutDeliberation,
+  StatutEvaluation,
+  StatutInscription,
+  StatutNotification,
+  StatutPaie,
+  StatutPaiement,
+  TypeAttestation,
+  TypeEvaluation,
+} from './generated/enums';
 
-export type StatutPaiement = 'EN_ATTENTE' | 'REUSSI' | 'ECHOUE' | 'ANNULE' | 'REMBOURSE';
-export type ModePaiement = 'MOBILE_MONEY' | 'ESPECES' | 'VIREMENT';
-export type StatutPaie = 'BROUILLON' | 'VALIDEE' | 'PAYEE';
-export type TypeEvaluation = 'CC' | 'EXAMEN' | 'RATTRAPAGE' | 'ORAL' | 'TP';
-export type StatutEvaluation = 'OUVERTE' | 'CLOTUREE';
-export type SessionDeliberation = 'NORMALE' | 'RATTRAPAGE';
-export type StatutDeliberation = 'BROUILLON' | 'VALIDEE';
-export type DecisionJury = 'ADMIS' | 'AJOURNE' | 'DEFAILLANT';
-export type TypeAttestation = 'SCOLARITE' | 'SITUATION' | 'REUSSITE' | 'DIPLOME' | 'ASSIDUITE';
-export type StatutAttestation = 'EMISE' | 'REVOQUEE';
-export type StatutNotification = 'EN_ATTENTE' | 'ENVOYEE' | 'ECHOUE';
+export type {
+  DecisionJury,
+  ModePaiement,
+  OperateurPaiement,
+  SessionDeliberation,
+  StatutAttestation,
+  StatutDeliberation,
+  StatutEvaluation,
+  StatutInscription,
+  StatutNotification,
+  StatutPaie,
+  StatutPaiement,
+  TypeAttestation,
+  TypeEvaluation,
+} from './generated/enums';
 
 export interface Etudiant {
   id: string;
@@ -67,7 +86,7 @@ export interface Paiement {
   montant: number;
   devise: string;
   mode: ModePaiement;
-  operateur?: string | null;
+  operateur?: OperateurPaiement | null;
   telephone?: string | null;
   nomComplet?: string | null;
   motif?: string | null;
@@ -116,7 +135,7 @@ export interface Deliberation {
   id: string;
   anneeId: string;
   promotionId: string;
-  session: 'NORMALE' | 'RATTRAPAGE';
+  session: SessionDeliberation;
   statut: StatutDeliberation;
   tauxReussite?: number | null;
   commentaire?: string | null;

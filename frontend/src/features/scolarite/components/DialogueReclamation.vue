@@ -114,11 +114,12 @@
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useQuasar } from 'quasar';
-import { api } from '@/boot/axios';
 import ChampRecherche from '@/shared/components/ChampRecherche.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
 import { LIBELLE_PRIORITE_RECLAMATION, LIBELLE_TYPE_RECLAMATION } from '@/shared/utils/libelles';
-import type { PrioriteReclamation, Reclamation, TypeReclamation } from '@/types';
+import { reclamationsService } from '../services/reclamations';
+import type { PrioriteReclamation, Reclamation, TuileType, TypeReclamation } from '../types';
+import { messageErreurApi } from '@/shared/utils/erreur-http';
 
 const ouvert = defineModel<boolean>({ required: true });
 const emit = defineEmits<{ enregistre: [Reclamation] }>();
@@ -127,12 +128,6 @@ const $q = useQuasar();
 const { t: $t } = useI18n();
 const enregistrement = ref(false);
 const erreur = ref('');
-
-interface TuileType {
-  value: TypeReclamation;
-  label: string;
-  icone: string;
-}
 
 const ICONE_TYPE: Record<TypeReclamation, string> = {
   NOTE_MANQUANTE: 'edit_note',
@@ -210,12 +205,12 @@ async function envoyer() {
       if (form.value.nomAuteur) body.nomAuteur = form.value.nomAuteur.trim();
       if (form.value.emailAuteur) body.emailAuteur = form.value.emailAuteur.trim();
     }
-    const { data } = await api.post('/reclamations', body, { silencieux: true });
-    $q.notify({ type: 'positive', message: $t('reclamations.dialog.create.opened', { numero: data.numero }) });
-    emit('enregistre', data);
+    const reclamation = await reclamationsService.creer(body, { silencieux: true });
+    $q.notify({ type: 'positive', message: $t('reclamations.dialog.create.opened', { numero: reclamation.numero }) });
+    emit('enregistre', reclamation);
     ouvert.value = false;
-  } catch (e: any) {
-    erreur.value = e.response?.data?.message ?? $t('reclamations.dialog.create.sendFailed');
+  } catch (e: unknown) {
+    erreur.value = messageErreurApi(e) ?? $t('reclamations.dialog.create.sendFailed');
   } finally {
     enregistrement.value = false;
   }

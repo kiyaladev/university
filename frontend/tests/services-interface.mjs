@@ -3,43 +3,77 @@ import fs from 'node:fs';
 import { chromium } from 'playwright';
 const base = process.argv[2] || 'http://127.0.0.1:15042';
 const api = process.env.API_URL || 'http://127.0.0.1:15041/api';
-if (![base, api].every(url => ['127.0.0.1', 'localhost'].includes(new URL(url).hostname)) || process.env.QA_DATABASE !== 'university_recommandations_20261006') throw Error('API locale et base QA explicites obligatoires');
+if (
+  ![base, api].every((url) => ['127.0.0.1', 'localhost'].includes(new URL(url).hostname)) ||
+  process.env.QA_DATABASE !== 'university_recommandations_20261006'
+)
+  throw Error('API locale et base QA explicites obligatoires');
 const previous = await (await fetch(api + '/services-actifs')).json();
-const login = await fetch(api + '/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: 'admin@unipresence.gn', password: 'Passer@2026' }) });
+const login = await fetch(api + '/auth/login', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ email: 'admin@unipresence.gn', password: 'Passer@2026' }),
+});
 assert.equal(login.status, 201);
 const { token } = await login.json();
 const browser = await chromium.launch();
 try {
   const context = await browser.newContext({ locale: 'fr-FR', viewport: { width: 1440, height: 950 } });
-  await context.addInitScript(token => { localStorage.setItem('unipresence_token', token); localStorage.setItem('lang', 'fr-FR'); }, token);
+  await context.addInitScript((token) => {
+    localStorage.setItem('university_token', token);
+    localStorage.setItem('university_lang', 'fr-FR');
+  }, token);
   const page = await context.newPage();
   await page.goto(base + '/#/parametres', { waitUntil: 'networkidle' });
   await page.getByRole('button', { name: 'Masquer les modules pilotes', exact: true }).click();
-  const responsePromise = page.waitForResponse(r => r.url().endsWith('/services-actifs') && r.request().method() === 'PUT');
+  const responsePromise = page.waitForResponse(
+    (r) => r.url().endsWith('/services-actifs') && r.request().method() === 'PUT',
+  );
   await page.getByRole('button', { name: 'Enregistrer les services', exact: true }).click();
   assert.equal((await responsePromise).status(), 200);
   const current = await (await fetch(api + '/services-actifs')).json();
-  assert.ok(current.every(s => s.obligatoire ? s.actif : !s.pilote || !s.actif));
+  assert.ok(current.every((s) => (s.obligatoire ? s.actif : !s.pilote || !s.actif)));
   await page.setViewportSize({ width: 375, height: 950 });
   await page.waitForTimeout(600);
-  const layout = await page.evaluate(() => ({ width: innerWidth, scrollWidth: document.documentElement.scrollWidth, overflowing: [...document.querySelectorAll('body *')].filter(e => e.getBoundingClientRect().right > innerWidth + 1).map(e => ({ tag: e.tagName, classes: e.className, right: e.getBoundingClientRect().right })).slice(0, 12) }));
+  const layout = await page.evaluate(() => ({
+    width: innerWidth,
+    scrollWidth: document.documentElement.scrollWidth,
+    overflowing: [...document.querySelectorAll('body *')]
+      .filter((e) => e.getBoundingClientRect().right > innerWidth + 1)
+      .map((e) => ({ tag: e.tagName, classes: e.className, right: e.getBoundingClientRect().right }))
+      .slice(0, 12),
+  }));
   assert.ok(layout.scrollWidth <= layout.width + 1, JSON.stringify(layout));
   await page.goto(base + '/#/vod', { waitUntil: 'networkidle' });
-  await page.waitForURL(url => url.hash === '#/');
+  await page.waitForURL((url) => url.hash === '#/');
   assert.equal(new URL(page.url()).hash, '#/');
   assert.equal(await page.locator('.q-drawer a[href="#/vod"]').count(), 0);
   const anonymous = await browser.newPage({ viewport: { width: 375, height: 950 } });
   await anonymous.goto(base + '/#/formations', { waitUntil: 'networkidle' });
-  await anonymous.waitForURL(url => url.hash === '#/connexion');
+  await anonymous.waitForURL((url) => url.hash === '#/connexion');
   assert.equal(new URL(anonymous.url()).hash, '#/connexion');
   assert.equal(await anonymous.locator('a[href="#/formations"]').count(), 0);
   const brand = anonymous.locator('.auth-entete__marque');
-  assert.ok(await brand.evaluate(element => element.scrollWidth <= element.clientWidth + 1));
-  const report = { date: new Date().toISOString(), checks: ['sélection des pilotes depuis les paramètres', 'enregistrement réel et essentiels conservés', 'paramètres sans débordement à 375 px', 'menu et accès direct VOD retirés', 'service public formation retiré', 'marque publique sans troncature à 375 px'] };
+  assert.ok(await brand.evaluate((element) => element.scrollWidth <= element.clientWidth + 1));
+  const report = {
+    date: new Date().toISOString(),
+    checks: [
+      'sélection des pilotes depuis les paramètres',
+      'enregistrement réel et essentiels conservés',
+      'paramètres sans débordement à 375 px',
+      'menu et accès direct VOD retirés',
+      'service public formation retiré',
+      'marque publique sans troncature à 375 px',
+    ],
+  };
   if (process.argv[3]) fs.writeFileSync(process.argv[3], JSON.stringify(report, null, 2));
   console.log(JSON.stringify(report));
 } finally {
-  const restore = await fetch(api + '/services-actifs', { method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ services: previous.map(({ id, actif }) => ({ id, actif })) }) });
+  const restore = await fetch(api + '/services-actifs', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ services: previous.map(({ id, actif }) => ({ id, actif })) }),
+  });
   assert.equal(restore.status, 200);
   await browser.close();
 }

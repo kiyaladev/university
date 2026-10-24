@@ -1,0 +1,262 @@
+import { QueryDto } from '../../../common/dto';
+import { journaliser } from '../../../common/audit';
+/**
+ * Étudiants : le registre central dont dépendent tous les autres modules.
+ * Matricule séquentiel par année ("2026-0004"), jeton QR resto généré à la
+ * création, compte portail (User role ETUDIANT) rattaché sur demande.
+ */
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { t } from '../../../common/i18n';
+import { Etudiant, Prisma, Role } from '@prisma/client';
+import * as bcrypt from 'bcryptjs';
+import { randomBytes } from 'node:crypto';
+import { CrudService } from '../../../common/crud.service';
+import { PrismaService } from '../../../prisma/prisma.service';
+import { AuthUser } from '../../../common/decorators';
+import { toDateOnly } from '../../../common/utils';
+import { CreateEtudiantDto, UpdateEtudiantDto } from './inscription.dto';
+import { SERIES_NUMERO, avecNumeroUnique, millesimeSerie, prochainNumeroSerie } from '../../../common/numero';
+
+export const ETUDIANT_INCLUDE = {
+  user: { select: { id: true, email: true, actif: true } },
+  _count: { select: { inscriptions: true, paiements: true } },
+  inscriptions: {
+    take: 1,
+    orderBy: { createdAt: 'desc' },
+    include: { promotion: true },
+  },
+} satisfies Prisma.EtudiantInclude;
+
+/** Champs du tableau départemental : pas d’adresse, date de naissance ni dossier complet. */
+const ETUDIANT_DEPARTEMENT_SELECT = {
+  id: true,
+  matricule: true,
+  nom: true,
+  prenom: true,
+  sexe: true,
+  telephone: true,
+  email: true,
+  actif: true,
+  user: { select: { id: true, email: true, actif: true } },
+  _count: { select: { inscriptions: true } },
+  inscriptions: {
+    take: 1,
+    orderBy: { createdAt: 'desc' },
+    select: {
+      promotion: {
+        select: { id: true, nom: true, niveau: true, filiere: { select: { code: true, nom: true } } },
+      },
+    },
+  },
+} satisfies Prisma.EtudiantSelect;
+
+/**
+ * Colonnes lues pour l'instantané d'audit d'un étudiant : ni coordonnées, ni
+ * date de naissance, ni données de compte.
+ */
+type EtudiantAudit = Pick<Etudiant, 'matricule' | 'nom' | 'prenom' | 'sexe' | 'actif'>;
+
+@Injectable()
+export class EtudiantsService extends CrudService {
+  constructor(prisma: PrismaService) {
+    super(prisma, 'etudiant', {
+      searchFields: ['nom', 'prenom', 'matricule', 'telephone', 'email'],
+      orderBy: [{ matricule: 'desc' }],
+      include: ETUDIANT_INCLUDE,
+      omit: { qrRestoToken: true },
+      label: 'Étudiant',
+    });
+  }
+
+  private lecture(user: AuthUser): CrudService {
+    if (user.role === Role.CHEF_DEPARTEMENT)
+      return new CrudService(this.prisma, 'etudiant', {
+        searchFields: ['nom', 'prenom', 'matricule', 'telephone', 'email'],
+        orderBy: [{ matricule: 'desc' }],
+        select: ETUDIANT_DEPARTEMENT_SELECT,
+        label: 'Étudiant',
+      });
+    if (user.role !== Role.ENSEIGNANT) return this;
+    return new CrudService(this.prisma, 'etudiant', {
+      searchFields: ['nom', 'prenom', 'matricule'],
+      orderBy: [{ matricule: 'desc' }],
+      select: { id: true, matricule: true, nom: true, prenom: true, sexe: true, actif: true },
+      label: 'Étudiant',
+    });
+  }
+
+  private perimetre(user: AuthUser) {
+    if (user.role === Role.ETUDIANT) return { id: user.etudiantId ?? '__aucun__' };
+    if (user.role === Role.CHEF_DEPARTEMENT)
+      return {
+        inscriptions: { some: { promotion: { filiere: { departementId: user.departementId ?? '__aucun__' } } } },
+      };
+    if (user.role === Role.ENSEIGNANT)
+      return {
+        travauxEncadres: { some: { encadrantId: user.enseignantId ?? '__aucun__' } },
+      };
+    return {};
+  }
+
+  listePour(query: QueryDto, filters: Record<string, unknown>, user: AuthUser) {
+    return this.lecture(user).lister(query, { AND: [filters, this.perimetre(user)] });
+  }
+
+  async detailPour(id: string, user: AuthUser) {
+    const result = await this.lecture(user).lister({ pageSize: 1 }, { AND: [{ id }, this.perimetre(user)] });
+    if (!result.data[0]) throw new NotFoundException(t('common.notFound'));
+    return result.data[0];
+  }
+
+  /** Jeton encodé dans le QR « carte resto » — aléatoire, unique, jamais devinable. */
+  nouveauQrResto(): string {
+    return `UP-RESTO-${randomBytes(12).toString('base64url')}`;
+  }
+
+  /**
+   * Création avec matricule et QR automatiques. `creerCompte` ouvre aussi le
+   * compte portail (User role ETUDIANT) rattaché à la fiche. Deux créations
+   * simultanées tentent le même matricule : la contrainte @unique départage,
+   * la création recommence avec le suivant.
+   */
+  async creer(dto: CreateEtudiantDto, user: AuthUser | null, libelleAnnee?: string | null) {
+    const { creerCompte = false, motDePasse, ...donnees } = dto;
+    if (creerCompte) {
+      if (!donnees.email) {
+        throw new BadRequestException(t('inscription.l_e_mail_est_requis_pour_creer_le_compte_etudiant'));
+      }
+      if (!motDePasse) {
+        throw new BadRequestException(t('inscription.le_mot_de_passe_est_requis_pour_creer_le_compte_etudiant'));
+      }
+    }
+
+    const annee = millesimeSerie(SERIES_NUMERO.MATRICULE, libelleAnnee);
+    return avecNumeroUnique(
+      () =>
+        this.prisma.$transaction(async (tx) => {
+          let compte: { id: string } | null = null;
+          if (creerCompte) {
+            const existant = await tx.user.findUnique({ where: { email: donnees.email } });
+            if (existant) {
+              throw new ConflictException(t('inscription.un_compte_existe_deja_avec_cet_e_mail'));
+            }
+            compte = await tx.user.create({
+              data: {
+                email: donnees.email!,
+                nom: donnees.nom,
+                prenom: donnees.prenom,
+                telephone: donnees.telephone ?? null,
+                role: Role.ETUDIANT,
+                password: await bcrypt.hash(motDePasse!, 10),
+              },
+              select: { id: true },
+            });
+          }
+          const etudiant = await tx.etudiant.create({
+            data: {
+              ...donnees,
+              ...(donnees.dateNaissance ? { dateNaissance: toDateOnly(donnees.dateNaissance) } : {}),
+              matricule: await prochainNumeroSerie(tx, SERIES_NUMERO.MATRICULE, annee),
+              qrRestoToken: this.nouveauQrResto(),
+              userId: compte?.id ?? null,
+            },
+            include: ETUDIANT_INCLUDE,
+          });
+          await journaliser(tx, user ?? null, 'ETUDIANT_CREE', 'Etudiant', etudiant.id, {
+            avant: null,
+            apres: this.instantaneAudit(etudiant),
+          });
+          return etudiant;
+        }),
+      {
+        tentatives: 10,
+        // Seul le matricule est un numéro : un e-mail déjà pris ou un jeton
+        // de resto en double doivent remonter tels quels, pas être transformés
+        // en « matricule indisponible ».
+        colonnes: ['matricule'],
+        erreur: () => new ConflictException(t('inscription.matricule_temporairement_indisponible_reessayez')),
+      },
+    );
+  }
+
+  async modifier(id: string, dto: UpdateEtudiantDto, user: AuthUser) {
+    const { creerCompte = false, motDePasse, ...donnees } = dto;
+    return this.prisma.$transaction(async (tx) => {
+      const actuel = await tx.etudiant.findUnique({ where: { id } });
+      if (!actuel) throw new NotFoundException(t('common.notFound'));
+
+      let compteId = actuel.userId ?? null;
+      if (creerCompte && !compteId) {
+        const email = donnees.email ?? actuel.email;
+        if (!email) throw new BadRequestException(t('inscription.l_e_mail_est_requis_pour_creer_le_compte_etudiant'));
+        if (!motDePasse) {
+          throw new BadRequestException(t('inscription.le_mot_de_passe_est_requis_pour_creer_le_compte_etudiant'));
+        }
+        const existant = await tx.user.findUnique({ where: { email } });
+        if (existant) throw new ConflictException(t('inscription.un_compte_existe_deja_avec_cet_e_mail'));
+        const compte = await tx.user.create({
+          data: {
+            email,
+            nom: donnees.nom ?? actuel.nom,
+            prenom: donnees.prenom ?? actuel.prenom,
+            telephone: donnees.telephone ?? actuel.telephone ?? null,
+            role: Role.ETUDIANT,
+            password: await bcrypt.hash(motDePasse!, 10),
+          },
+          select: { id: true },
+        });
+        compteId = compte.id;
+      }
+
+      const maj = await tx.etudiant.update({
+        where: { id },
+        data: {
+          ...donnees,
+          ...(donnees.dateNaissance ? { dateNaissance: toDateOnly(donnees.dateNaissance) } : {}),
+          qrRestoToken: actuel.qrRestoToken ?? this.nouveauQrResto(),
+          userId: compteId,
+        },
+        include: ETUDIANT_INCLUDE,
+      });
+      await journaliser(tx, user, 'ETUDIANT_MODIFIE', 'Etudiant', id, {
+        avant: this.instantaneAudit(actuel),
+        apres: this.instantaneAudit(maj),
+        champsModifies: Object.keys(donnees),
+      });
+      return maj;
+    });
+  }
+
+  /** État utile à l'audit sans coordonnées, date de naissance ni données de compte. */
+  private instantaneAudit(etudiant: EtudiantAudit) {
+    return {
+      matricule: etudiant.matricule,
+      nom: etudiant.nom,
+      prenom: etudiant.prenom,
+      sexe: etudiant.sexe ?? null,
+      actif: etudiant.actif,
+    };
+  }
+
+  /**
+   * « Suppression » : la fiche ne s'efface jamais (elle porte paiements,
+   * notes, attestations…), elle se désactive. Le portail étudiant refuse
+   * alors l'accès au compte rattaché.
+   */
+  async supprimer(id: string, user?: AuthUser) {
+    await this.prisma.$transaction(async (tx) => {
+      const avant = await tx.etudiant.findUnique({ where: { id } });
+      if (!avant) throw new NotFoundException(t('common.notFound'));
+      const apres = await tx.etudiant.update({
+        where: { id },
+        data: { actif: false },
+        include: ETUDIANT_INCLUDE,
+      });
+      await journaliser(tx, user ?? null, 'ETUDIANT_DESACTIVE', 'Etudiant', id, {
+        avant: this.instantaneAudit(avant),
+        apres: this.instantaneAudit(apres),
+      });
+    });
+    return { id };
+  }
+}

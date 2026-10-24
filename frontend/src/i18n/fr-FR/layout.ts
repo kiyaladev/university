@@ -20,6 +20,9 @@ export default {
   offline: 'Hors ligne',
   install: 'Installer sur cet appareil',
   installHelp: 'Ouvrir la tournée depuis l’écran d’accueil',
+  installed: '{name} est installée sur cet appareil',
+  installDeferred: 'Installation reportée',
+  installDeferredHint: 'Vous pourrez la relancer depuis ce menu.',
   downloadAndroid: 'Télécharger l’application Android',
   androidHelp: 'Nécessaire pour le lecteur d’empreintes branché au téléphone',
   changePassword: 'Changer mon mot de passe',
@@ -33,7 +36,7 @@ export default {
   publicNav: {
     services: 'Services publics',
     menu: 'Services',
-    footer: 'UniPrésence — services publics de l’université',
+    footer: 'University — services publics de l’université',
     personalArea: 'Espace personnel',
     staffLogin: 'Connexion',
     staffLoginHelp: 'Personnel de l’université',

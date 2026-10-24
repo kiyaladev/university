@@ -79,14 +79,15 @@
 import { computed, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
-import { api } from '@/boot/axios';
 import ChampDate from '@/shared/components/ChampDate.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
-import { LIBELLE_TYPE_RECETTE, aujourdhui } from '@/shared/utils/libelles';
+import { aujourdhui, DEVISE, LIBELLE_TYPE_RECETTE } from '@/shared/utils/libelles';
+import { recettesService } from '../services/recettes';
+import type { RecetteExterne, TypeRecette } from '@/types';
 
 const ouvert = defineModel<boolean>({ required: true });
 const props = defineProps<{
-  existant: any | null;
+  existant: RecetteExterne | null;
 }>();
 const emit = defineEmits<{
   enregistre: [];
@@ -104,11 +105,11 @@ const optionsTypes = computed(() =>
 
 const form = ref({
   numero: '',
-  type: 'PRESTATION_FORMATION',
+  type: 'PRESTATION_FORMATION' as TypeRecette,
   libelle: '',
   description: '',
   montant: 0,
-  devise: 'GNF',
+  devise: DEVISE,
   date: aujourdhui(),
   client: '',
   factureNum: '',
@@ -125,7 +126,7 @@ watch(ouvert, (v) => {
       libelle: props.existant.libelle,
       description: props.existant.description ?? '',
       montant: props.existant.montant,
-      devise: props.existant.devise ?? 'GNF',
+      devise: props.existant.devise ?? DEVISE,
       date: props.existant.date?.slice(0, 10) ?? aujourdhui(),
       client: props.existant.client ?? '',
       factureNum: props.existant.factureNum ?? '',
@@ -137,7 +138,7 @@ watch(ouvert, (v) => {
       libelle: '',
       description: '',
       montant: 0,
-      devise: 'GNF',
+      devise: DEVISE,
       date: aujourdhui(),
       client: '',
       factureNum: '',
@@ -164,22 +165,20 @@ async function enregistrer() {
       libelle: form.value.libelle.trim(),
       description: form.value.description.trim() || null,
       montant,
-      devise: form.value.devise.trim() || 'GNF',
+      devise: form.value.devise.trim() || DEVISE,
       date: form.value.date,
       client: form.value.client.trim() || null,
       factureNum: form.value.factureNum.trim() || null,
     };
     if (props.existant) {
-      await api.put(`/recettes/${props.existant.id}`, payload);
+      await recettesService.modifier(props.existant.id, payload);
       $q.notify({ type: 'positive', message: t('recettes.formDialog.updated') });
     } else {
-      await api.post('/recettes', { numero: form.value.numero.trim(), ...payload });
+      await recettesService.creer({ numero: form.value.numero.trim(), ...payload });
       $q.notify({ type: 'positive', message: t('recettes.formDialog.created') });
     }
     emit('enregistre');
     ouvert.value = false;
-  } catch {
-    /* notifié par l'intercepteur */
   } finally {
     envoi.value = false;
   }

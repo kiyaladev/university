@@ -58,7 +58,8 @@ import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
 import { computed, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
-import { api } from '@/boot/axios';
+import { affectationsService, libelleAffectation } from '../services/affectations';
+import { seancesService } from '../services/seances';
 import { useSeancesStore } from '@/stores/seances';
 import { TYPES_COURS, aujourdhui } from '@/shared/utils/libelles';
 import type { Affectation, Salle, Seance, TypeCours } from '@/types';
@@ -94,15 +95,14 @@ const optionsSalles = computed(() =>
   sallesDisponibles.value.map((s) => ({ label: `${s.code} — ${s.nom}`, value: s.id })),
 );
 
-const libelle = (a: Affectation) =>
-  `${a.enseignant?.nom} ${a.enseignant?.prenom} · ${a.matiere?.code} · ${a.promotion?.nom}`;
+const libelle = (a: Affectation) => libelleAffectation(a);
 
 async function filtrer(saisie: string, maj: (fn: () => void) => void) {
   if (!affectations.value.length) {
     try {
-      const { data } = await api.get('/affectations', { params: { all: '1' } });
-      affectations.value = data.data;
-      seancesHorsLigne.enregistrerAffectations(data.data ?? []);
+      const page = await affectationsService.toutes();
+      affectations.value = page.data;
+      await seancesHorsLigne.enregistrerAffectations(page.data ?? []);
     } catch {
       affectations.value = seancesHorsLigne.affectationsCache;
     }
@@ -135,14 +135,14 @@ async function enregistrer() {
     const payload = { ...form.value, thematique: form.value.thematique || undefined };
     let data: Seance;
     if (props.seance) {
-      ({ data } = await api.put(`/seances/${props.seance.id}`, payload));
+      data = await seancesService.modifier(props.seance.id, payload);
     } else {
       if (!affectations.value.length) affectations.value = seancesHorsLigne.affectationsCache;
       if (!affectations.value.length && navigator.onLine) {
         try {
-          const { data: chargees } = await api.get('/affectations', { params: { all: '1' } });
+          const chargees = await affectationsService.toutes();
           affectations.value = chargees.data ?? [];
-          seancesHorsLigne.enregistrerAffectations(affectations.value);
+          await seancesHorsLigne.enregistrerAffectations(affectations.value);
         } catch {
           /* Une saisie hors ligne continue avec le cache local. */
         }
@@ -171,7 +171,7 @@ async function enregistrer() {
         heureFin: form.value.heureFin,
         type: form.value.type as TypeCours,
         salleId: form.value.salleId,
-        statut: 'PLANIFIEE',
+        statut: 'PLANIFIE',
         thematique: form.value.thematique || null,
         affectation: selection,
         salle,

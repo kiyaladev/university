@@ -1,6 +1,6 @@
 # Simplifier University — analyse du 13 octobre 2026
 
-> Document figé. Le bilan de réalisation reste à la racine : [SIMPLIFICATION_2026_10_13.md](../../SIMPLIFICATION_2026_10_13.md).
+> Document figé. Le bilan de réalisation est ici : [bilan de réalisation](2026-10-13-bilan-simplification.md).
 
 ## Périmètre et conclusion
 
@@ -10,7 +10,7 @@ Analyse des routes, du menu, des composants partagés, des traductions français
 
 **Le meilleur premier chantier consiste à retirer les éléments répétés avant de fusionner les pages.** Le menu possède déjà cinq rubriques, des raccourcis par rôle et un seul groupe ouvert à la fois. Une nouvelle navigation générale apporterait peu. En revanche, les pages multiplient les renvois, les modes d’affichage et les blocs de synthèse avant la liste de travail.
 
-Ce document conserve l’analyse initiale, réalisée avant les modifications. La mise en œuvre autorisée ensuite est décrite dans le [bilan de réalisation](../../SIMPLIFICATION_2026_10_13.md). Aucune donnée de l’établissement n’a été supprimée.
+Ce document conserve l’analyse initiale, réalisée avant les modifications. La mise en œuvre autorisée ensuite est décrite dans le [bilan de réalisation](2026-10-13-bilan-simplification.md). Aucune donnée de l’établissement n’a été supprimée.
 
 ## 1. Suppressions prioritaires
 

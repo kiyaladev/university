@@ -68,5 +68,9 @@ export default {
     active: 'Créneau actif',
     saved: 'Créneau enregistré',
     saveFailed: 'Enregistrement impossible',
+    deleteTitle: 'Supprimer ce créneau ?',
+    deleteMessage: 'Le créneau du {day}, de {start} à {end}, disparaîtra de l’emploi du temps.',
+    deleted: 'Créneau supprimé',
+    deleteFailed: 'Suppression impossible',
   },
 };

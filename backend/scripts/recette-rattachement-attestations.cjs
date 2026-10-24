@@ -29,7 +29,7 @@ async function main() {
   const token = login.body.token;
   const year = await prisma.anneeAcademique.findFirstOrThrow({ where: { active: true, cloturee: false } });
   const promotion = await prisma.promotion.findFirstOrThrow({ where: { anneeId: year.id } });
-  const other = await prisma.inscription.findFirstOrThrow({ where: { anneeId: year.id, statut: 'VALIDEE' } });
+  const other = await prisma.inscription.findFirstOrThrow({ where: { anneeId: year.id, statut: 'VALIDE' } });
   const tag = 'QA-RATTACHEMENT-' + randomUUID();
   const otherYear = await prisma.anneeAcademique.create({
     data: { libelle: tag, dateDebut: year.dateDebut, dateFin: year.dateFin },
@@ -42,7 +42,7 @@ async function main() {
   const student = await prisma.etudiant.create({ data: { matricule: tag, nom: 'Recette', prenom: 'Rattachement' } });
   studentId = student.id;
   const inscription = await prisma.inscription.create({
-    data: { numero: tag, etudiantId: student.id, anneeId: year.id, promotionId: promotion.id, statut: 'VALIDEE' },
+    data: { numero: tag, etudiantId: student.id, anneeId: year.id, promotionId: promotion.id, statut: 'VALIDE' },
   });
   inscriptionId = inscription.id;
   const base = { etudiantId: student.id, anneeId: year.id };
@@ -98,7 +98,7 @@ async function main() {
     mismatchedPromotion: mismatchedPromotion.status,
     concurrentEmissions: emissions.map((r) => r.status).sort(),
     activeSchoolCertificates: await prisma.attestation.count({
-      where: { etudiantId: student.id, anneeId: year.id, type: 'SCOLARITE', statut: 'EMISE' },
+      where: { etudiantId: student.id, anneeId: year.id, type: 'SCOLARITE', statut: 'EMIS' },
     }),
     promotionDerivedFromInscription: persisted.promotionId === promotion.id,
     yearDerivedFromInscription: persisted.anneeId === year.id,
@@ -116,7 +116,7 @@ async function main() {
   );
   observations.concurrentTypeChanges = concurrentTypeChanges.map((r) => r.status).sort();
   observations.activeSuccessCertificates = await prisma.attestation.count({
-    where: { etudiantId: student.id, anneeId: year.id, type: 'REUSSITE', statut: 'EMISE' },
+    where: { etudiantId: student.id, anneeId: year.id, type: 'REUSSITE', statut: 'EMIS' },
   });
   const revocation = await request(token, 'POST', `/attestations/${issued.body.id}/revoquer`, {
     motifRevocation: 'Remplacement de recette',

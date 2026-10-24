@@ -2,7 +2,7 @@
 export default {
   signage: {
     overline: 'University staff',
-    brand: 'UniPrésence',
+    brand: 'University',
     tagline:
       'The controller’s register, room by room: it logs the session, gets the teacher to sign or place a finger, and the time is recorded.',
     facts: {

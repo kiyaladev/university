@@ -4,14 +4,14 @@ import { computed, nextTick, onMounted, ref } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import QRCode from 'qrcode';
-import { api } from '@/boot/axios';
-import { getAppLocale } from '@/boot/i18n';
 import EnTetePage from '@/shared/components/EnTetePage.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
 import { useAuthStore } from '@/stores/auth';
 import type { CarteEtudiante } from '@/types';
 import { ouvrirImpression } from '@/shared/services/impression';
+import { dateLongueLisible } from '@/shared/utils/format';
+import { cartesEtudiantesService } from '../services/cartes-etudiantes';
 
 const $q = useQuasar();
 const auth = useAuthStore();
@@ -27,12 +27,12 @@ const nipValeur = ref('');
 const nipConfirmation = ref('');
 
 /** Une carte révoquée ne s'imprime plus et n'accepte plus de NIP. */
-const carteUtilisable = computed(() => Boolean(carte.value && carte.value.statut === 'EMISE'));
+const carteUtilisable = computed(() => Boolean(carte.value && carte.value.statut === 'EMIS'));
 
 async function charger() {
   chargement.value = true;
   try {
-    const { data } = await api.get('/cartes-etudiantes/me');
+    const data = await cartesEtudiantesService.maCarte();
     carte.value = data;
     urlVerification.value = `${window.location.origin}/#/verification-carte?carte=${encodeURIComponent(data.id)}&k=${encodeURIComponent(data.qrToken)}`;
     await nextTick();
@@ -82,7 +82,7 @@ async function confirmerNip() {
   }
   if (!carte.value) return;
   try {
-    await api.post(`/cartes-etudiantes/${carte.value.id}/nip`, { nip: nipValeur.value });
+    await cartesEtudiantesService.definirNip(carte.value.id, nipValeur.value);
     $q.notify({ type: 'positive', message: t('maCarte.messages.nipSaved') });
     nipDialog.value = false;
   } catch {
@@ -93,12 +93,6 @@ async function confirmerNip() {
 function imprimer() {
   if (!carte.value) return;
   void ouvrirImpression(`/cartes-etudiantes/${carte.value.id}/imprimer`);
-}
-
-/** Date en toutes lettres (« 12 mars 2026 »), dans la langue choisie. */
-function dateLongue(v?: string | null): string {
-  if (!v) return '—';
-  return new Date(v).toLocaleDateString(getAppLocale(), { day: '2-digit', month: 'long', year: 'numeric' });
 }
 
 onMounted(charger);
@@ -167,11 +161,11 @@ onMounted(charger);
         <div class="row q-col-gutter-md">
           <div class="col-12 col-md-6">
             <div class="text-caption text-grey-7">{{ $t('common.fields.issuedOn') }}</div>
-            <div class="text-body1">{{ dateLongue(carte.dateEmission) }}</div>
+            <div class="text-body1">{{ dateLongueLisible(carte.dateEmission) }}</div>
           </div>
           <div class="col-12 col-md-6">
             <div class="text-caption text-grey-7">{{ $t('maCarte.card.validUntil') }}</div>
-            <div class="text-body1">{{ dateLongue(carte.dateValidite) }}</div>
+            <div class="text-body1">{{ dateLongueLisible(carte.dateValidite) }}</div>
           </div>
         </div>
       </q-card-section>

@@ -115,7 +115,7 @@ async function main() {
   const equipment = await request(admin, 'POST', '/equipements', { libelle: tag, emplacement: 'Salle QA' }, 201);
   created.equipments.push(equipment.id);
   assert.equal(equipment.codeQr, undefined);
-  const qr = (await prisma.equipementCampus.findUniqueOrThrow({ where: { id: equipment.id } })).codeQr;
+  const qr = (await prisma.equipementHelpdesk.findUniqueOrThrow({ where: { id: equipment.id } })).codeQr;
   const resolved = await request(null, 'GET', '/equipements/par-code/' + qr);
   assert.deepEqual(Object.keys(resolved).sort(), ['emplacement', 'id', 'libelle']);
   const ticket = await request(
@@ -385,7 +385,7 @@ async function main() {
   );
   const year = await prisma.anneeAcademique.findFirstOrThrow({ where: { active: true, cloturee: false } });
   const housed = await prisma.attributionLogement.findMany({
-    where: { anneeId: year.id, statut: 'ACCORDEE' },
+    where: { anneeId: year.id, statut: 'ACCORDE' },
     select: { etudiantId: true },
   });
   const applicant = await prisma.etudiant.findFirstOrThrow({
@@ -422,37 +422,39 @@ async function main() {
     directionToken,
     'PUT',
     `/attributions-logement/${applications[1].id}/decider`,
-    { statut: 'ACCORDEE' },
+    { statut: 'ACCORDE' },
     400,
   );
-  await request(admin, 'PUT', '/chambres/' + rooms[1].id, { statut: 'RESERVEE' });
+  await request(admin, 'PUT', '/chambres/' + rooms[1].id, { statut: 'RESERVE' });
   await request(
     registrarToken,
     'PUT',
     `/attributions-logement/${applications[0].id}/decider`,
-    { statut: 'ACCORDEE' },
+    { statut: 'ACCORDE' },
     403,
   );
-  await request(directionToken, 'PUT', `/attributions-logement/${applications[0].id}/decider`, { statut: 'ACCORDEE' });
+  await request(directionToken, 'PUT', `/attributions-logement/${applications[0].id}/decider`, { statut: 'ACCORDE' });
   await request(
     directionToken,
     'PUT',
     `/attributions-logement/${applications[1].id}/decider`,
-    { statut: 'ACCORDEE' },
+    { statut: 'ACCORDE' },
     400,
   );
   await request(admin, 'PUT', '/chambres/' + rooms[0].id, { statut: 'LIBRE' }, 400);
-  await request(admin, 'DELETE', '/chambres/' + rooms[0].id, null, 400);
-  await request(admin, 'DELETE', '/residences/' + residence.id, null, 400);
+  // 409 et non 400 : la demande est licite, c'est l'état du parc qui la
+  // refuse (la chambre porte une attribution, la résidence des chambres).
+  await request(admin, 'DELETE', '/chambres/' + rooms[0].id, null, 409);
+  await request(admin, 'DELETE', '/residences/' + residence.id, null, 409);
   await request(admin, 'PUT', `/attributions-logement/${applications[0].id}/retirer`, {
     motif: 'Départ fictif de recette',
   });
   assert.equal((await prisma.chambre.findUniqueOrThrow({ where: { id: rooms[0].id } })).statut, 'LIBRE');
-  await request(directionToken, 'PUT', `/attributions-logement/${applications[1].id}/decider`, { statut: 'ACCORDEE' });
-  assert.equal((await prisma.chambre.findUniqueOrThrow({ where: { id: rooms[1].id } })).statut, 'OCCUPEE');
+  await request(directionToken, 'PUT', `/attributions-logement/${applications[1].id}/decider`, { statut: 'ACCORDE' });
+  assert.equal((await prisma.chambre.findUniqueOrThrow({ where: { id: rooms[1].id } })).statut, 'OCCUPE');
   assert.equal(
     await prisma.attributionLogement.count({
-      where: { etudiantId: applicant.id, anneeId: year.id, statut: 'ACCORDEE' },
+      where: { etudiantId: applicant.id, anneeId: year.id, statut: 'ACCORDE' },
     }),
     1,
   );
@@ -474,14 +476,14 @@ async function main() {
       fetch(api + `/attributions-logement/${application.id}/decider`, {
         method: 'PUT',
         headers: { Authorization: `Bearer ${directionToken}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ statut: 'ACCORDEE' }),
+        body: JSON.stringify({ statut: 'ACCORDE' }),
       }),
     ),
   );
   assert.equal(decisions.filter((r) => r.status === 200).length, 1);
   assert.ok(decisions.some((r) => [400, 409].includes(r.status)));
   const finalAllocations = await prisma.attributionLogement.count({
-    where: { etudiantId: applicant.id, anneeId: year.id, statut: 'ACCORDEE' },
+    where: { etudiantId: applicant.id, anneeId: year.id, statut: 'ACCORDE' },
   });
   assert.equal(finalAllocations, 1);
   observations.logements = {
@@ -518,7 +520,7 @@ main()
     await prisma.soutenance.deleteMany({ where: { travailEncadreId: { in: created.works } } });
     await prisma.travailEncadre.deleteMany({ where: { id: { in: created.works } } });
     await prisma.ticketSupport.deleteMany({ where: { id: { in: created.tickets } } });
-    await prisma.equipementCampus.deleteMany({ where: { id: { in: created.equipments } } });
+    await prisma.equipementHelpdesk.deleteMany({ where: { id: { in: created.equipments } } });
     await prisma.documentDepot.deleteMany({ where: { id: { in: created.documents } } });
     await prisma.reparationMateriel.deleteMany({ where: { equipementId: { in: created.assets } } });
     await prisma.equipementPatrimoine.deleteMany({ where: { id: { in: created.assets } } });

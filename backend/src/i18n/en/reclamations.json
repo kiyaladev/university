@@ -12,5 +12,7 @@
   "l_escalade_automatique_n_est_possible_qu_apres_delaiheures": "Automatic escalation is only possible after {delaiHeures} hours without a response.",
   "transition_de_statut_non_autorisee": "This status transition is not allowed from the current state.",
   "reclamation_close_assignation_impossible": "A closed complaint cannot be reassigned.",
-  "ecriture_concurrente_reessayez": "This complaint was just changed. Reload it and try again."
+  "ecriture_concurrente_reessayez": "This complaint was just changed. Reload it and try again.",
+  "cette_reclamation_est_close_aucun_message_supplement": "This complaint is closed: no additional message is accepted.",
+  "pour_cloturer_passez_d_abord_la_reclamation_a_l_etat": "To close it, first move the complaint to the RESOLU, FERME or REJETE state."
 }

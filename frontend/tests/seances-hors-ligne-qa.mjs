@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import { createRequire } from 'node:module';
 import { chromium } from 'playwright';
+import { ecrirePreuve } from './preuves.mjs';
 const require = createRequire(import.meta.url);
 const { PrismaClient } = require('../../backend/node_modules/@prisma/client');
 const bcrypt = require('../../backend/node_modules/bcryptjs');
@@ -17,68 +18,109 @@ assert.equal(base, 'http://127.0.0.1:15042');
 const api = 'http://127.0.0.1:15041/api';
 const prisma = new PrismaClient({ datasources: { db: { url: env.DATABASE_URL } } });
 
-
 const tag = 'QA-OFFLINE-' + randomUUID();
 let year, department, filiere, promotion, teacher, subject, assignment, room, controller;
 const report = { date: new Date().toISOString(), statut: 'en_cours', api, simulatedApi: false };
 const browser = await chromium.launch();
 try {
- year = await prisma.anneeAcademique.create({ data: { libelle: tag, dateDebut: new Date('2026-01-01'), dateFin: new Date('2026-12-31') } });
- department = await prisma.departement.create({ data: { code: tag, nom: tag } });
- filiere = await prisma.filiere.create({ data: { code: tag, nom: tag, departementId: department.id } });
- promotion = await prisma.promotion.create({ data: { nom: tag, niveau: 'L1', filiereId: filiere.id, anneeId: year.id } });
- teacher = await prisma.enseignant.create({ data: { matricule: tag, nom: 'Recette', prenom: 'Planning', departementId: department.id } });
- subject = await prisma.matiere.create({ data: { code: tag, intitule: 'Planning QA', departementId: department.id } });
- assignment = await prisma.affectation.create({ data: { enseignantId: teacher.id, matiereId: subject.id, promotionId: promotion.id, anneeId: year.id } });
- room = await prisma.salle.create({ data: { code: tag, nom: 'Salle QA', qrToken: randomUUID() } });
+  year = await prisma.anneeAcademique.create({
+    data: { libelle: tag, dateDebut: new Date('2026-01-01'), dateFin: new Date('2026-12-31') },
+  });
+  department = await prisma.departement.create({ data: { code: tag, nom: tag } });
+  filiere = await prisma.filiere.create({ data: { code: tag, nom: tag, departementId: department.id } });
+  promotion = await prisma.promotion.create({
+    data: { nom: tag, niveau: 'L1', filiereId: filiere.id, anneeId: year.id },
+  });
+  teacher = await prisma.enseignant.create({
+    data: { matricule: tag, nom: 'Recette', prenom: 'Planning', departementId: department.id },
+  });
+  subject = await prisma.matiere.create({ data: { code: tag, intitule: 'Planning QA', departementId: department.id } });
+  assignment = await prisma.affectation.create({
+    data: { enseignantId: teacher.id, matiereId: subject.id, promotionId: promotion.id, anneeId: year.id },
+  });
+  room = await prisma.salle.create({ data: { code: tag, nom: 'Salle QA', qrToken: randomUUID() } });
 
- const password = randomUUID();
- controller = await prisma.user.create({ data: { email: 'qa-offline-' + randomUUID() + '@example.invalid', password: await bcrypt.hash(password, 10), nom: 'Recette', prenom: 'Contrôleur', role: 'CONTROLEUR', departementId: department.id } });
- Object.assign(process.env, env);
- const { AuthService } = require('../../backend/dist/modules/auth/auth.service');
- const { JwtService } = require('../../backend/node_modules/@nestjs/jwt');
- const { optionsJwt } = require('../../backend/dist/common/jwt-config.module');
- const auth = new AuthService(prisma, new JwtService(optionsJwt({ get: k => env[k] })));
- const token = (await auth.login({ email: controller.email, password }, 'QA-FIXTURE')).token;
- const me = await (await fetch(api + '/auth/me', { headers: { Authorization: `Bearer ${token}` } })).json(); assert.equal(me.id, controller.id);
- const context = await browser.newContext({ viewport: { width: 375, height: 900 } });
- await context.addInitScript(token => { localStorage.setItem('unipresence_token', token); localStorage.setItem('lang', 'fr-FR'); }, token);
- const page = await context.newPage(); page.setDefaultTimeout(60000);
- const erreurs = [], appelsSync = [];
- page.on('pageerror', e => erreurs.push(e.message));
- page.on('request', r => { if (r.url() === api + '/seances/sync' && r.method() === 'POST') appelsSync.push(r.postDataJSON()); });
+  const password = randomUUID();
+  controller = await prisma.user.create({
+    data: {
+      email: 'qa-offline-' + randomUUID() + '@example.invalid',
+      password: await bcrypt.hash(password, 10),
+      nom: 'Recette',
+      prenom: 'Contrôleur',
+      role: 'CONTROLEUR',
+      departementId: department.id,
+    },
+  });
+  Object.assign(process.env, env);
+  const { AuthService } = require('../../backend/dist/modules/auth/auth.service');
+  const { JwtService } = require('../../backend/node_modules/@nestjs/jwt');
+  const { optionsJwt } = require('../../backend/dist/common/jwt-config.module');
+  const auth = new AuthService(prisma, new JwtService(optionsJwt({ get: (k) => env[k] })));
+  const token = (await auth.login({ email: controller.email, password }, 'QA-FIXTURE')).token;
+  const me = await (await fetch(api + '/auth/me', { headers: { Authorization: `Bearer ${token}` } })).json();
+  assert.equal(me.id, controller.id);
+  const context = await browser.newContext({ viewport: { width: 375, height: 900 } });
+  await context.addInitScript((token) => {
+    localStorage.setItem('university_token', token);
+    localStorage.setItem('university_lang', 'fr-FR');
+  }, token);
+  const page = await context.newPage();
+  page.setDefaultTimeout(60000);
+  const erreurs = [],
+    appelsSync = [];
+  page.on('pageerror', (e) => erreurs.push(e.message));
+  page.on('request', (r) => {
+    if (r.url() === api + '/seances/sync' && r.method() === 'POST') appelsSync.push(r.postDataJSON());
+  });
   await page.goto(`${base}/#/controle`, { waitUntil: 'domcontentloaded', timeout: 60000 });
-  await page.waitForFunction(() => document.querySelector('#q-app')?.__vue_app__?.config.globalProperties.$pinia?._s.get('seancesHorsLigne'), null, { timeout: 60000 });
+  await page.waitForFunction(
+    () => document.querySelector('#q-app')?.__vue_app__?.config.globalProperties.$pinia?._s.get('seancesHorsLigne'),
+    null,
+    { timeout: 60000 },
+  );
   await page.evaluate(async () => navigator.serviceWorker.ready);
   await page.reload({ waitUntil: 'domcontentloaded', timeout: 60000 });
   await page.waitForFunction(() => Boolean(navigator.serviceWorker.controller), null, { timeout: 60000 });
-  await page.waitForFunction(() => document.querySelector('#q-app')?.__vue_app__?.config.globalProperties.$pinia?._s.get('seancesHorsLigne'), null, { timeout: 60000 });
+  await page.waitForFunction(
+    () => document.querySelector('#q-app')?.__vue_app__?.config.globalProperties.$pinia?._s.get('seancesHorsLigne'),
+    null,
+    { timeout: 60000 },
+  );
   await context.setOffline(true);
 
   const affectation = { id: assignment.id, anneeId: year.id, matiereId: subject.id };
   const salle = { id: room.id, code: room.code, nom: room.nom };
-  const queued = await page.evaluate(async ({ affectation, salle, userId }) => {
-    const store = document.querySelector('#q-app').__vue_app__.config.globalProperties.$pinia._s.get('seancesHorsLigne');
-    store.enregistrerAffectations([affectation]);
-    store.enregistrerSalles([salle]);
-    const result = await store.creer({
-      affectationId: affectation.id,
-      date: '2026-10-06T00:00:00.000Z',
-      heureDebut: '18:00',
-      heureFin: '19:00',
-      type: 'CM',
-      salleId: salle.id,
-      thematique: 'Séance de recette',
-    }, affectation, salle);
-    return {
-      result,
-      file: store.file,
-      affectations: store.affectationsCache,
-      salles: store.sallesCache,
-      visible: store.pourDate('2026-10-06'),
-      storage: localStorage.getItem('unipresence_file_seances_' + userId),
-    };
-  }, { affectation, salle, userId: controller.id });
+  const queued = await page.evaluate(
+    async ({ affectation, salle, userId }) => {
+      const store = document
+        .querySelector('#q-app')
+        .__vue_app__.config.globalProperties.$pinia._s.get('seancesHorsLigne');
+      store.enregistrerAffectations([affectation]);
+      store.enregistrerSalles([salle]);
+      const result = await store.creer(
+        {
+          affectationId: affectation.id,
+          date: '2026-10-06T00:00:00.000Z',
+          heureDebut: '18:00',
+          heureFin: '19:00',
+          type: 'CM',
+          salleId: salle.id,
+          thematique: 'Séance de recette',
+        },
+        affectation,
+        salle,
+      );
+      return {
+        result,
+        file: store.file,
+        affectations: store.affectationsCache,
+        salles: store.sallesCache,
+        visible: store.pourDate('2026-10-06'),
+        storage: localStorage.getItem('university_file_seances_' + userId),
+      };
+    },
+    { affectation, salle, userId: controller.id },
+  );
   assert.equal(queued.result.enFile, true, 'la séance doit être mise en file hors ligne');
   assert.match(queued.result.id, /^[0-9a-f-]{36}$/i, 'la file reçoit un UUID client stable');
   assert.equal(queued.file.length, 1);
@@ -89,19 +131,43 @@ try {
   assert.equal(appelsSync.length, 0, 'aucune demande de synchronisation ne part pendant la coupure réseau');
 
   await page.reload({ waitUntil: 'domcontentloaded', timeout: 60000 });
-  await page.waitForFunction(() => document.querySelector('#q-app')?.__vue_app__?.config.globalProperties.$pinia?._s.get('seancesHorsLigne')?.file?.length === 1, null, { timeout: 60000 });
+  await page.waitForFunction(
+    () =>
+      document.querySelector('#q-app')?.__vue_app__?.config.globalProperties.$pinia?._s.get('seancesHorsLigne')?.file
+        ?.length === 1,
+    null,
+    { timeout: 60000 },
+  );
   const restored = await page.evaluate(() => {
-    const store = document.querySelector('#q-app').__vue_app__.config.globalProperties.$pinia._s.get('seancesHorsLigne');
-    return { id: store.file[0].idClient, affectations: store.affectationsCache.length, salles: store.sallesCache.length };
+    const store = document
+      .querySelector('#q-app')
+      .__vue_app__.config.globalProperties.$pinia._s.get('seancesHorsLigne');
+    return {
+      id: store.file[0].idClient,
+      affectations: store.affectationsCache.length,
+      salles: store.sallesCache.length,
+    };
   });
-  assert.deepEqual(restored, { id: queued.result.id, affectations: 1, salles: 1 }, 'séance, affectations et salles persistent après rechargement hors ligne');
+  assert.deepEqual(
+    restored,
+    { id: queued.result.id, affectations: 1, salles: 1 },
+    'séance, affectations et salles persistent après rechargement hors ligne',
+  );
 
   await context.setOffline(false);
   await page.evaluate(async () => {
-    const store = document.querySelector('#q-app').__vue_app__.config.globalProperties.$pinia._s.get('seancesHorsLigne');
+    const store = document
+      .querySelector('#q-app')
+      .__vue_app__.config.globalProperties.$pinia._s.get('seancesHorsLigne');
     await store.synchroniser();
   });
-  await page.waitForFunction(() => document.querySelector('#q-app')?.__vue_app__?.config.globalProperties.$pinia?._s.get('seancesHorsLigne')?.file?.length === 0, null, { timeout: 60000 });
+  await page.waitForFunction(
+    () =>
+      document.querySelector('#q-app')?.__vue_app__?.config.globalProperties.$pinia?._s.get('seancesHorsLigne')?.file
+        ?.length === 0,
+    null,
+    { timeout: 60000 },
+  );
   assert.equal(appelsSync.length, 1, 'une seule synchronisation est envoyée');
   const envoyee = appelsSync[0].seances[0];
   assert.equal(envoyee.idClient, queued.result.id);
@@ -110,35 +176,50 @@ try {
   assert.equal(envoyee.enfileeLe, undefined);
 
   await page.evaluate(async () => {
-    const store = document.querySelector('#q-app').__vue_app__.config.globalProperties.$pinia._s.get('seancesHorsLigne');
+    const store = document
+      .querySelector('#q-app')
+      .__vue_app__.config.globalProperties.$pinia._s.get('seancesHorsLigne');
     await store.synchroniser();
   });
   assert.equal(appelsSync.length, 1, 'un nouvel appel ne rejoue pas une file déjà acceptée');
   assert.deepEqual(erreurs, [], 'aucune erreur JavaScript pendant le parcours');
-  report.statut = 'valide'; report.uuid = queued.result.id;
+  report.statut = 'valide';
+  report.uuid = queued.result.id;
   const stored = await prisma.seance.findUniqueOrThrow({ where: { id: queued.result.id } });
-  assert.equal(stored.controleurAssigneId, controller.id); assert.equal(stored.affectationId, assignment.id);
-  assert.equal(await prisma.auditLog.count({ where: { entiteId: stored.id, action: 'SEANCE_SYNCHRONISEE_HORS_LIGNE' } }), 1);
+  assert.equal(stored.controleurAssigneId, controller.id);
+  assert.equal(stored.affectationId, assignment.id);
+  assert.equal(
+    await prisma.auditLog.count({ where: { entiteId: stored.id, action: 'SEANCE_SYNCHRONISEE_HORS_LIGNE' } }),
+    1,
+  );
   report.singlePersistedSessionAndAudit = true;
 
- await context.close();
-} catch (e) { report.statut = 'echec'; report.erreur = e.message; process.exitCode = 1; }
-finally {
- if (year) {
-  const ss = await prisma.seance.findMany({ where: { anneeId: year.id }, select: { id: true } });
-  await prisma.auditLog.deleteMany({ where: { OR: [{ entiteId: { in: ss.map(s => s.id) } }, ...(controller ? [{ userId: controller.id }] : [])] } });
-  await prisma.seance.deleteMany({ where: { anneeId: year.id } });
-  if (assignment) await prisma.affectation.delete({ where: { id: assignment.id } });
-  if (promotion) await prisma.promotion.delete({ where: { id: promotion.id } });
-  if (filiere) await prisma.filiere.delete({ where: { id: filiere.id } });
-  if (teacher) await prisma.enseignant.delete({ where: { id: teacher.id } });
-  if (subject) await prisma.matiere.delete({ where: { id: subject.id } });
-  if (controller) await prisma.user.delete({ where: { id: controller.id } });
-  if (department) await prisma.departement.delete({ where: { id: department.id } });
-  if (room) await prisma.salle.delete({ where: { id: room.id } });
-  await prisma.anneeAcademique.delete({ where: { id: year.id } });
- }
- report.productionUntouched = true; report.physicalDeviceAndPointagePending = true;
- fs.writeFileSync('../audit/recommandations-2026-10-06/seances-hors-ligne-qa.json', JSON.stringify(report, null, 2) + '\n');
- await browser.close(); await prisma.$disconnect(); console.log(JSON.stringify({ statut: report.statut, erreur: report.erreur }));
+  await context.close();
+} catch (e) {
+  report.statut = 'echec';
+  report.erreur = e.message;
+  process.exitCode = 1;
+} finally {
+  if (year) {
+    const ss = await prisma.seance.findMany({ where: { anneeId: year.id }, select: { id: true } });
+    await prisma.auditLog.deleteMany({
+      where: { OR: [{ entiteId: { in: ss.map((s) => s.id) } }, ...(controller ? [{ userId: controller.id }] : [])] },
+    });
+    await prisma.seance.deleteMany({ where: { anneeId: year.id } });
+    if (assignment) await prisma.affectation.delete({ where: { id: assignment.id } });
+    if (promotion) await prisma.promotion.delete({ where: { id: promotion.id } });
+    if (filiere) await prisma.filiere.delete({ where: { id: filiere.id } });
+    if (teacher) await prisma.enseignant.delete({ where: { id: teacher.id } });
+    if (subject) await prisma.matiere.delete({ where: { id: subject.id } });
+    if (controller) await prisma.user.delete({ where: { id: controller.id } });
+    if (department) await prisma.departement.delete({ where: { id: department.id } });
+    if (room) await prisma.salle.delete({ where: { id: room.id } });
+    await prisma.anneeAcademique.delete({ where: { id: year.id } });
+  }
+  report.productionUntouched = true;
+  report.physicalDeviceAndPointagePending = true;
+  ecrirePreuve('seances-hors-ligne-qa.json', report);
+  await browser.close();
+  await prisma.$disconnect();
+  console.log(JSON.stringify({ statut: report.statut, erreur: report.erreur }));
 }

@@ -295,9 +295,13 @@ import { usePresentationListe } from '@/shared/composables/usePresentationListe'
 import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { useI18n } from 'vue-i18n';
-import { api } from '@/boot/axios';
 import { useAuthStore } from '@/stores/auth';
 import { useReferentielsStore } from '@/stores/referentiels';
+import {
+  affectationsService,
+  type AffectationSaisie,
+  type Charge,
+} from '@/features/administration/services/affectations';
 import BarreFiltres from '@/shared/components/BarreFiltres.vue';
 import BarrePagination from '@/shared/components/BarrePagination.vue';
 import EnTetePage from '@/shared/components/EnTetePage.vue';
@@ -305,12 +309,7 @@ import EtatVide from '@/shared/components/EtatVide.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
 import { pageApi, texteApi, useListePaginee } from '@/shared/composables/useListePaginee';
 import { useConfirmation } from '@/shared/composables/useConfirmation';
-import type { Affectation, AnneeAcademique, Enseignant, Matiere, Promotion, ChipFiltre } from '@/types';
-
-/** Le backend joint l'année académique ; le type partagé ne la déclare pas. */
-interface Charge extends Affectation {
-  annee?: AnneeAcademique | null;
-}
+import type { AnneeAcademique, Enseignant, Matiere, Promotion, ChipFiltre, FiltresPage } from '@/types';
 
 const $q = useQuasar();
 const auth = useAuthStore();
@@ -332,7 +331,7 @@ const enregistrement = ref(false);
 
 // Filtres gardés dans l'URL : l'arrivée depuis « Enseignants », « Matières »
 // ou « Structure académique » pré-filtre la liste des charges.
-const filtres = ref<Record<string, any>>({
+const filtres = ref<FiltresPage>({
   recherche: '',
   enseignantId: null,
   matiereId: null,
@@ -344,18 +343,14 @@ const aff = reactive(
     filtres,
     syncUrl: true,
     charger: ({ filtres: f, ...p }) =>
-      api
-        .get('/affectations', {
-          params: {
-            ...pageApi(p),
-            search: texteApi(f.recherche),
-            enseignantId: f.enseignantId || undefined,
-            matiereId: f.matiereId || undefined,
-            promotionId: f.promotionId || undefined,
-            anneeId: f.anneeId || undefined,
-          },
-        })
-        .then((r) => r.data),
+      affectationsService.liste({
+        ...pageApi(p),
+        search: texteApi(f.recherche),
+        enseignantId: f.enseignantId || undefined,
+        matiereId: f.matiereId || undefined,
+        promotionId: f.promotionId || undefined,
+        anneeId: f.anneeId || undefined,
+      }),
   }),
 );
 
@@ -498,10 +493,11 @@ watch(
 async function enregistrer() {
   enregistrement.value = true;
   try {
+    const payload: AffectationSaisie = { ...form.value };
     if (affectationEditee.value) {
-      await api.put(`/affectations/${affectationEditee.value.id}`, form.value);
+      await affectationsService.modifier(affectationEditee.value.id, payload);
     } else {
-      await api.post('/affectations', form.value);
+      await affectationsService.creer(payload);
     }
     $q.notify({ type: 'positive', message: t('affectations.messages.saved') });
     dialogOuvert.value = false;

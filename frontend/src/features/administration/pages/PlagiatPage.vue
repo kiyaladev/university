@@ -310,7 +310,6 @@ import { computed, reactive, ref, watch } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
-import { api } from '@/boot/axios';
 import BarreFiltres from '@/shared/components/BarreFiltres.vue';
 import BarrePagination from '@/shared/components/BarrePagination.vue';
 import ChampDate from '@/shared/components/ChampDate.vue';
@@ -323,7 +322,12 @@ import { useListePaginee } from '@/shared/composables/useListePaginee';
 import { useConfirmation } from '@/shared/composables/useConfirmation';
 import { useAuthStore } from '@/stores/auth';
 import { dateLisible, nombreLisible } from '@/shared/utils/libelles';
-import type { SuspicionPlagiat, ChipFiltre } from '@/types';
+import type { SuspicionPlagiat, ChipFiltre, FiltresPage } from '@/types';
+import {
+  lireRecapitulatifRecalcul,
+  lireTableauDeBordPlagiat,
+  plagiatService,
+} from '@/features/administration/services/plagiat';
 
 const $q = useQuasar();
 const { t } = useI18n();
@@ -348,19 +352,20 @@ const recalculEnCours = ref(false);
 const dernierRecap = ref<{ titre: string; message: string } | null>(null);
 
 // La bibliothèque renvoie ici avec le document à examiner.
-const filtres = ref<Record<string, any>>(route.query.documentId ? { documentId: String(route.query.documentId) } : {});
+const filtres = ref<FiltresPage>(route.query.documentId ? { documentId: String(route.query.documentId) } : {});
 
 const liste = reactive(
   useListePaginee<SuspicionPlagiat>({
     filtres,
     pageSize: 0,
     clesLocales: true,
-    charger: () =>
-      api.get('/documents/plagiat').then(({ data }) => {
-        lireTableauDeBord(data);
-        page.value = 1;
-        return { data: (data?.suspicions ?? []) as SuspicionPlagiat[] };
-      }),
+    charger: async () => {
+      const tableau = lireTableauDeBordPlagiat(await plagiatService.tableauDeBord());
+      kpis.value = tableau.kpis;
+      topDocuments.value = tableau.topDocuments;
+      page.value = 1;
+      return { data: tableau.suspicions };
+    },
   }),
 );
 const suspicions = computed(() => liste.lignes);
@@ -474,30 +479,6 @@ const suspicionsPage = computed(() =>
   suspicionsFiltrees.value.slice((page.value - 1) * pageSize.value, page.value * pageSize.value),
 );
 
-function lireTableauDeBord(data: any) {
-  kpis.value = {
-    total: data?.kpis?.total ?? 0,
-    scoreMoyen: data?.kpis?.scoreMoyen ?? 0,
-    enAttente: data?.kpis?.enAttente ?? 0,
-    acquittees: data?.kpis?.acquittees ?? 0,
-    confirmees: data?.kpis?.confirmees ?? 0,
-  };
-
-  // Le « top » est renvoyé sous forme de suspicions : on agrège par document.
-  const compteur = new Map<string, { id: string; titre: string; compte: number }>();
-  for (const s of (data?.topDix ?? []) as SuspicionPlagiat[]) {
-    for (const d of [s.documentA, s.documentB]) {
-      if (!d) continue;
-      const ex = compteur.get(d.id);
-      if (ex) ex.compte += 1;
-      else compteur.set(d.id, { id: d.id, titre: d.titre, compte: 1 });
-    }
-  }
-  topDocuments.value = Array.from(compteur.values())
-    .sort((a, b) => b.compte - a.compte)
-    .slice(0, 5);
-}
-
 function reinitialiser() {
   filtres.value = {};
   page.value = 1;
@@ -532,7 +513,7 @@ async function validerDecision() {
   }
   decisionEnCours.value = true;
   try {
-    await api.post(`/documents/plagiat/${decisionCourante.value.id}/acquitter`, {
+    await plagiatService.acquitter(decisionCourante.value.id, {
       decision: decisionStatut.value,
       commentaire: decisionMotif.value.trim() || undefined,
     });
@@ -560,13 +541,13 @@ async function lancerRecalcul() {
   if (!ok) return;
   recalculEnCours.value = true;
   try {
-    const { data } = await api.post('/documents/recalculer-plagiat', {});
+    const recap = lireRecapitulatifRecalcul(await plagiatService.recalculer());
     dernierRecap.value = {
       titre: t('plagiatPage.messages.recalculateDoneTitle'),
       message: t('plagiatPage.messages.recalculateDoneMessage', {
-        created: data?.creees ?? 0,
-        updated: data?.misesAJour ?? 0,
-        ignored: data?.ignorees ?? 0,
+        created: recap.creees,
+        updated: recap.misesAJour,
+        ignored: recap.ignorees,
       }),
     };
     $q.notify({ type: 'positive', message: t('plagiatPage.messages.recalculateSuccess') });

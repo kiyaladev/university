@@ -13,10 +13,10 @@ export default {
     NON_CONTROLE: 'Non contrôlé',
   },
   statut_seance: {
-    PLANIFIEE: 'Planifiée',
+    PLANIFIE: 'Planifié',
     EN_COURS: 'En cours',
-    CONTROLEE: 'Contrôlée',
-    ANNULEE: 'Annulée',
+    CONTROLE: 'Contrôlé',
+    ANNULE: 'Annulé',
     NON_TENUE: 'Non tenue',
   },
   role: {
@@ -31,9 +31,9 @@ export default {
   statut_inscription: {
     BROUILLON: 'Brouillon',
     EN_ATTENTE_PAIEMENT: 'En attente de paiement',
-    PAYEE: 'Frais payés',
-    VALIDEE: 'Validée',
-    ANNULEE: 'Annulée',
+    PAYE: 'Frais payés',
+    VALIDE: 'Validé',
+    ANNULE: 'Annulé',
   },
   statut_paiement: {
     EN_ATTENTE: 'En attente',
@@ -55,8 +55,8 @@ export default {
   },
   statut_paie: {
     BROUILLON: 'Brouillon',
-    VALIDEE: 'Validée',
-    PAYEE: 'Payée',
+    VALIDE: 'Validé',
+    PAYE: 'Payé',
   },
   type_evaluation: {
     CC: 'Contrôle continu',
@@ -66,8 +66,8 @@ export default {
     TP: 'Travaux pratiques',
   },
   statut_evaluation: {
-    OUVERTE: 'Ouverte',
-    CLOTUREE: 'Clôturée',
+    OUVERT: 'Ouvert',
+    CLOTURE: 'Clôturé',
   },
   session_deliberation: {
     NORMALE: 'Session normale',
@@ -75,9 +75,11 @@ export default {
   },
   statut_deliberation: {
     BROUILLON: 'Brouillon',
-    VALIDEE: 'Validée',
+    // La délibération et l'encadrement partagent désormais le jeton VALIDE :
+    // une seule entrée, la nuance « lecture seule » reste portée par le
+    // namespace `statut_encadrement`.
+    VALIDE: 'Validé',
     PROPOSE: 'Proposé',
-    VALIDE: 'Validé (lecture seule)',
     SOUTENU: 'Soutenu (rattrapage validé)',
     ABANDONNE: 'Abandonné',
   },
@@ -94,13 +96,13 @@ export default {
     ASSIDUITE: 'Attestation d’assiduité',
   },
   statut_attestation: {
-    EMISE: 'Émise',
-    REVOQUEE: 'Révoquée',
+    EMIS: 'Émis',
+    REVOQUE: 'Révoqué',
   },
   statut_notification: {
     EN_ATTENTE: 'En file',
-    ENVOYEE: 'Envoyée',
-    ECHOUE: 'Échouée',
+    ENVOYE: 'Envoyé',
+    ECHOUE: 'Échoué',
   },
   categorie_chambre: {
     CHAMBRE_SIMPLE: 'Chambre simple',
@@ -110,15 +112,15 @@ export default {
   },
   statut_chambre: {
     LIBRE: 'Libre',
-    RESERVEE: 'Réservée',
-    OCCUPEE: 'Occupée',
+    RESERVE: 'Réservé',
+    OCCUPE: 'Occupé',
     MAINTENANCE: 'Maintenance',
   },
   statut_attribution: {
     EN_ATTENTE: 'En attente',
-    ACCORDEE: 'Accordée',
-    REFUSEE: 'Refusée',
-    RETIREE: 'Retirée',
+    ACCORDE: 'Accordé',
+    REFUSE: 'Refusé',
+    RETIRE: 'Retiré',
   },
   type_document: {
     MEMOIRE: 'Mémoire',
@@ -138,14 +140,14 @@ export default {
   },
   statut_consommation: {
     EN_ATTENTE: 'En attente',
-    VALIDEE: 'Validée',
-    ANNULEE: 'Annulée',
+    VALIDE: 'Validé',
+    ANNULE: 'Annulé',
   },
   statut_reservation: {
     EN_ATTENTE: 'En attente',
-    CONFIRMEE: 'Confirmée',
-    REFUSEE: 'Refusée',
-    ANNULEE: 'Annulée',
+    CONFIRME: 'Confirmé',
+    REFUSE: 'Refusé',
+    ANNULE: 'Annulé',
   },
   type_encadrement: {
     STAGE: 'Stage',
@@ -182,13 +184,13 @@ export default {
   },
   statut_formation: {
     BROUILLON: 'Brouillon',
-    PUBLIEE: 'Publiée',
-    COMPLETE: 'Complète',
+    PUBLIE: 'Publié',
+    COMPLET: 'Complet',
   },
   statut_inscription_formation: {
     EN_ATTENTE: 'En attente',
-    CONFIRMEE: 'Confirmée',
-    ANNULEE: 'Annulée',
+    CONFIRME: 'Confirmé',
+    ANNULE: 'Annulé',
   },
   attestation: {
     AUCUNE: 'Non attestée',
@@ -262,12 +264,12 @@ export default {
     ANNULE: 'Annulé',
   },
   statut_reclamation: {
-    OUVERTE: 'Ouverte',
+    OUVERT: 'Ouvert',
     EN_COURS: 'En cours',
     EN_ATTENTE_REPONSE: 'Attente réponse',
-    RESOLUE: 'Résolue',
-    FERMEE: 'Fermée',
-    REJETEE: 'Rejetée',
+    RESOLU: 'Résolu',
+    FERME: 'Fermé',
+    REJETE: 'Rejeté',
   },
   type_reclamation: {
     NOTE_MANQUANTE: 'Note manquante',
@@ -286,11 +288,11 @@ export default {
   },
   statut_demande: {
     EN_ATTENTE_PAIEMENT: 'Attente paiement',
-    PAYEE: 'Payée',
+    PAYE: 'Payé',
     EN_TRAITEMENT: 'En traitement',
-    PRETE: 'Prête',
+    PRET: 'Prêt',
     REMISE: 'Remise',
-    REJETEE: 'Rejetée',
+    REJETE: 'Rejeté',
   },
   type_demande: {
     ATTESTATION_SCOLARITE: 'Attestation de scolarité',
@@ -302,8 +304,8 @@ export default {
     AUTRE: 'Autre',
   },
   statut_carte: {
-    EMISE: 'Émise',
-    REVOQUEE: 'Révoquée',
+    EMIS: 'Émis',
+    REVOQUE: 'Révoqué',
   },
   type_ressource_vod: {
     AUDIO: 'Audio',
@@ -315,12 +317,12 @@ export default {
     BROUILLON: 'Brouillon',
     EN_LIGNE: 'En ligne',
     HORS_LIGNE: 'Hors ligne',
-    ARCHIVE: 'Archivée',
+    ARCHIVE: 'Archivé',
   },
   statut_suspicion: {
     EN_ATTENTE: 'En attente',
-    ACQUITTE: 'Acquittée',
-    CONFIRME: 'Confirmée',
+    ACQUITTE: 'Acquitté',
+    CONFIRME: 'Confirmé',
   },
   statut_enseignant: {
     PERMANENT: 'Permanent',
@@ -334,13 +336,13 @@ export default {
   },
   statut_election: {
     BROUILLON: 'Brouillon',
-    OUVERTE: 'Ouverte',
-    CLOSE: 'Close',
-    PROCLAMEE: 'Proclamée',
-    ANNULEE: 'Annulée',
+    OUVERT: 'Ouvert',
+    CLOS: 'Clos',
+    PROCLAME: 'Proclamé',
+    ANNULE: 'Annulé',
   },
   statut_recette: {
-    ENCAISSEE: 'Encaissée',
+    ENCAISSE: 'Encaissée',
     A_ENCAISSER: 'À encaisser',
   },
 };

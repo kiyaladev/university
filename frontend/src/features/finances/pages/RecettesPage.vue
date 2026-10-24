@@ -83,7 +83,7 @@
       </template>
       <template #body-cell-statut="p">
         <q-td :props="p">
-          <PastilleStatut domaine="recette" :statut="p.row.paiementId ? 'ENCAISSEE' : 'A_ENCAISSER'" />
+          <PastilleStatut domaine="recette" :statut="p.row.paiementId ? 'ENCAISSE' : 'A_ENCAISSER'" />
         </q-td>
       </template>
       <template #body-cell-montant="p">
@@ -164,7 +164,7 @@
                 <div class="text-subtitle1 text-weight-bold">{{ r.libelle }}</div>
                 <div class="text-caption q-mt-xs">{{ libelleType(r.type) }} · {{ r.client ?? '—' }}</div>
               </div>
-              <PastilleStatut domaine="recette" :statut="r.paiementId ? 'ENCAISSEE' : 'A_ENCAISSER'" />
+              <PastilleStatut domaine="recette" :statut="r.paiementId ? 'ENCAISSE' : 'A_ENCAISSER'" />
             </div>
           </q-card-section>
           <q-card-section>
@@ -237,7 +237,6 @@ import EtatVide from '@/shared/components/EtatVide.vue';
 import { computed, onMounted, reactive, ref } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { useI18n } from 'vue-i18n';
-import { api } from '@/boot/axios';
 import { useAuthStore } from '@/stores/auth';
 import { pageApi, texteApi, useListePaginee } from '@/shared/composables/useListePaginee';
 import { useConfirmation } from '@/shared/composables/useConfirmation';
@@ -245,8 +244,9 @@ import BarreFiltres from '@/shared/components/BarreFiltres.vue';
 import BarrePagination from '@/shared/components/BarrePagination.vue';
 import ChampDate from '@/shared/components/ChampDate.vue';
 import DialogueRecette from '../components/DialogueRecette.vue';
+import { recettesService, type KpisRecettes } from '../services/recettes';
 import { LIBELLE_TYPE_RECETTE, aujourdhui, dateLisible, decalerJours, montantLisible } from '@/shared/utils/libelles';
-import type { RecetteExterne, ChipFiltre } from '@/types';
+import type { RecetteExterne, ChipFiltre, FiltresPage } from '@/types';
 
 const $q = useQuasar();
 const auth = useAuthStore();
@@ -258,14 +258,9 @@ const dialogOuvert = ref(false);
 const encaissementEnCours = ref(false);
 const dialogEncaissementOuvert = ref(false);
 const recetteEnEdition = ref<RecetteExterne | null>(null);
-const kpis = ref<{
-  annee: number;
-  totalMois: number;
-  totalAnnee: number;
-  top3: Array<{ type: string; total: number }>;
-} | null>(null);
+const kpis = ref<KpisRecettes | null>(null);
 
-const filtres = ref<Record<string, any>>({
+const filtres = ref<FiltresPage>({
   recherche: '',
   type: null as string | null,
   paiementStatut: null as string | null,
@@ -279,18 +274,14 @@ const liste = reactive(
     filtres,
     syncUrl: true,
     charger: ({ filtres: f, ...p }) =>
-      api
-        .get('/recettes', {
-          params: {
-            ...pageApi(p),
-            search: texteApi(f.recherche),
-            type: f.type || undefined,
-            paiementStatut: f.paiementStatut || undefined,
-            dateDebut: f.dateDebut || undefined,
-            dateFin: f.dateFin || undefined,
-          },
-        })
-        .then((r) => r.data),
+      recettesService.liste({
+        ...pageApi(p),
+        search: texteApi(f.recherche),
+        type: f.type || undefined,
+        paiementStatut: f.paiementStatut || undefined,
+        dateDebut: f.dateDebut || undefined,
+        dateFin: f.dateFin || undefined,
+      }),
   }),
 );
 
@@ -363,8 +354,7 @@ function libelleType(s: string) {
 async function chargerKpis() {
   if (!auth.aRole(['ADMIN', 'DIRECTION'])) return;
   try {
-    const { data } = await api.get('/recettes/dashboard');
-    kpis.value = data;
+    kpis.value = await recettesService.dashboard();
   } catch {
     kpis.value = null;
   }
@@ -403,12 +393,10 @@ async function encaisser(r: RecetteExterne) {
   if (!ok) return;
   encaissementEnCours.value = true;
   try {
-    await api.post(`/recettes/${r.id}/encaisser`, {});
+    await recettesService.encaisser(r.id);
     $q.notify({ type: 'positive', message: t('recettes.messages.cashSuccess') });
     await liste.recharger();
     await chargerKpis();
-  } catch {
-    /* notifié par l'intercepteur */
   } finally {
     encaissementEnCours.value = false;
   }

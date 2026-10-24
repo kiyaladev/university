@@ -1,0 +1,1167 @@
+{
+  "date": "2026-10-24T10:59:26.227Z",
+  "build": "/tmp/mc/l7/build-nav",
+  "front": "http://127.0.0.1:5029",
+  "roles": [
+    "ADMIN",
+    "ADMIN",
+    "ADMIN",
+    "ADMIN",
+    "ADMIN",
+    "ADMIN",
+    "ADMIN",
+    "ADMIN",
+    "ADMIN",
+    "ADMIN",
+    "ADMIN",
+    "ADMIN",
+    "ADMIN",
+    "ADMIN",
+    "ADMIN",
+    "ADMIN",
+    "ADMIN",
+    "ADMIN",
+    "ADMIN",
+    "ADMIN",
+    "ADMIN",
+    "ADMIN",
+    "ADMIN",
+    "ADMIN",
+    "ADMIN",
+    "ADMIN",
+    "ADMIN",
+    "ADMIN",
+    "ADMIN",
+    "ADMIN",
+    "ADMIN",
+    "ADMIN",
+    "ADMIN",
+    "ADMIN",
+    "ADMIN",
+    "ADMIN",
+    "ADMIN",
+    "ADMIN",
+    "ADMIN",
+    "ADMIN",
+    "ADMIN",
+    "ADMIN",
+    "ADMIN",
+    "ADMIN",
+    "ADMIN",
+    "ADMIN",
+    "ADMIN",
+    "ADMIN",
+    "ADMIN",
+    "ADMIN",
+    "SCOLARITE",
+    "SCOLARITE",
+    "SCOLARITE",
+    "SCOLARITE",
+    "SCOLARITE",
+    "SCOLARITE",
+    "SCOLARITE",
+    "SCOLARITE",
+    "SCOLARITE",
+    "SCOLARITE",
+    "SCOLARITE",
+    "SCOLARITE",
+    "SCOLARITE",
+    "SCOLARITE",
+    "SCOLARITE",
+    "SCOLARITE",
+    "SCOLARITE",
+    "SCOLARITE",
+    "SCOLARITE",
+    "SCOLARITE",
+    "SCOLARITE",
+    "SCOLARITE",
+    "SCOLARITE",
+    "SCOLARITE",
+    "SCOLARITE",
+    "SCOLARITE",
+    "SCOLARITE",
+    "SCOLARITE",
+    "SCOLARITE",
+    "SCOLARITE",
+    "SCOLARITE",
+    "SCOLARITE",
+    "SCOLARITE",
+    "SCOLARITE",
+    "SCOLARITE",
+    "SCOLARITE",
+    "SCOLARITE",
+    "SCOLARITE",
+    "SCOLARITE",
+    "SCOLARITE",
+    "SCOLARITE",
+    "SCOLARITE",
+    "ENSEIGNANT",
+    "ENSEIGNANT",
+    "ENSEIGNANT",
+    "ENSEIGNANT",
+    "ENSEIGNANT",
+    "ENSEIGNANT",
+    "ENSEIGNANT",
+    "ENSEIGNANT",
+    "ENSEIGNANT",
+    "ENSEIGNANT",
+    "ENSEIGNANT",
+    "ENSEIGNANT",
+    "CONTROLEUR",
+    "CONTROLEUR",
+    "CONTROLEUR",
+    "CONTROLEUR",
+    "CONTROLEUR",
+    "CONTROLEUR",
+    "CONTROLEUR",
+    "CONTROLEUR",
+    "CONTROLEUR",
+    "CONTROLEUR",
+    "CONTROLEUR",
+    "CONTROLEUR",
+    "CONTROLEUR",
+    "CONTROLEUR",
+    "CONTROLEUR",
+    "CONTROLEUR",
+    "ETUDIANT",
+    "ETUDIANT",
+    "ETUDIANT",
+    "ETUDIANT",
+    "ETUDIANT",
+    "ETUDIANT",
+    "ETUDIANT",
+    "ETUDIANT"
+  ],
+  "totaux": {
+    "ecrans": 128,
+    "ok": 110,
+    "ko": 0
+  },
+  "lignes": [
+    {
+      "role": "ADMIN",
+      "ecran": "rubrique « fact_check\nPrésences\nkeyboard_arrow_down »",
+      "libelle": "fact_check\nPrésences\nkeyboard_arrow_down",
+      "statut": "INFO",
+      "titreDocument": "",
+      "erreurs": []
+    },
+    {
+      "role": "ADMIN",
+      "ecran": "rubrique « school\nScolarité\nkeyboard_arrow_down »",
+      "libelle": "school\nScolarité\nkeyboard_arrow_down",
+      "statut": "INFO",
+      "titreDocument": "",
+      "erreurs": []
+    },
+    {
+      "role": "ADMIN",
+      "ecran": "rubrique « payments\nFinances\nkeyboard_arrow_down »",
+      "libelle": "payments\nFinances\nkeyboard_arrow_down",
+      "statut": "INFO",
+      "titreDocument": "",
+      "erreurs": []
+    },
+    {
+      "role": "ADMIN",
+      "ecran": "rubrique « apartment\nCampus\nkeyboard_arrow_down »",
+      "libelle": "apartment\nCampus\nkeyboard_arrow_down",
+      "statut": "INFO",
+      "titreDocument": "",
+      "erreurs": []
+    },
+    {
+      "role": "ADMIN",
+      "ecran": "rubrique « settings\nAdministration\nkeyboard_arrow_down »",
+      "libelle": "settings\nAdministration\nkeyboard_arrow_down",
+      "statut": "INFO",
+      "titreDocument": "",
+      "erreurs": []
+    },
+    {
+      "role": "ADMIN",
+      "ecran": "/",
+      "libelle": "dashboard Accueil de l’université",
+      "statut": "OK",
+      "titreDocument": "Accueil de l’université — University",
+      "erreurs": []
+    },
+    {
+      "role": "ADMIN",
+      "ecran": "/controle",
+      "libelle": "fact_check Contrôle des séances",
+      "statut": "OK",
+      "titreDocument": "Contrôle des séances — University",
+      "erreurs": []
+    },
+    {
+      "role": "ADMIN",
+      "ecran": "/inscriptions",
+      "libelle": "how_to_reg Inscriptions",
+      "statut": "OK",
+      "titreDocument": "Inscriptions — University",
+      "erreurs": []
+    },
+    {
+      "role": "ADMIN",
+      "ecran": "/suivi-presences",
+      "libelle": "insights Suivi des présences",
+      "statut": "OK",
+      "titreDocument": "Synthèse des présences — University",
+      "erreurs": []
+    },
+    {
+      "role": "ADMIN",
+      "ecran": "/emploi-du-temps",
+      "libelle": "calendar_month Emploi du temps",
+      "statut": "OK",
+      "titreDocument": "Emploi du temps — University",
+      "erreurs": []
+    },
+    {
+      "role": "ADMIN",
+      "ecran": "/seances",
+      "libelle": "event_note Séances",
+      "statut": "OK",
+      "titreDocument": "Séances — University",
+      "erreurs": []
+    },
+    {
+      "role": "ADMIN",
+      "ecran": "/justificatifs",
+      "libelle": "assignment_late Justificatifs d’absence 2",
+      "statut": "OK",
+      "titreDocument": "Justificatifs d’absence — University",
+      "erreurs": []
+    },
+    {
+      "role": "ADMIN",
+      "ecran": "/moyens-attestation",
+      "libelle": "fingerprint Moyens de preuve",
+      "statut": "OK",
+      "titreDocument": "Moyens de preuve — University",
+      "erreurs": []
+    },
+    {
+      "role": "ADMIN",
+      "ecran": "/corrections-pointages",
+      "libelle": "edit_note Corrections des pointages",
+      "statut": "OK",
+      "titreDocument": "Corrections des pointages — University",
+      "erreurs": []
+    },
+    {
+      "role": "ADMIN",
+      "ecran": "/documents",
+      "libelle": "description Documents",
+      "statut": "OK",
+      "titreDocument": "Demandes de documents — University",
+      "erreurs": []
+    },
+    {
+      "role": "ADMIN",
+      "ecran": "/etudiants",
+      "libelle": "groups Étudiants",
+      "statut": "OK",
+      "titreDocument": "Étudiants — University",
+      "erreurs": []
+    },
+    {
+      "role": "ADMIN",
+      "ecran": "/scolarite",
+      "libelle": "school Accueil scolarité",
+      "statut": "OK",
+      "titreDocument": "Accueil scolarité — University",
+      "erreurs": []
+    },
+    {
+      "role": "ADMIN",
+      "ecran": "/evaluations",
+      "libelle": "fact_check Évaluations et notes",
+      "statut": "OK",
+      "titreDocument": "Évaluations et notes — University",
+      "erreurs": []
+    },
+    {
+      "role": "ADMIN",
+      "ecran": "/examens",
+      "libelle": "quiz Organisation des examens Pilote",
+      "statut": "OK",
+      "titreDocument": "Organisation des examens — University",
+      "erreurs": []
+    },
+    {
+      "role": "ADMIN",
+      "ecran": "/deliberations",
+      "libelle": "gavel Délibérations",
+      "statut": "OK",
+      "titreDocument": "Délibérations — University",
+      "erreurs": []
+    },
+    {
+      "role": "ADMIN",
+      "ecran": "/reclamations",
+      "libelle": "support_agent Réclamations & requêtes",
+      "statut": "OK",
+      "titreDocument": "Réclamations & requêtes — University",
+      "erreurs": []
+    },
+    {
+      "role": "ADMIN",
+      "ecran": "/stages",
+      "libelle": "work Stages & mémoires Pilote",
+      "statut": "OK",
+      "titreDocument": "Stages & mémoires — University",
+      "erreurs": []
+    },
+    {
+      "role": "ADMIN",
+      "ecran": "/paiements",
+      "libelle": "payments Paiements",
+      "statut": "OK",
+      "titreDocument": "Paiements — University",
+      "erreurs": []
+    },
+    {
+      "role": "ADMIN",
+      "ecran": "/recettes",
+      "libelle": "request_quote Régie des recettes",
+      "statut": "OK",
+      "titreDocument": "Régie des recettes — University",
+      "erreurs": []
+    },
+    {
+      "role": "ADMIN",
+      "ecran": "/paie",
+      "libelle": "payments Paie des vacataires",
+      "statut": "OK",
+      "titreDocument": "Paie des vacataires — University",
+      "erreurs": []
+    },
+    {
+      "role": "ADMIN",
+      "ecran": "/frais",
+      "libelle": "request_quote Frais d'inscription",
+      "statut": "OK",
+      "titreDocument": "Frais d'inscription — University",
+      "erreurs": []
+    },
+    {
+      "role": "ADMIN",
+      "ecran": "/vod",
+      "libelle": "play_circle Cours en vidéo Pilote",
+      "statut": "OK",
+      "titreDocument": "Cours en vidéo — University",
+      "erreurs": []
+    },
+    {
+      "role": "ADMIN",
+      "ecran": "/elections/vote",
+      "libelle": "how_to_vote Voter Pilote",
+      "statut": "OK",
+      "titreDocument": "Voter — University",
+      "erreurs": []
+    },
+    {
+      "role": "ADMIN",
+      "ecran": "/badges",
+      "libelle": "how_to_reg Badges & visiteurs Pilote",
+      "statut": "OK",
+      "titreDocument": "Badges & visiteurs — University",
+      "erreurs": []
+    },
+    {
+      "role": "ADMIN",
+      "ecran": "/cites",
+      "libelle": "apartment Cités universitaires Pilote",
+      "statut": "OK",
+      "titreDocument": "Cités universitaires — University",
+      "erreurs": []
+    },
+    {
+      "role": "ADMIN",
+      "ecran": "/resto",
+      "libelle": "restaurant Restaurant universitaire Pilote",
+      "statut": "OK",
+      "titreDocument": "Restaurant universitaire — University",
+      "erreurs": []
+    },
+    {
+      "role": "ADMIN",
+      "ecran": "/bibliotheque-gestion",
+      "libelle": "local_library Bibliothèque numérique Pilote",
+      "statut": "OK",
+      "titreDocument": "Bibliothèque numérique — University",
+      "erreurs": []
+    },
+    {
+      "role": "ADMIN",
+      "ecran": "/formations-admin",
+      "libelle": "workspace_premium Formation continue Pilote",
+      "statut": "OK",
+      "titreDocument": "Formation continue — University",
+      "erreurs": []
+    },
+    {
+      "role": "ADMIN",
+      "ecran": "/reservations",
+      "libelle": "event_seat Réservations de salles",
+      "statut": "OK",
+      "titreDocument": "Réservations de salles — University",
+      "erreurs": []
+    },
+    {
+      "role": "ADMIN",
+      "ecran": "/helpdesk",
+      "libelle": "headset_mic Assistance informatique Pilote",
+      "statut": "OK",
+      "titreDocument": "Assistance informatique — University",
+      "erreurs": []
+    },
+    {
+      "role": "ADMIN",
+      "ecran": "/elections",
+      "libelle": "how_to_vote Élections Pilote",
+      "statut": "OK",
+      "titreDocument": "Élections — University",
+      "erreurs": []
+    },
+    {
+      "role": "ADMIN",
+      "ecran": "/patrimoine",
+      "libelle": "inventory_2 Patrimoine & matériel Pilote",
+      "statut": "OK",
+      "titreDocument": "Patrimoine & matériel — University",
+      "erreurs": []
+    },
+    {
+      "role": "ADMIN",
+      "ecran": "/affectations",
+      "libelle": "assignment_ind Charges d’enseignement",
+      "statut": "OK",
+      "titreDocument": "Charges d’enseignement — University",
+      "erreurs": []
+    },
+    {
+      "role": "ADMIN",
+      "ecran": "/enseignants",
+      "libelle": "person Enseignants",
+      "statut": "OK",
+      "titreDocument": "Enseignants — University",
+      "erreurs": []
+    },
+    {
+      "role": "ADMIN",
+      "ecran": "/matieres",
+      "libelle": "menu_book Matières",
+      "statut": "OK",
+      "titreDocument": "Matières — University",
+      "erreurs": []
+    },
+    {
+      "role": "ADMIN",
+      "ecran": "/structure",
+      "libelle": "account_tree Départements, filières et promotions",
+      "statut": "OK",
+      "titreDocument": "Départements, filières et promotions — University",
+      "erreurs": []
+    },
+    {
+      "role": "ADMIN",
+      "ecran": "/salles",
+      "libelle": "meeting_room Salles",
+      "statut": "OK",
+      "titreDocument": "Salles — University",
+      "erreurs": []
+    },
+    {
+      "role": "ADMIN",
+      "ecran": "/imports",
+      "libelle": "upload_file Importer des données",
+      "statut": "OK",
+      "titreDocument": "Importer des données — University",
+      "erreurs": []
+    },
+    {
+      "role": "ADMIN",
+      "ecran": "/plagiat",
+      "libelle": "find_in_page Anti-plagiat Pilote",
+      "statut": "OK",
+      "titreDocument": "Anti-plagiat — University",
+      "erreurs": []
+    },
+    {
+      "role": "ADMIN",
+      "ecran": "/audit",
+      "libelle": "history Journal d’audit",
+      "statut": "OK",
+      "titreDocument": "Journal d’audit — University",
+      "erreurs": []
+    },
+    {
+      "role": "ADMIN",
+      "ecran": "/bilan",
+      "libelle": "account_balance Bilan de l’établissement Pilote",
+      "statut": "OK",
+      "titreDocument": "Bilan de l’établissement — University",
+      "erreurs": []
+    },
+    {
+      "role": "ADMIN",
+      "ecran": "/courrier",
+      "libelle": "mail Courrier administratif Pilote",
+      "statut": "OK",
+      "titreDocument": "Courrier administratif — University",
+      "erreurs": []
+    },
+    {
+      "role": "ADMIN",
+      "ecran": "/notifications",
+      "libelle": "sms Notifications SMS Pilote",
+      "statut": "OK",
+      "titreDocument": "Notifications SMS — University",
+      "erreurs": []
+    },
+    {
+      "role": "ADMIN",
+      "ecran": "/utilisateurs",
+      "libelle": "manage_accounts Utilisateurs",
+      "statut": "OK",
+      "titreDocument": "Utilisateurs — University",
+      "erreurs": []
+    },
+    {
+      "role": "ADMIN",
+      "ecran": "/parametres",
+      "libelle": "settings Paramètres",
+      "statut": "OK",
+      "titreDocument": "Paramètres — University",
+      "erreurs": []
+    },
+    {
+      "role": "SCOLARITE",
+      "ecran": "rubrique « fact_check\nPrésences\nkeyboard_arrow_down »",
+      "libelle": "fact_check\nPrésences\nkeyboard_arrow_down",
+      "statut": "INFO",
+      "titreDocument": "",
+      "erreurs": []
+    },
+    {
+      "role": "SCOLARITE",
+      "ecran": "rubrique « school\nScolarité\nkeyboard_arrow_down »",
+      "libelle": "school\nScolarité\nkeyboard_arrow_down",
+      "statut": "INFO",
+      "titreDocument": "",
+      "erreurs": []
+    },
+    {
+      "role": "SCOLARITE",
+      "ecran": "rubrique « payments\nFinances\nkeyboard_arrow_down »",
+      "libelle": "payments\nFinances\nkeyboard_arrow_down",
+      "statut": "INFO",
+      "titreDocument": "",
+      "erreurs": []
+    },
+    {
+      "role": "SCOLARITE",
+      "ecran": "rubrique « apartment\nCampus\nkeyboard_arrow_down »",
+      "libelle": "apartment\nCampus\nkeyboard_arrow_down",
+      "statut": "INFO",
+      "titreDocument": "",
+      "erreurs": []
+    },
+    {
+      "role": "SCOLARITE",
+      "ecran": "rubrique « settings\nAdministration\nkeyboard_arrow_down »",
+      "libelle": "settings\nAdministration\nkeyboard_arrow_down",
+      "statut": "INFO",
+      "titreDocument": "",
+      "erreurs": []
+    },
+    {
+      "role": "SCOLARITE",
+      "ecran": "/scolarite",
+      "libelle": "school Accueil scolarité",
+      "statut": "OK",
+      "titreDocument": "Accueil scolarité — University",
+      "erreurs": []
+    },
+    {
+      "role": "SCOLARITE",
+      "ecran": "/inscriptions",
+      "libelle": "how_to_reg Inscriptions",
+      "statut": "OK",
+      "titreDocument": "Inscriptions — University",
+      "erreurs": []
+    },
+    {
+      "role": "SCOLARITE",
+      "ecran": "/evaluations",
+      "libelle": "fact_check Évaluations et notes",
+      "statut": "OK",
+      "titreDocument": "Évaluations et notes — University",
+      "erreurs": []
+    },
+    {
+      "role": "SCOLARITE",
+      "ecran": "/documents",
+      "libelle": "description Documents",
+      "statut": "OK",
+      "titreDocument": "Demandes de documents — University",
+      "erreurs": []
+    },
+    {
+      "role": "SCOLARITE",
+      "ecran": "/suivi-presences",
+      "libelle": "insights Suivi des présences",
+      "statut": "OK",
+      "titreDocument": "Rapports de présence — University",
+      "erreurs": []
+    },
+    {
+      "role": "SCOLARITE",
+      "ecran": "/emploi-du-temps",
+      "libelle": "calendar_month Emploi du temps",
+      "statut": "OK",
+      "titreDocument": "Emploi du temps — University",
+      "erreurs": []
+    },
+    {
+      "role": "SCOLARITE",
+      "ecran": "/seances",
+      "libelle": "event_note Séances",
+      "statut": "OK",
+      "titreDocument": "Séances — University",
+      "erreurs": []
+    },
+    {
+      "role": "SCOLARITE",
+      "ecran": "/justificatifs",
+      "libelle": "assignment_late Justificatifs d’absence 2",
+      "statut": "OK",
+      "titreDocument": "Justificatifs d’absence — University",
+      "erreurs": []
+    },
+    {
+      "role": "SCOLARITE",
+      "ecran": "/moyens-attestation",
+      "libelle": "fingerprint Moyens de preuve",
+      "statut": "OK",
+      "titreDocument": "Moyens de preuve — University",
+      "erreurs": []
+    },
+    {
+      "role": "SCOLARITE",
+      "ecran": "/etudiants",
+      "libelle": "groups Étudiants",
+      "statut": "OK",
+      "titreDocument": "Étudiants — University",
+      "erreurs": []
+    },
+    {
+      "role": "SCOLARITE",
+      "ecran": "/examens",
+      "libelle": "quiz Organisation des examens Pilote",
+      "statut": "OK",
+      "titreDocument": "Organisation des examens — University",
+      "erreurs": []
+    },
+    {
+      "role": "SCOLARITE",
+      "ecran": "/deliberations",
+      "libelle": "gavel Délibérations",
+      "statut": "OK",
+      "titreDocument": "Délibérations — University",
+      "erreurs": []
+    },
+    {
+      "role": "SCOLARITE",
+      "ecran": "/reclamations",
+      "libelle": "support_agent Réclamations & requêtes",
+      "statut": "OK",
+      "titreDocument": "Réclamations & requêtes — University",
+      "erreurs": []
+    },
+    {
+      "role": "SCOLARITE",
+      "ecran": "/stages",
+      "libelle": "work Stages & mémoires Pilote",
+      "statut": "OK",
+      "titreDocument": "Stages & mémoires — University",
+      "erreurs": []
+    },
+    {
+      "role": "SCOLARITE",
+      "ecran": "/paiements",
+      "libelle": "payments Paiements",
+      "statut": "OK",
+      "titreDocument": "Paiements — University",
+      "erreurs": []
+    },
+    {
+      "role": "SCOLARITE",
+      "ecran": "/recettes",
+      "libelle": "request_quote Régie des recettes",
+      "statut": "OK",
+      "titreDocument": "Régie des recettes — University",
+      "erreurs": []
+    },
+    {
+      "role": "SCOLARITE",
+      "ecran": "/paie",
+      "libelle": "payments Paie des vacataires",
+      "statut": "OK",
+      "titreDocument": "Paie des vacataires — University",
+      "erreurs": []
+    },
+    {
+      "role": "SCOLARITE",
+      "ecran": "/frais",
+      "libelle": "request_quote Frais d'inscription",
+      "statut": "OK",
+      "titreDocument": "Frais d'inscription — University",
+      "erreurs": []
+    },
+    {
+      "role": "SCOLARITE",
+      "ecran": "/vod",
+      "libelle": "play_circle Cours en vidéo Pilote",
+      "statut": "OK",
+      "titreDocument": "Cours en vidéo — University",
+      "erreurs": []
+    },
+    {
+      "role": "SCOLARITE",
+      "ecran": "/elections/vote",
+      "libelle": "how_to_vote Voter Pilote",
+      "statut": "OK",
+      "titreDocument": "Voter — University",
+      "erreurs": []
+    },
+    {
+      "role": "SCOLARITE",
+      "ecran": "/badges",
+      "libelle": "how_to_reg Badges & visiteurs Pilote",
+      "statut": "OK",
+      "titreDocument": "Badges & visiteurs — University",
+      "erreurs": []
+    },
+    {
+      "role": "SCOLARITE",
+      "ecran": "/cites",
+      "libelle": "apartment Cités universitaires Pilote",
+      "statut": "OK",
+      "titreDocument": "Cités universitaires — University",
+      "erreurs": []
+    },
+    {
+      "role": "SCOLARITE",
+      "ecran": "/resto",
+      "libelle": "restaurant Restaurant universitaire Pilote",
+      "statut": "OK",
+      "titreDocument": "Restaurant universitaire — University",
+      "erreurs": []
+    },
+    {
+      "role": "SCOLARITE",
+      "ecran": "/bibliotheque-gestion",
+      "libelle": "local_library Bibliothèque numérique Pilote",
+      "statut": "OK",
+      "titreDocument": "Bibliothèque numérique — University",
+      "erreurs": []
+    },
+    {
+      "role": "SCOLARITE",
+      "ecran": "/formations-admin",
+      "libelle": "workspace_premium Formation continue Pilote",
+      "statut": "OK",
+      "titreDocument": "Formation continue — University",
+      "erreurs": []
+    },
+    {
+      "role": "SCOLARITE",
+      "ecran": "/reservations",
+      "libelle": "event_seat Réservations de salles",
+      "statut": "OK",
+      "titreDocument": "Réservations de salles — University",
+      "erreurs": []
+    },
+    {
+      "role": "SCOLARITE",
+      "ecran": "/helpdesk",
+      "libelle": "headset_mic Assistance informatique Pilote",
+      "statut": "OK",
+      "titreDocument": "Assistance informatique — University",
+      "erreurs": []
+    },
+    {
+      "role": "SCOLARITE",
+      "ecran": "/elections",
+      "libelle": "how_to_vote Élections Pilote",
+      "statut": "OK",
+      "titreDocument": "Élections — University",
+      "erreurs": []
+    },
+    {
+      "role": "SCOLARITE",
+      "ecran": "/patrimoine",
+      "libelle": "inventory_2 Patrimoine & matériel Pilote",
+      "statut": "OK",
+      "titreDocument": "Patrimoine & matériel — University",
+      "erreurs": []
+    },
+    {
+      "role": "SCOLARITE",
+      "ecran": "/affectations",
+      "libelle": "assignment_ind Charges d’enseignement",
+      "statut": "OK",
+      "titreDocument": "Charges d’enseignement — University",
+      "erreurs": []
+    },
+    {
+      "role": "SCOLARITE",
+      "ecran": "/enseignants",
+      "libelle": "person Enseignants",
+      "statut": "OK",
+      "titreDocument": "Enseignants — University",
+      "erreurs": []
+    },
+    {
+      "role": "SCOLARITE",
+      "ecran": "/matieres",
+      "libelle": "menu_book Matières",
+      "statut": "OK",
+      "titreDocument": "Matières — University",
+      "erreurs": []
+    },
+    {
+      "role": "SCOLARITE",
+      "ecran": "/structure",
+      "libelle": "account_tree Départements, filières et promotions",
+      "statut": "OK",
+      "titreDocument": "Départements, filières et promotions — University",
+      "erreurs": []
+    },
+    {
+      "role": "SCOLARITE",
+      "ecran": "/salles",
+      "libelle": "meeting_room Salles",
+      "statut": "OK",
+      "titreDocument": "Salles — University",
+      "erreurs": []
+    },
+    {
+      "role": "SCOLARITE",
+      "ecran": "/imports",
+      "libelle": "upload_file Importer des données",
+      "statut": "OK",
+      "titreDocument": "Importer des données — University",
+      "erreurs": []
+    },
+    {
+      "role": "SCOLARITE",
+      "ecran": "/courrier",
+      "libelle": "mail Courrier administratif Pilote",
+      "statut": "OK",
+      "titreDocument": "Courrier administratif — University",
+      "erreurs": []
+    },
+    {
+      "role": "SCOLARITE",
+      "ecran": "/notifications",
+      "libelle": "sms Notifications SMS Pilote",
+      "statut": "OK",
+      "titreDocument": "Notifications SMS — University",
+      "erreurs": []
+    },
+    {
+      "role": "ENSEIGNANT",
+      "ecran": "rubrique « school\nScolarité\nkeyboard_arrow_down »",
+      "libelle": "school\nScolarité\nkeyboard_arrow_down",
+      "statut": "INFO",
+      "titreDocument": "",
+      "erreurs": []
+    },
+    {
+      "role": "ENSEIGNANT",
+      "ecran": "rubrique « apartment\nCampus\nkeyboard_arrow_down »",
+      "libelle": "apartment\nCampus\nkeyboard_arrow_down",
+      "statut": "INFO",
+      "titreDocument": "",
+      "erreurs": []
+    },
+    {
+      "role": "ENSEIGNANT",
+      "ecran": "/mes-seances",
+      "libelle": "person_pin Mes séances",
+      "statut": "OK",
+      "titreDocument": "Mes séances — University",
+      "erreurs": []
+    },
+    {
+      "role": "ENSEIGNANT",
+      "ecran": "/emploi-du-temps",
+      "libelle": "calendar_month Emploi du temps",
+      "statut": "OK",
+      "titreDocument": "Emploi du temps — University",
+      "erreurs": []
+    },
+    {
+      "role": "ENSEIGNANT",
+      "ecran": "/justificatifs",
+      "libelle": "assignment_late Justificatifs d’absence",
+      "statut": "OK",
+      "titreDocument": "Justificatifs d’absence — University",
+      "erreurs": []
+    },
+    {
+      "role": "ENSEIGNANT",
+      "ecran": "/examens/scan",
+      "libelle": "qr_code_scanner Scan examens Pilote",
+      "statut": "OK",
+      "titreDocument": "Scan examens — University",
+      "erreurs": []
+    },
+    {
+      "role": "ENSEIGNANT",
+      "ecran": "/stages",
+      "libelle": "work Stages & mémoires Pilote",
+      "statut": "OK",
+      "titreDocument": "Stages & mémoires — University",
+      "erreurs": []
+    },
+    {
+      "role": "ENSEIGNANT",
+      "ecran": "/vod",
+      "libelle": "play_circle Cours en vidéo Pilote",
+      "statut": "OK",
+      "titreDocument": "Cours en vidéo — University",
+      "erreurs": []
+    },
+    {
+      "role": "ENSEIGNANT",
+      "ecran": "/elections/vote",
+      "libelle": "how_to_vote Voter Pilote",
+      "statut": "OK",
+      "titreDocument": "Voter — University",
+      "erreurs": []
+    },
+    {
+      "role": "ENSEIGNANT",
+      "ecran": "/bibliotheque-gestion",
+      "libelle": "local_library Bibliothèque numérique Pilote",
+      "statut": "OK",
+      "titreDocument": "Bibliothèque numérique — University",
+      "erreurs": []
+    },
+    {
+      "role": "ENSEIGNANT",
+      "ecran": "/reservations",
+      "libelle": "event_seat Réservations de salles",
+      "statut": "OK",
+      "titreDocument": "Réservations de salles — University",
+      "erreurs": []
+    },
+    {
+      "role": "ENSEIGNANT",
+      "ecran": "/helpdesk",
+      "libelle": "headset_mic Assistance informatique Pilote",
+      "statut": "OK",
+      "titreDocument": "Assistance informatique — University",
+      "erreurs": []
+    },
+    {
+      "role": "CONTROLEUR",
+      "ecran": "rubrique « fact_check\nPrésences\nkeyboard_arrow_down »",
+      "libelle": "fact_check\nPrésences\nkeyboard_arrow_down",
+      "statut": "INFO",
+      "titreDocument": "",
+      "erreurs": []
+    },
+    {
+      "role": "CONTROLEUR",
+      "ecran": "rubrique « school\nScolarité\nkeyboard_arrow_down »",
+      "libelle": "school\nScolarité\nkeyboard_arrow_down",
+      "statut": "INFO",
+      "titreDocument": "",
+      "erreurs": []
+    },
+    {
+      "role": "CONTROLEUR",
+      "ecran": "rubrique « apartment\nCampus\nkeyboard_arrow_down »",
+      "libelle": "apartment\nCampus\nkeyboard_arrow_down",
+      "statut": "INFO",
+      "titreDocument": "",
+      "erreurs": []
+    },
+    {
+      "role": "CONTROLEUR",
+      "ecran": "rubrique « settings\nAdministration\nkeyboard_arrow_down »",
+      "libelle": "settings\nAdministration\nkeyboard_arrow_down",
+      "statut": "INFO",
+      "titreDocument": "",
+      "erreurs": []
+    },
+    {
+      "role": "CONTROLEUR",
+      "ecran": "/controle",
+      "libelle": "fact_check Contrôle des séances",
+      "statut": "OK",
+      "titreDocument": "Contrôle des séances — University",
+      "erreurs": []
+    },
+    {
+      "role": "CONTROLEUR",
+      "ecran": "/emploi-du-temps",
+      "libelle": "calendar_month Emploi du temps",
+      "statut": "OK",
+      "titreDocument": "Emploi du temps — University",
+      "erreurs": []
+    },
+    {
+      "role": "CONTROLEUR",
+      "ecran": "/suivi-presences",
+      "libelle": "insights Suivi des présences",
+      "statut": "OK",
+      "titreDocument": "Statistiques de présence — University",
+      "erreurs": []
+    },
+    {
+      "role": "CONTROLEUR",
+      "ecran": "/seances",
+      "libelle": "event_note Séances",
+      "statut": "OK",
+      "titreDocument": "Séances — University",
+      "erreurs": []
+    },
+    {
+      "role": "CONTROLEUR",
+      "ecran": "/corrections-pointages",
+      "libelle": "edit_note Corrections des pointages",
+      "statut": "OK",
+      "titreDocument": "Corrections des pointages — University",
+      "erreurs": []
+    },
+    {
+      "role": "CONTROLEUR",
+      "ecran": "/examens/scan",
+      "libelle": "qr_code_scanner Scan examens Pilote",
+      "statut": "OK",
+      "titreDocument": "Scan examens — University",
+      "erreurs": []
+    },
+    {
+      "role": "CONTROLEUR",
+      "ecran": "/vod",
+      "libelle": "play_circle Cours en vidéo Pilote",
+      "statut": "OK",
+      "titreDocument": "Cours en vidéo — University",
+      "erreurs": []
+    },
+    {
+      "role": "CONTROLEUR",
+      "ecran": "/elections/vote",
+      "libelle": "how_to_vote Voter Pilote",
+      "statut": "OK",
+      "titreDocument": "Voter — University",
+      "erreurs": []
+    },
+    {
+      "role": "CONTROLEUR",
+      "ecran": "/resto",
+      "libelle": "restaurant Restaurant universitaire Pilote",
+      "statut": "OK",
+      "titreDocument": "Restaurant universitaire — University",
+      "erreurs": []
+    },
+    {
+      "role": "CONTROLEUR",
+      "ecran": "/reservations",
+      "libelle": "event_seat Réservations de salles",
+      "statut": "OK",
+      "titreDocument": "Réservations de salles — University",
+      "erreurs": []
+    },
+    {
+      "role": "CONTROLEUR",
+      "ecran": "/helpdesk",
+      "libelle": "headset_mic Assistance informatique Pilote",
+      "statut": "OK",
+      "titreDocument": "Assistance informatique — University",
+      "erreurs": []
+    },
+    {
+      "role": "CONTROLEUR",
+      "ecran": "/salles",
+      "libelle": "meeting_room Salles",
+      "statut": "OK",
+      "titreDocument": "Salles — University",
+      "erreurs": []
+    },
+    {
+      "role": "ETUDIANT",
+      "ecran": "rubrique « school\nScolarité\nkeyboard_arrow_down »",
+      "libelle": "school\nScolarité\nkeyboard_arrow_down",
+      "statut": "INFO",
+      "titreDocument": "",
+      "erreurs": []
+    },
+    {
+      "role": "ETUDIANT",
+      "ecran": "rubrique « apartment\nCampus\nkeyboard_arrow_down »",
+      "libelle": "apartment\nCampus\nkeyboard_arrow_down",
+      "statut": "INFO",
+      "titreDocument": "",
+      "erreurs": []
+    },
+    {
+      "role": "ETUDIANT",
+      "ecran": "/portail",
+      "libelle": "person Mon espace",
+      "statut": "OK",
+      "titreDocument": "Mon espace — University",
+      "erreurs": []
+    },
+    {
+      "role": "ETUDIANT",
+      "ecran": "/emploi-du-temps",
+      "libelle": "calendar_month Emploi du temps",
+      "statut": "OK",
+      "titreDocument": "Emploi du temps — University",
+      "erreurs": []
+    },
+    {
+      "role": "ETUDIANT",
+      "ecran": "/ma-carte",
+      "libelle": "badge Ma carte étudiante",
+      "statut": "OK",
+      "titreDocument": "Ma carte étudiante — University",
+      "erreurs": []
+    },
+    {
+      "role": "ETUDIANT",
+      "ecran": "/mes-demarches",
+      "libelle": "assignment Mes démarches",
+      "statut": "OK",
+      "titreDocument": "Mes demandes de documents — University",
+      "erreurs": []
+    },
+    {
+      "role": "ETUDIANT",
+      "ecran": "/vod",
+      "libelle": "play_circle Cours en vidéo Pilote",
+      "statut": "OK",
+      "titreDocument": "Cours en vidéo — University",
+      "erreurs": []
+    },
+    {
+      "role": "ETUDIANT",
+      "ecran": "/elections/vote",
+      "libelle": "how_to_vote Voter Pilote",
+      "statut": "OK",
+      "titreDocument": "Voter — University",
+      "erreurs": []
+    }
+  ],
+  "anomalies": []
+}

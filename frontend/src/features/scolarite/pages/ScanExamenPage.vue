@@ -198,12 +198,12 @@ import { computed, onMounted, ref } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
-import { api } from '@/boot/axios';
 import { useAuthStore } from '@/stores/auth';
 import LecteurQr from '@/shared/components/LecteurQr.vue';
 import EnTetePage from '@/shared/components/EnTetePage.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
 import { LIBELLE_TYPE_EXAMEN, dateLisible, pourcentLisible } from '@/shared/utils/libelles';
+import { examensService, type ScanExamenEntree } from '../services/examens';
 import type { Examen, ScanExamen } from '@/types';
 
 const $q = useQuasar();
@@ -247,15 +247,12 @@ const nbRestant = computed(() => {
 async function chargerExamens() {
   chargementExamens.value = true;
   try {
-    const { data } = await api.get('/examens', {
-      params: { all: '1', statut: 'EN_COURS', pageSize: 200 },
-    });
-    examens.value = data.data ?? [];
+    examens.value = await examensService.tous({ all: '1', statut: 'EN_COURS', pageSize: 200 });
 
     const demande = String(route.query.examenId ?? '');
     if (demande && !examens.value.some((e) => e.id === demande)) {
       try {
-        const { data: ex } = await api.get(`/examens/${demande}`);
+        const ex = await examensService.lire(demande);
         examens.value = [ex, ...examens.value];
         $q.notify({
           type: 'warning',
@@ -283,8 +280,7 @@ async function selectionnerExamen(id: string) {
     return;
   }
   try {
-    const { data } = await api.get(`/examens/${id}`);
-    examenCourant.value = data;
+    examenCourant.value = await examensService.lire(id);
   } catch {
     examenCourant.value = null;
   }
@@ -295,8 +291,8 @@ async function rafraichirCompteurs() {
   const courant = examenCourant.value;
   if (!courant) return;
   try {
-    const { data } = await api.get(`/examens/${courant.id}/stats`);
-    examenCourant.value = { ...courant, ...data };
+    const data = await examensService.stats(courant.id);
+    examenCourant.value = { ...courant, ...(data as Partial<Examen>) };
   } catch {
     /* le compteur se remettra à jour au prochain scan */
   }
@@ -306,12 +302,13 @@ async function confirmer() {
   if (!examenCourant.value || !reference.value.trim()) return;
   envoiScan.value = true;
   try {
-    const { data } = await api.post('/examens/scan', {
+    const charge: ScanExamenEntree = {
       examenId: examenCourant.value.id,
       reference: reference.value.trim(),
       scanneurId: auth.utilisateur?.id,
-    });
-    dernierResultat.value = data;
+    };
+    // Le service renvoie le scan enregistré : on garde le modèle complet.
+    dernierResultat.value = (await examensService.scanner(charge)) as unknown as ScanExamen;
     reference.value = '';
     await rafraichirCompteurs();
   } catch {

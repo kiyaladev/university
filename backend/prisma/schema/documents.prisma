@@ -1,0 +1,206 @@
+// Domaine « documents » : attestations, demandes de documents, carte d'étudiant et badges.
+
+enum TypeAttestation {
+  SCOLARITE // certificat de scolarité
+  SITUATION // certificat de situation
+  REUSSITE // attestation de réussite / d'admission
+  DIPLOME // attestation de diplôme (en attendant le parchemin)
+  ASSIDUITE // attestation d'assiduité
+}
+
+enum StatutAttestation {
+  EMIS
+  REVOQUE // attestation invalidée (erreur, fraude…)
+}
+
+// ---------------------------------------------------------------------------
+// Attestations & vérification par QR code (Module 4 — la vitrine)
+// ---------------------------------------------------------------------------
+
+/// Document émis par la scolarité, vérifiable par n'importe qui via le QR.
+model Attestation {
+  id      String            @id @default(uuid())
+  numero  String            @unique // "ATT-2026-00001"
+  type    TypeAttestation
+  motif   String? // texte libre : bourse, passeport, banque…
+  statut  StatutAttestation @default(EMIS)
+  // Le jeton encodé dans le QR de vérification (format "UP-DOC-<base64url>").
+  qrToken String            @unique
+
+  anneeId       String?
+  annee         AnneeAcademique? @relation(fields: [anneeId], references: [id], onDelete: Restrict)
+  promotionId   String?
+  promotion     Promotion?       @relation(fields: [promotionId], references: [id], onDelete: SetNull)
+  inscriptionId String?
+  inscription   Inscription?     @relation(fields: [inscriptionId], references: [id], onDelete: SetNull)
+  etudiantId    String?
+  etudiant      Etudiant?        @relation(fields: [etudiantId], references: [id], onDelete: SetNull)
+
+  emiseParId      String?
+  emisePar        User?     @relation("AttestationEmetteur", fields: [emiseParId], references: [id], onDelete: SetNull)
+  emiseLe         DateTime  @default(now())
+  revoqueeLe      DateTime?
+  revoqueeParId   String?
+  revoqueePar     User?     @relation("AttestationRevocateur", fields: [revoqueeParId], references: [id], onDelete: SetNull)
+  motifRevocation String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  verifications   VerificationAttestation[]
+  demandeDocument DemandeDocument?
+
+  @@index([type, statut])
+  @@index([etudiantId])
+  @@index([anneeId])
+  @@index([promotionId])
+}
+
+/// Journal des consultations de vérification d'une attestation (QR code).
+model VerificationAttestation {
+  id            String      @id @default(uuid())
+  attestationId String
+  attestation   Attestation @relation(fields: [attestationId], references: [id], onDelete: Cascade)
+  ip            String?
+  resultat      Boolean     @default(true)
+  verifieeLe    DateTime    @default(now())
+
+  @@index([verifieeLe])
+  // Le journal des vérifications est relu par attestation (QR public).
+  @@index([attestationId])
+}
+
+// ------------------ Plateforme de Demande de Documents en Ligne ----
+
+enum TypeDemandeDocument {
+  ATTESTATION_SCOLARITE
+  ATTESTATION_FREQUENTATION
+  RELEVE_NOTES
+  DUPLICATA_CARTE
+  ATTESTATION_REUSSITE
+  CERTIFICAT_SCOLARITE
+  AUTRE
+}
+
+enum StatutDemande {
+  EN_ATTENTE_PAIEMENT
+  PAYE
+  EN_TRAITEMENT
+  PRET
+  REMISE
+  REJETE
+}
+
+model DemandeDocument {
+  id            String              @id @default(uuid())
+  numero        String              @unique // "DOC-2026-00001"
+  type          TypeDemandeDocument
+  motif         String?
+  etudiantId    String
+  etudiant      Etudiant            @relation(fields: [etudiantId], references: [id], onDelete: Restrict)
+  inscriptionId String?
+  inscription   Inscription?        @relation(fields: [inscriptionId], references: [id], onDelete: SetNull)
+  frais         Decimal             @default(0) @db.Decimal(14, 2)
+  devise        String              @default("GNF")
+  paiementId    String?             @unique
+  paiement      Paiement?           @relation("PaiementDemandeDocument", fields: [paiementId], references: [id], onDelete: SetNull)
+  statut        StatutDemande       @default(EN_ATTENTE_PAIEMENT)
+  notification  String? // "Le document est prêt à être retiré au guichet"
+  traiteParId   String?
+  traitePar     User?               @relation("DemandeDocumentTraitee", fields: [traiteParId], references: [id], onDelete: SetNull)
+  // Colonne conservée « creeLe » en base : le champ Prisma suit la
+  // convention `createdAt` du reste du modèle.
+  createdAt     DateTime            @default(now()) @map("creeLe")
+  // Dernière modification de la demande (traitement, remise, rejet).
+  updatedAt     DateTime            @updatedAt
+  remiseLe      DateTime?
+  notes         String?
+  // Attestation vérifiable par QR émise au passage « prête » (types
+  // ATTESTATION_SCOLARITE, CERTIFICAT_SCOLARITE, ATTESTATION_REUSSITE).
+  // Une attestation ne se supprime jamais (elle se révoque) : Restrict.
+  attestationId String?             @unique
+  attestation   Attestation?        @relation(fields: [attestationId], references: [id], onDelete: Restrict)
+
+  @@index([etudiantId, statut])
+}
+
+/// Choix du tarif par type (paramétrable).
+model TarifDemande {
+  id          String              @id @default(uuid())
+  type        TypeDemandeDocument @unique
+  montant     Decimal             @default(0) @db.Decimal(14, 2)
+  devise      String              @default("GNF")
+  // Délai de traitement en heures
+  delaiHeures Int                 @default(72)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+}
+
+// ------------------ Carte d'Étudiant Numérique -----------------
+
+/// Apparaît dans `Etudiant` (déjà : `qrRestoToken String? @unique`).
+/// Pour la carte d'étudiant on complète avec `carteQrToken` + URL de vérification.
+model CarteEtudiante {
+  id              String            @id @default(uuid())
+  etudiantId      String            @unique
+  etudiant        Etudiant          @relation(fields: [etudiantId], references: [id], onDelete: Cascade)
+  /// Jeton encodé dans le QR d'identification (différent du qrRestoToken)
+  qrToken         String            @unique // "UP-CARTE-<base64url>"
+  dateEmission    DateTime          @default(now())
+  dateValidite    DateTime? // à fixer chaque année
+  statut          StatutAttestation @default(EMIS) // réutilise : EMIS/REVOQUE
+  motifRevocation String?
+  // Pour l'impression : photoUrl, signature
+  photoUrl        String?
+  // NIP optionnel (code personnel à 4 chiffres à la demande)
+  nip             String? // hash bcrypt
+  creeParId       String?
+  creePar         User?             @relation("CarteCreePar", fields: [creeParId], references: [id], onDelete: SetNull)
+  active          Boolean           @default(true)
+  updatedAt       DateTime          @updatedAt
+}
+
+// ------------------ Générateur de Badges (visiteur, intervenant) -
+
+enum StatutBadge {
+  ACTIF
+  EXPIRE
+  ANNULE
+}
+
+/// Qualité de la personne à qui le badge est délivré.
+enum TypeBadge {
+  VISITEUR
+  INTERVENANT
+  TECHNICIEN
+  VIP // personnage officiel
+}
+
+model BadgeAcces {
+  id             String      @id @default(uuid())
+  numero         String      @unique // "BADGE-2026-00001"
+  /// Visiteur, intervenant, technicien, personnage officielle
+  type           TypeBadge
+  nom            String
+  prenom         String
+  fonction       String?
+  organisation   String?
+  telephone      String?
+  email          String?
+  pieceIdentite  String? // Type de pièce d'identité
+  numeroPiece    String?
+  dateDelivrance DateTime    @default(now())
+  dateValidite   DateTime
+  zonesAccess    String? // Liste des zones autorisées (CSV)
+  qrToken        String      @unique // "UP-BADGE-<base64url>"
+  statut         StatutBadge @default(ACTIF)
+  motif          String?
+  creeParId      String?
+  creePar        User?       @relation("BadgeCreePar", fields: [creeParId], references: [id], onDelete: SetNull)
+  // Aperçu photo
+  photoUrl       String?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  @@index([statut, dateValidite])
+}

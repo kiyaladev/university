@@ -33,7 +33,7 @@
           </span>
           <span v-else>—</span>
           <span class="pochoir">{{ $t('reservations.detailDialog.requestedOn') }}</span>
-          <span>{{ dateHeureLisible(reservation.creeLe) }}</span>
+          <span>{{ dateHeureLisible(reservation.createdAt) }}</span>
         </div>
 
         <!-- L'emploi du temps se lit, il ne se décide pas ici : sans action
@@ -55,7 +55,7 @@
               :label="$t('common.actions.confirm')"
               :loading="enCours === 'confirmer'"
               :disabled="reservation.statut !== 'EN_ATTENTE'"
-              @click="decider('CONFIRMEE')"
+              @click="decider('CONFIRME')"
             />
             <q-btn
               unelevated
@@ -65,7 +65,7 @@
               :label="$t('common.actions.refuse')"
               :loading="enCours === 'refuser'"
               :disabled="reservation.statut !== 'EN_ATTENTE'"
-              @click="decider('REFUSEE')"
+              @click="decider('REFUSE')"
             />
           </div>
         </div>
@@ -135,19 +135,14 @@ import PastilleStatut from '@/shared/components/PastilleStatut.vue';
 import { computed, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
-import { api } from '@/boot/axios';
 import { useAuthStore } from '@/stores/auth';
 import { useConfirmation } from '@/shared/composables/useConfirmation';
 import ChampDate from '@/shared/components/ChampDate.vue';
-import { dateHeureLisible } from '@/shared/utils/libelles';
-import type { ReservationSalle, Salle } from '@/types';
-
-/** Champs renvoyés par l'API mais non inscrits dans types.ts (ajouts récents). */
-type ReservationDetail = ReservationSalle & {
-  demandeurId?: string | null;
-  refuseParId?: string | null;
-  refusePar?: { id: string; nom: string; prenom: string } | null;
-};
+import { dateHeureLisible } from '@/shared/utils/format';
+import { reservationsService } from '../services/reservations';
+import type { ReservationDetail } from '../types';
+import type { Salle } from '@/types';
+import { messageErreurApi } from '@/shared/utils/erreur-http';
 
 const props = defineProps<{
   modelValue: boolean;
@@ -207,26 +202,22 @@ watch(
   },
 );
 
-async function decider(statut: 'CONFIRMEE' | 'REFUSEE') {
+async function decider(statut: 'CONFIRME' | 'REFUSE') {
   const id = props.reservation!.id;
-  enCours.value = statut === 'CONFIRMEE' ? 'confirmer' : 'refuser';
+  enCours.value = statut === 'CONFIRME' ? 'confirmer' : 'refuser';
   erreur.value = '';
   try {
-    await api.post(
-      `/reservations/${id}/decider`,
-      {
-        statut,
-        ...(decisionMotif.value ? { motif: decisionMotif.value } : {}),
-      },
-      { silencieux: true },
-    );
+    await reservationsService.decider(id, {
+      statut,
+      ...(decisionMotif.value ? { motif: decisionMotif.value } : {}),
+    });
     $q.notify({
-      type: statut === 'CONFIRMEE' ? 'positive' : 'warning',
-      message: t(statut === 'CONFIRMEE' ? 'reservations.detailDialog.confirmed' : 'reservations.detailDialog.refused'),
+      type: statut === 'CONFIRME' ? 'positive' : 'warning',
+      message: t(statut === 'CONFIRME' ? 'reservations.detailDialog.confirmed' : 'reservations.detailDialog.refused'),
     });
     emit('change');
-  } catch (e: any) {
-    erreur.value = e.response?.data?.message ?? t('reservations.detailDialog.decisionFailed');
+  } catch (e: unknown) {
+    erreur.value = messageErreurApi(e) ?? t('reservations.detailDialog.decisionFailed');
   } finally {
     enCours.value = '';
   }
@@ -236,19 +227,15 @@ async function modifier() {
   enCours.value = 'modifier';
   erreur.value = '';
   try {
-    await api.put(
-      `/reservations/${props.reservation!.id}`,
-      {
-        ...form.value,
-        organisme: form.value.organisme || undefined,
-        responsable: form.value.responsable || undefined,
-      },
-      { silencieux: true },
-    );
+    await reservationsService.modifier(props.reservation!.id, {
+      ...form.value,
+      organisme: form.value.organisme || undefined,
+      responsable: form.value.responsable || undefined,
+    });
     $q.notify({ type: 'positive', message: t('reservations.detailDialog.updated') });
     emit('change');
-  } catch (e: any) {
-    erreur.value = e.response?.data?.message ?? t('reservations.detailDialog.updateFailed');
+  } catch (e: unknown) {
+    erreur.value = messageErreurApi(e) ?? t('reservations.detailDialog.updateFailed');
   } finally {
     enCours.value = '';
   }
@@ -265,12 +252,12 @@ async function annuler() {
   enCours.value = 'annuler';
   erreur.value = '';
   try {
-    await api.delete(`/reservations/${props.reservation!.id}`, { silencieux: true });
+    await reservationsService.supprimer(props.reservation!.id);
     $q.notify({ type: 'positive', message: t('reservations.detailDialog.cancelled') });
     emit('change');
     emit('update:modelValue', false);
-  } catch (e: any) {
-    erreur.value = e.response?.data?.message ?? t('reservations.detailDialog.cancelFailed');
+  } catch (e: unknown) {
+    erreur.value = messageErreurApi(e) ?? t('reservations.detailDialog.cancelFailed');
   } finally {
     enCours.value = '';
   }

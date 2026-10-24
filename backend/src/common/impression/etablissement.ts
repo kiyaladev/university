@@ -5,7 +5,7 @@
  * replis différents ('Université', valeur par défaut du catalogue…).
  */
 import { Logger } from '@nestjs/common';
-import { PARAMETRES_DEFAUT } from '../../modules/parametres/parametres.service';
+import { PARAMETRES_DEFAUT } from '../../modules/socle/parametres/parametres.service';
 
 export interface Etablissement {
   nom: string;

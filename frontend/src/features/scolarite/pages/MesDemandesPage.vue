@@ -139,7 +139,7 @@
               <div class="text-uppercase text-caption text-grey-7">{{ d.numero }}</div>
               <div class="text-subtitle1 text-weight-medium">{{ libelleType(d.type) }}</div>
               <div class="text-caption text-grey-7">
-                {{ $t('mesDemandes.cards.createdOn', { date: dateHeureLisible(d.creeLe) }) }}
+                {{ $t('mesDemandes.cards.createdOn', { date: dateHeureLisible(d.createdAt) }) }}
               </div>
             </div>
             <PastilleStatut domaine="demande" :statut="d.statut" />
@@ -240,7 +240,7 @@
             </div>
             <div>
               <span class="pochoir">{{ $t('common.fields.createdOn') }}</span>
-              <span>{{ dateHeureLisible(demandeSuivie.creeLe) }}</span>
+              <span>{{ dateHeureLisible(demandeSuivie.createdAt) }}</span>
             </div>
             <div v-if="demandeSuivie.remiseLe">
               <span class="pochoir">{{ $t('mesDemandes.dialog.deliveredAt') }}</span>
@@ -256,7 +256,7 @@
             <span class="section-titre">{{ $t('mesDemandes.dialog.registrarMessage') }}</span>
             <div class="demande-bloc" style="white-space: pre-wrap">{{ demandeSuivie.notification }}</div>
           </div>
-          <div v-if="demandeSuivie.statut === 'REJETEE' && demandeSuivie.notes" class="q-mt-md">
+          <div v-if="demandeSuivie.statut === 'REJETE' && demandeSuivie.notes" class="q-mt-md">
             <span class="section-titre">{{ $t('mesDemandes.dialog.rejectionReason') }}</span>
             <div class="demande-bloc" style="white-space: pre-wrap">{{ demandeSuivie.notes }}</div>
           </div>
@@ -350,7 +350,6 @@ import EnTetePage from '@/shared/components/EnTetePage.vue';
 import { computed, reactive, ref } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { useI18n } from 'vue-i18n';
-import { api } from '@/boot/axios';
 import { useAuthStore } from '@/stores/auth';
 import BarreFiltres from '@/shared/components/BarreFiltres.vue';
 import BarrePagination from '@/shared/components/BarrePagination.vue';
@@ -367,7 +366,10 @@ import {
   montantLisible,
   optionsDepuis,
 } from '@/shared/utils/libelles';
-import type { DemandeDocument, ModePaiement, StatutDemande, TypeDemandeDocument } from '@/types';
+import { demandesDocumentsService } from '../services/documents-demande';
+import type { ModePaiement, FiltresPage } from '@/types';
+import type { DemandeDocument, StatutDemande, TypeDemandeDocument } from '../types';
+import { messageErreurApi } from '@/shared/utils/erreur-http';
 
 const $q = useQuasar();
 const { t } = useI18n();
@@ -378,18 +380,18 @@ const rolePasBon = computed(() => auth.utilisateur && auth.utilisateur.role !== 
 /** Le même statut, dit sans jargon administratif. */
 const EXPLICATION_STATUT = computed<Record<StatutDemande, string>>(() => ({
   EN_ATTENTE_PAIEMENT: t('mesDemandes.statusExplanations.EN_ATTENTE_PAIEMENT'),
-  PAYEE: t('mesDemandes.statusExplanations.PAYEE'),
+  PAYE: t('mesDemandes.statusExplanations.PAYE'),
   EN_TRAITEMENT: t('mesDemandes.statusExplanations.EN_TRAITEMENT'),
-  PRETE: t('mesDemandes.statusExplanations.PRETE'),
+  PRET: t('mesDemandes.statusExplanations.PRET'),
   REMISE: t('mesDemandes.statusExplanations.REMISE'),
-  REJETEE: t('mesDemandes.statusExplanations.REJETEE'),
+  REJETE: t('mesDemandes.statusExplanations.REJETE'),
 }));
 
 const ETAPES_DEMANDE = computed(() => [
   { identifiant: 'EN_ATTENTE_PAIEMENT', libelle: t('common.fields.payment'), icone: 'payments' },
-  { identifiant: 'PAYEE', libelle: t('mesDemandes.steps.paid'), icone: 'verified' },
+  { identifiant: 'PAYE', libelle: t('mesDemandes.steps.paid'), icone: 'verified' },
   { identifiant: 'EN_TRAITEMENT', libelle: t('mesDemandes.steps.processing'), icone: 'build' },
-  { identifiant: 'PRETE', libelle: t('mesDemandes.steps.ready'), icone: 'check_circle' },
+  { identifiant: 'PRET', libelle: t('mesDemandes.steps.ready'), icone: 'check_circle' },
   { identifiant: 'REMISE', libelle: t('mesDemandes.steps.delivered'), icone: 'task_alt' },
 ]);
 
@@ -405,17 +407,17 @@ const OPTIONS_OPERATEUR = computed(() => [
   { label: t('mesDemandes.operatorOptions.telecel'), value: 'TELECEL' },
 ]);
 
-const filtres = ref<Record<string, any>>({ recherche: '', statut: null });
+const filtres = ref<FiltresPage>({ recherche: '', statut: null });
 const liste = reactive(
   useListePaginee<DemandeDocument>({
     filtres,
     actif: () => auth.utilisateur?.role === 'ETUDIANT',
     charger: ({ filtres: f, ...p }) =>
-      api
-        .get('/documents-demande/mes', {
-          params: { ...pageApi(p), statut: f.statut || undefined, search: texteApi(f.recherche) },
-        })
-        .then((r) => r.data),
+      demandesDocumentsService.mesDemandes({
+        ...pageApi(p),
+        statut: f.statut || undefined,
+        search: texteApi(f.recherche),
+      }),
   }),
 );
 const modeVue = usePresentationListe();
@@ -423,7 +425,7 @@ const modeVue = usePresentationListe();
 // Compteurs calculés sur les demandes affichées (l'API étudiante ne
 // fournit pas de tableau de bord dédié).
 const stats = computed(() => {
-  const counts: Record<string, number> = { EN_ATTENTE_PAIEMENT: 0, EN_TRAITEMENT: 0, PRETE: 0, REMISE: 0 };
+  const counts: Record<string, number> = { EN_ATTENTE_PAIEMENT: 0, EN_TRAITEMENT: 0, PRET: 0, REMISE: 0 };
   for (const d of liste.lignes) {
     if (counts[d.statut] != null) counts[d.statut]++;
   }
@@ -446,7 +448,7 @@ const formPaiement = ref({
 const plaques = computed(() => [
   { cle: 'EN_ATTENTE_PAIEMENT', libelle: t('mesDemandes.stats.labels.toPay'), alerte: true },
   { cle: 'EN_TRAITEMENT', libelle: t('mesDemandes.stats.labels.inProgress'), alerte: false },
-  { cle: 'PRETE', libelle: t('mesDemandes.stats.labels.ready'), alerte: false },
+  { cle: 'PRET', libelle: t('mesDemandes.stats.labels.ready'), alerte: false },
   { cle: 'REMISE', libelle: t('mesDemandes.stats.labels.delivered'), alerte: false },
 ]);
 
@@ -460,9 +462,9 @@ const colonnes = computed<QTableColumn[]>(() => [
   { name: 'frais', label: t('mesDemandes.table.columns.fees'), field: 'frais', align: 'right' },
   { name: 'statut', label: t('common.fields.status'), field: 'statut', align: 'left' },
   {
-    name: 'creeLe',
+    name: 'createdAt',
     label: t('common.fields.createdOn'),
-    field: 'creeLe',
+    field: 'createdAt',
     align: 'left',
     format: (v: string) => dateHeureLisible(v),
   },
@@ -503,7 +505,7 @@ async function payer() {
       body.operateur = formPaiement.value.operateur;
       body.telephone = formPaiement.value.telephone.trim();
     }
-    await api.post(`/documents-demande/${demandeAPayer.value.id}/payer`, body, {
+    await demandesDocumentsService.payer(demandeAPayer.value.id, body, {
       silencieux: true,
     });
     $q.notify({
@@ -514,8 +516,8 @@ async function payer() {
     });
     paiementOuvert.value = false;
     void liste.recharger();
-  } catch (e: any) {
-    erreurPaiement.value = e.response?.data?.message ?? t('mesDemandes.messages.paymentFailed');
+  } catch (e: unknown) {
+    erreurPaiement.value = messageErreurApi(e) ?? t('mesDemandes.messages.paymentFailed');
   } finally {
     enregistrementPaiement.value = false;
   }

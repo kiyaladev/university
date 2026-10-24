@@ -1,8 +1,8 @@
 {
   "id": "/",
-  "name": "UniPrésence — contrôle des séances",
-  "short_name": "UniPrésence",
-  "description": "Le registre du contrôleur pédagogique : la tournée du jour, salle par salle, avec attestation de l'enseignant en salle. Fonctionne hors ligne.",
+  "name": "University — plateforme de gestion universitaire",
+  "short_name": "University",
+  "description": "La plateforme de gestion universitaire : présences, scolarité, finances, campus et documents. Fonctionne hors ligne.",
   "lang": "fr",
   "dir": "ltr",
   "display": "standalone",

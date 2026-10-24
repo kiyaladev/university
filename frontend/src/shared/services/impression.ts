@@ -1,5 +1,6 @@
 import { Notify } from 'quasar';
 import { API_URL } from '@/boot/axios';
+import { i18n } from '@/boot/i18n';
 import { jetonPresent, lireToken } from './session';
 
 /**
@@ -18,7 +19,7 @@ import { jetonPresent, lireToken } from './session';
  */
 export async function ouvrirImpression(chemin: string, params: Record<string, string | undefined> = {}): Promise<void> {
   if (!jetonPresent()) {
-    Notify.create({ type: 'negative', message: 'Session expirée : reconnectez-vous.' });
+    Notify.create({ type: 'negative', message: i18n.global.t('common.http.sessionExpired') as string });
     return;
   }
 
@@ -49,7 +50,7 @@ export async function ouvrirImpression(chemin: string, params: Record<string, st
     onglet?.close();
     Notify.create({
       type: 'negative',
-      message: "Le document n'a pas pu être généré.",
+      message: i18n.global.t('common.impression.generationFailed') as string,
     });
   }
 }
@@ -78,11 +79,11 @@ export async function ouvrirImpressions(
   params: Record<string, string | undefined> = {},
 ): Promise<void> {
   if (!chemins.length) {
-    Notify.create({ type: 'warning', message: 'Aucun document à imprimer.' });
+    Notify.create({ type: 'warning', message: i18n.global.t('common.impression.nothingToPrint') as string });
     return;
   }
   if (!jetonPresent()) {
-    Notify.create({ type: 'negative', message: 'Session expirée : reconnectez-vous.' });
+    Notify.create({ type: 'negative', message: i18n.global.t('common.http.sessionExpired') as string });
     return;
   }
 
@@ -122,7 +123,7 @@ section.doc:last-child { page-break-after: auto; }
     setTimeout(() => URL.revokeObjectURL(objet), 60_000);
   } catch {
     onglet?.close();
-    Notify.create({ type: 'negative', message: "Les documents n'ont pas pu être générés." });
+    Notify.create({ type: 'negative', message: i18n.global.t('common.impression.generationFailedMany') as string });
   }
 }
 
@@ -136,7 +137,7 @@ export async function telechargerFichier(
   nomFichier: string,
 ): Promise<void> {
   if (!jetonPresent()) {
-    Notify.create({ type: 'negative', message: 'Session expirée : reconnectez-vous.' });
+    Notify.create({ type: 'negative', message: i18n.global.t('common.http.sessionExpired') as string });
     return;
   }
   try {
@@ -157,6 +158,6 @@ export async function telechargerFichier(
     lien.click();
     setTimeout(() => URL.revokeObjectURL(objet), 60_000);
   } catch {
-    Notify.create({ type: 'negative', message: "L'export n'a pas pu être généré." });
+    Notify.create({ type: 'negative', message: i18n.global.t('common.impression.exportFailed') as string });
   }
 }

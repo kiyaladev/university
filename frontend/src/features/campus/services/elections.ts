@@ -1,6 +1,6 @@
-import { api } from '@/boot/axios';
-import type { Election, Liste, ResultatElection, StatutElection, TypeElection } from '@/types';
-import { getAppLocale } from '@/boot/i18n';
+import { creer, lire, lister, modifier, supprimer } from '@/shared/services/http';
+import type { CandidatElection, Election, Liste, ResultatElection, StatutElection, TypeElection } from '@/types';
+import { dateCourteLisible, dateHeureLisible } from '@/shared/utils/format';
 
 export interface MonVote {
   aVote: boolean;
@@ -14,6 +14,30 @@ export interface ParametresListeElections {
   statut?: StatutElection;
   type?: TypeElection;
   search?: string;
+}
+
+/** Champs acceptés à la création ou à la modification d'un scrutin. */
+export interface CorpsElection {
+  titre: string;
+  type: TypeElection;
+  dateOuverture?: string | null;
+  dateCloture?: string | null;
+  nbSieges?: number;
+  bulletin?: string | null;
+  description?: string | null;
+  promotionId?: string | null;
+  departementId?: string | null;
+}
+
+/** Champs acceptés à la déclaration d'un candidat. */
+export interface CorpsCandidat {
+  nom: string;
+  prenom: string;
+  ordre?: number;
+  etudiantId?: string | null;
+  enseignantId?: string | null;
+  photoUrl?: string | null;
+  programme?: string | null;
 }
 
 /**
@@ -40,7 +64,7 @@ export function dateElection(v?: string | null): string {
   if (!v) return '—';
   const d = new Date(v);
   if (Number.isNaN(d.getTime())) return '—';
-  return d.toLocaleDateString(getAppLocale(), { day: '2-digit', month: 'short', year: 'numeric' });
+  return dateCourteLisible(v);
 }
 
 /** « 12 août, 14:30 » — ouverture / clôture d'un scrutin. */
@@ -48,7 +72,7 @@ export function dateHeureElection(v?: string | null): string {
   if (!v) return '—';
   const d = new Date(v);
   if (Number.isNaN(d.getTime())) return '—';
-  return d.toLocaleString(getAppLocale(), {
+  return dateHeureLisible(v, {
     day: '2-digit',
     month: 'short',
     hour: '2-digit',
@@ -69,17 +93,36 @@ export function messageErreurElection(e: unknown, defaut: string): string {
  */
 export const electionsService = {
   liste: (params: ParametresListeElections, silencieux = false) =>
-    api.get<Liste<Election>>('/elections', { params, silencieux }),
-  actives: (silencieux = false) => api.get<Election[]>('/elections/actives', { silencieux }),
-  trouver: (id: string, silencieux = false) => api.get<Election>(`/elections/${id}`, { silencieux }),
+    lister<Election>('/elections', params, { silencieux }),
+
+  actives: (silencieux = false) => lire<Election[]>('/elections/actives', undefined, { silencieux }),
+
+  trouver: (id: string, silencieux = false) => lire<Election>(`/elections/${id}`, undefined, { silencieux }),
+
+  /** Crée un scrutin. */
+  creer: (corps: CorpsElection) => creer<Election>('/elections', corps),
+
+  /** Modifie un scrutin. */
+  modifier: (id: string, corps: Partial<CorpsElection>) => modifier<Election>(`/elections/${id}`, corps),
+
+  /** Déclare un candidat à un scrutin. */
+  creerCandidat: (electionId: string, corps: CorpsCandidat) =>
+    creer<CandidatElection>(`/elections/${electionId}/candidats`, corps),
+
   monVote: (electionId: string, silencieux = false) =>
-    api.get<MonVote>(`/elections/${electionId}/mon-vote`, { silencieux }),
+    lire<MonVote>(`/elections/${electionId}/mon-vote`, undefined, { silencieux }),
+
   resultats: (id: string, silencieux = false) =>
-    api.get<ResultatElection>(`/elections/${id}/resultats`, { silencieux }),
+    lire<ResultatElection>(`/elections/${id}/resultats`, undefined, { silencieux }),
+
   voter: (payload: { electionId: string; bulletin: Array<{ candidatId: string }> }, silencieux = false) =>
-    api.post<{ scrutinId: string; nbVotes: number }>('/elections/vote', payload, { silencieux }),
-  transition: (id: string, action: 'ouvrir' | 'clore' | 'proclamer') =>
-    api.post<Election>(`/elections/${id}/${action}`),
+    creer<{ scrutinId: string; nbVotes: number }>('/elections/vote', payload, { silencieux }),
+
+  transition: (id: string, action: 'ouvrir' | 'clore' | 'proclamer') => creer<Election>(`/elections/${id}/${action}`),
+
   supprimerCandidat: (electionId: string, candidatId: string) =>
-    api.delete(`/elections/${electionId}/candidats/${candidatId}`),
+    supprimer(`/elections/${electionId}/candidats/${candidatId}`),
 };
+
+/** Liste des élections : la page consomme `{ data, total }`. */
+export type ListeElections = Liste<Election>;

@@ -3,10 +3,10 @@
     <en-tete-page :title="$t('notes.title')" :subtitle="$t('notes.subtitle')">
       <template v-if="evaluationActive" #actions>
         <q-badge
-          :color="evaluationActive.statut === 'OUVERTE' ? 'positive' : 'grey-7'"
+          :color="evaluationActive.statut === 'OUVERT' ? 'positive' : 'grey-7'"
           class="q-px-sm q-py-xs text-body2"
         >
-          <q-icon :name="evaluationActive.statut === 'OUVERTE' ? 'lock_open' : 'lock'" class="q-mr-xs" />
+          <q-icon :name="evaluationActive.statut === 'OUVERT' ? 'lock_open' : 'lock'" class="q-mr-xs" />
           {{ LIBELLE_STATUT_EVALUATION[evaluationActive.statut] }}
         </q-badge>
       </template>
@@ -38,7 +38,7 @@
             @click="allerAuxEvaluations"
           />
           <q-btn
-            v-if="evaluationActive && evaluationActive.statut === 'OUVERTE' && peutCloturer()"
+            v-if="evaluationActive && evaluationActive.statut === 'OUVERT' && peutCloturer()"
             outline
             no-caps
             icon="lock"
@@ -110,13 +110,15 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
-import { api } from '@/boot/axios';
 import { useAuthStore } from '@/stores/auth';
 import ChampRecherche from '@/shared/components/ChampRecherche.vue';
 import NotesSaisieMasse from '../components/NotesSaisieMasse.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
 import { useConfirmation } from '@/shared/composables/useConfirmation';
 import { LIBELLE_STATUT_EVALUATION, LIBELLE_TYPE_EVALUATION } from '@/shared/utils/libelles';
+import { notesService } from '../services/notes';
+import { evaluationsService } from '../services/evaluations';
+import type { LigneEvaluation, SaisieNotes } from '../services/evaluations';
 import type { Evaluation, Note, TypeEvaluation } from '@/types';
 
 const $q = useQuasar();
@@ -133,24 +135,14 @@ const peutCloturer = () => auth.peut('evaluations.gerer');
 
 const selEvaluationId = ref<string | null>(null);
 const evaluationActive = ref<Evaluation | null>(null);
-const lignes = ref<
-  Array<{
-    inscriptionId: string;
-    numero: string;
-    matricule: string;
-    nom: string;
-    prenom: string;
-    note: number | null;
-    present: boolean;
-  }>
->([]);
+const lignes = ref<LigneEvaluation[]>([]);
 const notesExistantes = ref<Note[]>([]);
 const chargementInitial = ref(true);
 
-const cloturee = computed(() => evaluationActive.value?.statut === 'CLOTUREE');
+const cloturee = computed(() => evaluationActive.value?.statut === 'CLOTURE');
 
 /** Une ligne d'autocomplétion doit dire l'épreuve, la matière, la promo et l'état. */
-function libelleEvaluation(e: any): string {
+function libelleEvaluation(e: Evaluation): string {
   const type = LIBELLE_TYPE_EVALUATION[e.type as TypeEvaluation] ?? e.type;
   const etat = LIBELLE_STATUT_EVALUATION[e.statut] ?? e.statut;
   return `${e.intitule} · ${type} · ${e.matiere?.intitule ?? ''} (${e.promotion?.nom ?? ''}) — ${etat}`;
@@ -174,10 +166,10 @@ const motifLectureSeule = computed(() => {
 async function choisir(e: Evaluation) {
   chargementInitial.value = true;
   try {
-    const { data } = await api.get(`/notes/evaluation/${e.id}`);
+    const data = await notesService.evaluation(e.id);
     evaluationActive.value = data.evaluation ?? e;
-    lignes.value = (data.lignes ?? []).map((l: any) => ({
-      inscriptionId: l.inscriptionId,
+    lignes.value = (data.lignes ?? []).map((l) => ({
+      inscriptionId: l.inscriptionId ?? '',
       numero: l.numero,
       matricule: l.matricule,
       nom: l.nom,
@@ -186,11 +178,11 @@ async function choisir(e: Evaluation) {
       present: l.present ?? true,
     }));
     notesExistantes.value = (data.lignes ?? [])
-      .filter((l: any) => l.note !== null && l.note !== undefined)
-      .map((l: any) => ({
-        id: l.id ?? l.inscriptionId,
+      .filter((l) => l.note !== null && l.note !== undefined)
+      .map((l) => ({
+        id: l.id ?? l.inscriptionId ?? '',
         evaluationId: e.id,
-        inscriptionId: l.inscriptionId,
+        inscriptionId: l.inscriptionId ?? '',
         note: l.note,
         present: l.present ?? true,
         saisieLe: l.saisieLe ?? new Date().toISOString(),
@@ -208,8 +200,8 @@ async function chargerDepuisId(id: string | null) {
     return;
   }
   try {
-    const { data } = await api.get(`/evaluations/${id}`);
-    await choisir(data as Evaluation);
+    const evaluation = await evaluationsService.lire(id);
+    await choisir(evaluation);
   } catch {
     evaluationActive.value = null;
     lignes.value = [];
@@ -221,22 +213,19 @@ async function chargerDepuisId(id: string | null) {
   }
 }
 
-async function enregistrer(payload: {
-  evaluationId: string;
-  notes: Array<{ inscriptionId: string; note: number | null; present: boolean }>;
-}) {
+async function enregistrer(payload: SaisieNotes) {
   try {
-    const { data } = await api.put('/notes/saisie', payload);
-    const count = data.n ?? payload.notes.length;
+    const resultat = await notesService.saisie(payload);
+    const count = resultat.n ?? payload.notes.length;
     $q.notify({
       type: 'positive',
-      message: data.ignorees
-        ? t('notes.messages.savedWithIgnored', { count, ignored: data.ignorees })
+      message: resultat.ignorees
+        ? t('notes.messages.savedWithIgnored', { count, ignored: resultat.ignorees })
         : t('notes.messages.saved', { count }),
     });
     if (evaluationActive.value) await choisir(evaluationActive.value);
   } catch {
-    /* Notification gérée par l’intercepteur axios */
+    /* Notification gérée par l'intercepteur axios */
   }
 }
 
@@ -250,11 +239,11 @@ async function cloturer() {
   });
   if (!ok) return;
   try {
-    await api.post(`/evaluations/${e.id}/cloturer`);
+    await evaluationsService.cloturer(e.id);
     $q.notify({ type: 'positive', message: t('notes.messages.closed') });
-    await choisir({ ...e, statut: 'CLOTUREE' });
+    await choisir({ ...e, statut: 'CLOTURE' });
   } catch {
-    /* Notification gérée par l’intercepteur axios */
+    /* Notification gérée par l'intercepteur axios */
   }
 }
 

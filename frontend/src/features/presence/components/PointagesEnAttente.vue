@@ -78,30 +78,32 @@
 </template>
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n';
-import { useQuasar } from 'quasar';
 import { usePointagesStore } from '@/stores/pointages';
 import { useSeancesStore } from '@/stores/seances';
+import { useConfirmation } from '@/shared/composables/useConfirmation';
 import { dateHeureLisible, LIBELLE_STATUT_PRESENCE } from '@/shared/utils/libelles';
 defineProps<{ modelValue: boolean }>();
 const emit = defineEmits<{ 'update:modelValue': [value: boolean] }>();
 const pointages = usePointagesStore();
 const seancesHorsLigne = useSeancesStore();
 const { t } = useI18n();
-const $q = useQuasar();
-function retirer(id: string) {
-  $q.dialog({
-    title: t('filePointages.remove'),
+const { confirmer } = useConfirmation();
+
+async function retirer(id: string) {
+  const ok = await confirmer({
+    titre: t('filePointages.remove'),
     message: t('filePointages.removeConfirm'),
-    cancel: true,
     persistent: true,
-  }).onOk(() => pointages.retirer(id));
+  });
+  if (ok) pointages.retirer(id);
 }
-function retirerSeance(idClient: string) {
-  $q.dialog({
-    title: t('seances.offline.remove'),
+
+async function retirerSeance(idClient: string) {
+  const ok = await confirmer({
+    titre: t('seances.offline.remove'),
     message: t('seances.offline.removeConfirm'),
-    cancel: true,
     persistent: true,
-  }).onOk(() => seancesHorsLigne.retirer(idClient));
+  });
+  if (ok) seancesHorsLigne.retirer(idClient);
 }
 </script>

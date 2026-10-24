@@ -1,0 +1,95 @@
+{
+  "date": "2026-10-23T12:54:48.785Z",
+  "statut": "valide",
+  "preview": {
+    "valides": 2,
+    "rejetees": 1
+  },
+  "applied": {
+    "type": "creneaux",
+    "lignesLues": 3,
+    "importees": 2,
+    "rejetees": 1,
+    "erreurs": [
+      {
+        "numero": 3,
+        "erreurs": [
+          "L’affectation indiquée n’existe pas."
+        ]
+      }
+    ],
+    "colonnesIgnorees": []
+  },
+  "replay": {
+    "type": "creneaux",
+    "lignesLues": 3,
+    "importees": 0,
+    "rejetees": 3,
+    "erreurs": [
+      {
+        "numero": 2,
+        "erreurs": [
+          "Conflit d’emploi du temps le Lundi, de 08:00 à 10:00."
+        ]
+      },
+      {
+        "numero": 3,
+        "erreurs": [
+          "L’affectation indiquée n’existe pas."
+        ]
+      },
+      {
+        "numero": 4,
+        "erreurs": [
+          "Conflit d’emploi du temps le Mardi, de 14:00 à 16:00."
+        ]
+      }
+    ],
+    "colonnesIgnorees": []
+  },
+  "collision": {
+    "type": "creneaux",
+    "lignesLues": 1,
+    "importees": 0,
+    "rejetees": 1,
+    "erreurs": [
+      {
+        "numero": 2,
+        "erreurs": [
+          "Conflit d’emploi du temps le Lundi, de 08:00 à 10:00."
+        ]
+      }
+    ],
+    "colonnesIgnorees": []
+  },
+  "closedYear": {
+    "type": "creneaux",
+    "lignesLues": 1,
+    "importees": 0,
+    "rejetees": 1,
+    "erreurs": [
+      {
+        "numero": 2,
+        "erreurs": [
+          "Cette année académique est clôturée : aucune nouvelle écriture n’y est autorisée."
+        ]
+      }
+    ],
+    "colonnesIgnorees": []
+  },
+  "observations": [
+    "Normalisation lundi, 8h00 et dates françaises",
+    "Aperçu sans écriture",
+    "Deux créations et référence UUID inconnue rejetée",
+    "Rejeu sans doublon",
+    "Collision rejetée",
+    "Année clôturée sans nouvelle écriture",
+    "Une trace par création",
+    "Rôle étudiant refusé"
+  ],
+  "fixturesRestantes": 0,
+  "productionUntouched": true,
+  "limites": [
+    "Fichiers historiques et parcours XLSX navigateur non qualifiés par cette recette"
+  ]
+}

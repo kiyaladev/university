@@ -100,9 +100,9 @@
 import { computed, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
-import { api } from '@/boot/axios';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
-import { LIBELLE_CATEGORIE_CHAMBRE, LIBELLE_STATUT_CHAMBRE } from '@/shared/utils/libelles';
+import { citesService } from '../services/cites';
+import { DEVISE, LIBELLE_CATEGORIE_CHAMBRE, LIBELLE_STATUT_CHAMBRE } from '@/shared/utils/libelles';
 import type { Chambre, Residence } from '@/types';
 
 const ouvert = defineModel<boolean>({ required: true });
@@ -123,7 +123,7 @@ const form = ref({
   categorie: 'CHAMBRE_PARTAGEE',
   lits: 2,
   loyer: 0,
-  devise: 'GNF',
+  devise: DEVISE,
   statut: 'LIBRE',
 });
 
@@ -142,7 +142,7 @@ watch(ouvert, (o) => {
     categorie: c?.categorie ?? 'CHAMBRE_PARTAGEE',
     lits: c?.lits ?? 1,
     loyer: c?.loyer ?? 0,
-    devise: c?.devise ?? 'GNF',
+    devise: c?.devise ?? DEVISE,
     statut: c?.statut ?? 'LIBRE',
   };
 });
@@ -151,8 +151,8 @@ async function enregistrer() {
   enregistrement.value = true;
   try {
     const payload = { ...form.value };
-    if (props.chambre) await api.put(`/chambres/${props.chambre.id}`, payload);
-    else await api.post('/chambres', payload);
+    if (props.chambre) await citesService.modifierChambre(props.chambre.id, payload);
+    else await citesService.creerChambre(payload);
     $q.notify({ type: 'positive', message: t('cites.chambres.dialogs.form.saved') });
     emit('enregistre');
     ouvert.value = false;

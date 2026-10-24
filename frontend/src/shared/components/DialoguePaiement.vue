@@ -41,7 +41,7 @@
             </div>
             <div class="col-12 col-sm-4">
               <q-input
-                :model-value="`${montantLisible(dossierChoisi.montantFrais)} GNF`"
+                :model-value="montantLisible(dossierChoisi.montantFrais, DEVISE)"
                 outlined
                 dense
                 readonly
@@ -50,7 +50,7 @@
             </div>
             <div class="col-12 col-sm-4">
               <q-input
-                :model-value="`${montantLisible(resteAPayer)} GNF`"
+                :model-value="montantLisible(resteAPayer, DEVISE)"
                 outlined
                 dense
                 readonly
@@ -173,9 +173,12 @@
 import { computed, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
-import { api } from '@/boot/axios';
 import ChampRecherche from './ChampRecherche.vue';
+import { paiementsApi } from '@/shared/services/paiements';
+import { elements } from '@/shared/utils/collections';
+import { resteAPayer as resteDuDossier } from '@/shared/utils/finances';
 import {
+  DEVISE,
   LIBELLE_MODE_PAIEMENT,
   LIBELLE_OPERATEUR_MM,
   LIBELLE_STATUT_INSCRIPTION,
@@ -205,7 +208,7 @@ const form = ref({
   inscriptionId: '',
   etudiantId: '',
   montant: null as number | null,
-  devise: 'GNF',
+  devise: DEVISE,
   mode: 'MOBILE_MONEY',
   operateur: 'ORANGE_MONEY',
   telephone: '',
@@ -222,15 +225,8 @@ const peutSimulerReussi = computed(() => auth.peut('paiements.simuler'));
 
 const dossierChoisi = computed(() => inscriptions.value.find((i) => i.id === form.value.inscriptionId) ?? null);
 
-/** Déjà encaissé sur le dossier : seuls les paiements réussis comptent. */
-function montantPaye(dossier: Inscription): number {
-  return (dossier.paiements ?? []).filter((p) => p.statut === 'REUSSI').reduce((t, p) => t + p.montant, 0);
-}
-
 /** Reste dû : le montant proposé par défaut, jamais le total des frais. */
-const resteAPayer = computed(() =>
-  dossierChoisi.value ? Math.max(0, dossierChoisi.value.montantFrais - montantPaye(dossierChoisi.value)) : null,
-);
+const resteAPayer = computed(() => (dossierChoisi.value ? resteDuDossier(dossierChoisi.value) : null));
 
 const telephoneOuNom = computed(() =>
   form.value.mode === 'MOBILE_MONEY' ? !!form.value.telephone : !!form.value.nomComplet,
@@ -243,8 +239,7 @@ const montantValide = computed(() => !!form.value.montant && form.value.montant 
 
 async function charger() {
   try {
-    const { data } = await api.get('/inscriptions', { params: { all: '1' } });
-    inscriptions.value = Array.isArray(data) ? data : (data.data ?? []);
+    inscriptions.value = elements(await paiementsApi.dossiers());
   } catch {
     inscriptions.value = [];
   }
@@ -273,7 +268,7 @@ watch(
       inscriptionId: retenuIns,
       etudiantId: props.etudiantId ?? '',
       montant: props.montantInitial ?? null,
-      devise: 'GNF',
+      devise: DEVISE,
       mode: 'MOBILE_MONEY',
       operateur: 'ORANGE_MONEY',
       telephone: '',
@@ -286,8 +281,11 @@ watch(
 );
 
 async function poster(): Promise<string> {
-  const { data } = await api.post('/paiements', {
-    montant: form.value.montant,
+  // Le bouton d'enregistrement est désactivé tant que le montant n'est pas
+  // valide : le montant est donc un nombre positif à ce point. Le repli à 0
+  // ne sert qu'à tenir le type — l'API refuse un montant hors bornes.
+  const paiement = await paiementsApi.creer({
+    montant: form.value.montant ?? 0,
     devise: form.value.devise,
     mode: form.value.mode,
     operateur: form.value.mode === 'MOBILE_MONEY' ? form.value.operateur : undefined,
@@ -297,7 +295,7 @@ async function poster(): Promise<string> {
     inscriptionId: form.value.inscriptionId || undefined,
     etudiantId: form.value.etudiantId || undefined,
   });
-  return data.id as string;
+  return paiement.id;
 }
 
 async function enregistrer() {
@@ -318,7 +316,7 @@ async function enregistrerEnSimulantReussi() {
   try {
     const id = await poster();
     // Confirmation opérateur : la transaction est validée immédiatement.
-    await api.post(`/paiements/${id}/simuler`, { statut: 'REUSSI' });
+    await paiementsApi.simuler(id, 'REUSSI');
     $q.notify({ type: 'positive', message: t('paiements.messages.recordedAndSucceeded') });
     emit('paye');
     emit('update:modelValue', false);

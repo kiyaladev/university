@@ -1,0 +1,155 @@
+import { Transform, Type } from 'class-transformer';
+import {
+  IsBoolean,
+  IsDateString,
+  IsEnum,
+  IsIn,
+  IsInt,
+  MaxLength,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Min,
+} from 'class-validator';
+import { ModePaiement, OperateurPaiement, StatutConsommation, StatutPaiement, TypeRepas } from '@prisma/client';
+import { QueryDto } from '../../../common/dto';
+import { OPERATEURS_MOBILE_MONEY } from '../../../common/finances/paiement';
+
+// ---------------------------------------------------------------------------
+// Portefeuilles
+// ---------------------------------------------------------------------------
+
+export class PortefeuillesQueryDto extends QueryDto {
+  @IsOptional()
+  @IsUUID()
+  etudiantId?: string;
+}
+
+/**
+ * Rechargement au guichet (espèces) ou par Mobile Money.
+ * `simuler: true` confirme immédiatement la transaction (pilote) : le mode
+ * Mobile Money est alors crédité sur-le-champ comme les espèces.
+ */
+export class RechargerPortefeuilleDto {
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  montant: number;
+
+  @IsOptional()
+  @IsIn([ModePaiement.MOBILE_MONEY, ModePaiement.ESPECES])
+  mode?: ModePaiement;
+
+  @IsOptional()
+  @IsIn(OPERATEURS_MOBILE_MONEY)
+  operateur?: OperateurPaiement;
+
+  @IsOptional()
+  @IsString()
+  telephone?: string;
+
+  @IsOptional()
+  @Transform(({ obj, key }) => obj[key])
+  @IsBoolean()
+  simuler?: boolean;
+}
+
+/** Confirmation pilote d'une recharge en attente (miroir du module paiement). */
+export class SimulerRechargeDto {
+  @IsIn([StatutPaiement.REUSSI, StatutPaiement.ECHOUE])
+  statut: StatutPaiement;
+}
+
+// ---------------------------------------------------------------------------
+// Guichet : validation d'un repas
+// ---------------------------------------------------------------------------
+
+/**
+ * La « référence » portée par le QR de la carte (UP-RESTO-<base64url>), par le
+ * matricule INE ou par le numéro de téléphone de l'étudiant : le guichet tape
+ * ou scanne indistinctement.
+ */
+export class ValiderRepasDto {
+  @IsString()
+  @MaxLength(64)
+  reference: string;
+
+  @IsEnum(TypeRepas)
+  repas: TypeRepas;
+
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  montant: number;
+
+  @IsOptional()
+  @IsString()
+  cantine?: string;
+}
+
+// ---------------------------------------------------------------------------
+// Consommations
+// ---------------------------------------------------------------------------
+
+export class ConsommationsQueryDto extends QueryDto {
+  @IsOptional()
+  @IsEnum(StatutConsommation)
+  statut?: StatutConsommation;
+
+  @IsOptional()
+  @IsDateString()
+  dateDebut?: string;
+
+  @IsOptional()
+  @IsDateString()
+  dateFin?: string;
+
+  @IsOptional()
+  @IsString()
+  cantine?: string;
+}
+
+export class AnnulerConsommationDto {
+  @IsOptional()
+  @IsString()
+  motif?: string;
+}
+
+/** Filtres des recharges : le statut est un statut de paiement, pas un repas. */
+export class RechargesQueryDto extends QueryDto {
+  @IsOptional()
+  @IsEnum(StatutPaiement)
+  statut?: StatutPaiement;
+
+  @IsOptional()
+  @IsDateString()
+  dateDebut?: string;
+
+  @IsOptional()
+  @IsDateString()
+  dateFin?: string;
+}
+
+// ---------------------------------------------------------------------------
+// Portail étudiant
+// ---------------------------------------------------------------------------
+
+/**
+ * Rechargement depuis le portail : toujours Mobile Money, jamais crédité
+ * directement. L'étudiant reçoit les instructions de paiement et le guichet
+ * (ou la caisse) confirme ensuite la transaction.
+ */
+export class RechargerPortailDto {
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  montant: number;
+
+  @IsOptional()
+  @IsIn([ModePaiement.MOBILE_MONEY])
+  mode?: ModePaiement;
+
+  @IsOptional()
+  @IsIn(OPERATEURS_MOBILE_MONEY)
+  operateur?: OperateurPaiement;
+}

@@ -94,7 +94,7 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useQuasar } from 'quasar';
 import type { QTableColumn } from 'quasar';
-import { api } from '@/boot/axios';
+import { rapportsService, type FicheEnseignant } from '../services/rapports';
 import { useAuthStore } from '@/stores/auth';
 import { useImpressionFicheEnseignant } from '@/shared/composables/useImpressionFicheEnseignant';
 import ChampStatut from '../components/ChampStatut.vue';
@@ -110,7 +110,7 @@ const { ouvrir: ouvrirFicheEnseignant } = useImpressionFicheEnseignant();
 
 const dateDebut = ref(decalerJours(aujourdhui(), -60));
 const dateFin = ref(aujourdhui());
-const fiche = ref<any>(null);
+const fiche = ref<FicheEnseignant | null>(null);
 const chargement = ref(false);
 
 const kpis = computed(() => {
@@ -131,7 +131,7 @@ const colonnes = computed<QTableColumn[]>(() => [
   {
     name: 'date',
     label: t('common.fields.date'),
-    field: (r: any) => dateLisible(r.date),
+    field: (r: FicheEnseignant['seances'][number]) => dateLisible(r.date),
     align: 'left',
     sortable: true,
   },
@@ -143,7 +143,7 @@ const colonnes = computed<QTableColumn[]>(() => [
   {
     name: 'duree',
     label: t('common.fields.duration'),
-    field: (r: any) => dureeLisible(r.dureeMinutes),
+    field: (r: FicheEnseignant['seances'][number]) => dureeLisible(r.dureeMinutes),
     align: 'left',
   },
   { name: 'theme', label: t('mesSeances.table.columns.theme'), field: 'thematiqueTraitee', align: 'left' },
@@ -164,10 +164,10 @@ function imprimer() {
 async function charger() {
   chargement.value = true;
   try {
-    const { data } = await api.get('/rapports/ma-fiche', {
-      params: { dateDebut: dateDebut.value, dateFin: dateFin.value },
+    fiche.value = await rapportsService.maFiche({
+      dateDebut: dateDebut.value,
+      dateFin: dateFin.value,
     });
-    fiche.value = data;
   } finally {
     chargement.value = false;
   }

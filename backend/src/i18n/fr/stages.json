@@ -20,5 +20,10 @@
   "statut_initial_invalide_donnees_statut_creer_en_propose_puis": "Statut initial invalide ({donnees.statut}) : créer en PROPOSE puis faire évoluer",
   "un_travail_travail_statut_ne_se_supprime_pas_abandonnez_le_o": "Un travail {travail.statut} ne se supprime pas : abandonnez-le ou laissez-le vivre",
   "seule_l_administration_peut_changer_l_encadrant_d_un_travail_": "Seule l'administration peut changer l'encadrant d'un travail.",
-  "ce_travail_a_change_d_etat_pendant_la_transition_recharge": "Ce travail a changé d'état au même moment : rechargez-le avant de réessayer."
+  "ce_travail_a_change_d_etat_pendant_la_transition_recharge": "Ce travail a changé d'état au même moment : rechargez-le avant de réessayer.",
+  "transition_interdite": "Transition {statut} → {cible} interdite (autorisées : {autorisees})",
+  "aucune_transition_autorisee": "aucune",
+  "la_soutenance_suppose_le_rapport_rendu": "La soutenance suppose le rapport rendu : cochez « rapport rendu » d’abord",
+  "aucune_soutenance_enregistree": "Aucune soutenance enregistrée : la défense passe par l’enregistrement d’une soutenance",
+  "ce_dossier_ne_se_soutient_pas": "Un dossier {statut} ne se soutient pas : il doit être EN_COURS"
 }

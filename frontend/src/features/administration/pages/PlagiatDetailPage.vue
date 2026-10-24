@@ -302,12 +302,12 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useQuasar } from 'quasar';
 import { useRoute } from 'vue-router';
-import { api } from '@/boot/axios';
 import { useAuthStore } from '@/stores/auth';
 import { LIBELLE_TYPE_DOCUMENT, dateHeureLisible } from '@/shared/utils/libelles';
 import EnTetePage from '@/shared/components/EnTetePage.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
-import type { DocumentDepot, SuspicionPlagiat, TypeDocument } from '@/types';
+import type { SuspicionPlagiat, TypeDocument } from '@/types';
+import { plagiatService, texteDocument } from '@/features/administration/services/plagiat';
 
 const $q = useQuasar();
 const auth = useAuthStore();
@@ -344,7 +344,7 @@ async function charger() {
   if (!id.value) return;
   chargement.value = true;
   try {
-    const { data } = await api.get(`/documents/plagiat/${id.value}`);
+    const data = await plagiatService.suspicion(id.value);
     suspicion.value = data;
     decisionStatut.value = 'ACQUITTE';
     decisionMotif.value = data?.commentaire ?? '';
@@ -364,18 +364,10 @@ async function chargerTextes() {
   if (!suspicion.value) return;
   chargementTexte.value = true;
   try {
-    const docs = [suspicion.value.documentA, suspicion.value.documentB];
-    const promises = docs.map(async (d?: DocumentDepot | null) => {
-      if (!d) return '';
-      if (d.contenuTexte) return d.contenuTexte;
-      try {
-        const { data } = await api.get(`/documents/${d.id}`);
-        return (data?.contenuTexte ?? '').toString();
-      } catch {
-        return '';
-      }
-    });
-    const [a, b] = await Promise.all(promises);
+    const [a, b] = await Promise.all([
+      texteDocument(suspicion.value.documentA),
+      texteDocument(suspicion.value.documentB),
+    ]);
     texteA.value = a;
     texteB.value = b;
   } finally {
@@ -410,7 +402,7 @@ async function validerDecision() {
   }
   decisionEnCours.value = true;
   try {
-    const { data } = await api.post(`/documents/plagiat/${suspicion.value.id}/acquitter`, {
+    const data = await plagiatService.acquitter(suspicion.value.id, {
       decision: decisionStatut.value,
       commentaire: decisionMotif.value.trim() || undefined,
     });

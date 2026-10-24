@@ -1,15 +1,31 @@
 /** Référentiels : rôles, comptes, années, structure, salles, enseignants, matières, affectations, créneaux. */
 
-export type Role = 'ADMIN' | 'DIRECTION' | 'SCOLARITE' | 'CHEF_DEPARTEMENT' | 'CONTROLEUR' | 'ENSEIGNANT' | 'ETUDIANT';
+/**
+ * Les énumérations viennent du schéma Prisma : elles sont générées dans
+ * `types/generated/enums.ts` et réexportées ici, sans recopie. Regenerer avec
+ * `bun run types:generer`.
+ */
+import type {
+  Niveau,
+  Role,
+  StatutEnseignant,
+  StatutJustificatif,
+  StatutPresence,
+  StatutSeance,
+  TypeCours,
+  TypeJustificatif,
+} from './generated/enums';
 
-export type StatutPresence = 'PRESENT' | 'RETARD' | 'ABSENT' | 'DEPART_ANTICIPE' | 'REMPLACE' | 'EXCUSE';
-
-export type StatutSeance = 'PLANIFIEE' | 'EN_COURS' | 'CONTROLEE' | 'ANNULEE' | 'NON_TENUE';
-export type TypeCours = 'CM' | 'TD' | 'TP' | 'EXAMEN' | 'CONFERENCE';
-export type Niveau = 'L1' | 'L2' | 'L3' | 'M1' | 'M2' | 'DOCTORAT';
-export type StatutEnseignant = 'PERMANENT' | 'VACATAIRE' | 'CONTRACTUEL';
-export type StatutJustificatif = 'EN_ATTENTE' | 'VALIDE' | 'REJETE';
-export type TypeJustificatif = 'MALADIE' | 'MISSION' | 'FORMATION' | 'DEUIL' | 'TRANSPORT' | 'AUTRE';
+export type {
+  Niveau,
+  Role,
+  StatutEnseignant,
+  StatutJustificatif,
+  StatutPresence,
+  StatutSeance,
+  TypeCours,
+  TypeJustificatif,
+} from './generated/enums';
 
 export interface Utilisateur {
   id: string;

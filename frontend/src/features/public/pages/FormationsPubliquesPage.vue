@@ -56,224 +56,12 @@
       />
 
       <div class="vitrine__grille">
-        <article v-for="f in formations" :key="f.id" class="plaque carte-formation">
-          <div class="carte-formation__tete">
-            <span v-if="f.categorie" class="pochoir carte-formation__categorie">{{ f.categorie }}</span>
-            <span v-else class="pochoir carte-formation__categorie">{{
-              $t('formationsPubliques.catalogue.card.categorieDefaut')
-            }}</span>
-            <!-- `placesRestantes` vaut null/undefined quand la capacité est libre. -->
-            <span
-              v-if="f.placesRestantes != null"
-              class="pochoir carte-formation__places"
-              :class="{ 'carte-formation__places--dernieres': f.placesRestantes <= 5 }"
-            >
-              {{
-                f.placesRestantes === 0
-                  ? $t('formationsPubliques.catalogue.card.complet')
-                  : $t('formationsPubliques.catalogue.card.placesRestantes', { n: f.placesRestantes })
-              }}
-            </span>
-          </div>
-
-          <h3 class="lettrage carte-formation__titre">{{ f.titre }}</h3>
-          <p v-if="f.description" class="carte-formation__description">{{ f.description }}</p>
-
-          <dl class="carte-formation__details">
-            <div v-if="f.dureeHeures">
-              <dt class="pochoir">{{ $t('common.fields.duration') }}</dt>
-              <dd class="chiffres">{{ $t('formationsPubliques.catalogue.card.dureeValeur', { n: f.dureeHeures }) }}</dd>
-            </div>
-            <div v-if="f.dateDebut || f.dateFin">
-              <dt class="pochoir">{{ $t('formationsPubliques.catalogue.card.dates') }}</dt>
-              <dd class="chiffres">{{ periodeLisible(f) }}</dd>
-            </div>
-            <div v-if="f.lieu">
-              <dt class="pochoir">{{ $t('formationsPubliques.catalogue.card.lieu') }}</dt>
-              <dd>{{ f.lieu }}</dd>
-            </div>
-          </dl>
-
-          <div class="carte-formation__prix">
-            <span class="pochoir carte-formation__prix-libelle">{{
-              $t('formationsPubliques.catalogue.card.investissement')
-            }}</span>
-            <span class="lettrage chiffres carte-formation__montant">
-              {{ montantLisible(f.prix) }}
-              <small class="carte-formation__devise">{{ f.devise }}</small>
-            </span>
-          </div>
-
-          <q-btn
-            class="full-width carte-formation__cta"
-            color="primary"
-            size="lg"
-            unelevated
-            no-caps
-            :label="
-              f.prix > 0
-                ? $t('formationsPubliques.catalogue.card.inscrirePayant')
-                : $t('formationsPubliques.catalogue.card.inscrireGratuit')
-            "
-            :disable="f.placesRestantes === 0"
-            @click="ouvrirInscription(f)"
-          />
-        </article>
+        <carte-formation-publique v-for="f in formations" :key="f.id" :formation="f" @inscrire="ouvrirInscription(f)" />
       </div>
     </section>
 
     <!-- Demande d'inscription -->
-    <q-dialog v-model="dialogInscription" persistent>
-      <q-card style="width: 560px; max-width: 95vw">
-        <!-- Étape 1 : identité -->
-        <q-card-section v-if="etape === 1">
-          <div class="text-h6">{{ $t('formationsPubliques.dialog.step1.title') }}</div>
-          <div class="text-caption text-grey-7 q-mt-xs">
-            <strong>{{ selection?.titre }}</strong> {{ $t('common.format.emptyValue') }}
-            {{ montantLisible(selection?.prix ?? 0) }} {{ selection?.devise ?? 'GNF' }}
-          </div>
-        </q-card-section>
-        <q-card-section v-if="etape === 1">
-          <span class="section-titre">{{ $t('common.fields.identity') }}</span>
-          <q-input
-            v-model="form.nomComplet"
-            outlined
-            dense
-            :label="$t('formationsPubliques.dialog.step1.nomComplet.label')"
-            :hint="$t('formationsPubliques.dialog.step1.nomComplet.hint')"
-            autofocus
-          />
-          <q-input
-            v-model="form.telephone"
-            outlined
-            dense
-            :label="$t('formationsPubliques.dialog.step1.telephone.label')"
-            :hint="$t('formationsPubliques.dialog.step1.telephone.hint')"
-          />
-          <q-input
-            v-model="form.email"
-            outlined
-            dense
-            type="email"
-            :label="$t('formationsPubliques.dialog.step1.email.label')"
-          />
-          <q-input
-            v-model="form.matricule"
-            outlined
-            dense
-            :label="$t('formationsPubliques.dialog.step1.matricule.label')"
-            :hint="$t('formationsPubliques.dialog.step1.matricule.hint')"
-          />
-        </q-card-section>
-
-        <!-- Étape 2 : récapitulatif -->
-        <q-card-section v-if="etape === 2">
-          <div class="text-h6">{{ $t('formationsPubliques.dialog.step2.title') }}</div>
-          <div class="plaque recapitulatif">
-            <div class="recapitulatif__ligne">
-              <span class="pochoir">{{ $t('formationsPubliques.dialog.step2.formation') }}</span>
-              <span class="recapitulatif__valeur">{{ selection?.titre }}</span>
-            </div>
-            <div class="recapitulatif__ligne">
-              <span class="pochoir">{{ $t('formationsPubliques.dialog.step2.participant') }}</span>
-              <span class="recapitulatif__valeur">{{ form.nomComplet }}</span>
-            </div>
-            <div class="recapitulatif__ligne">
-              <span class="pochoir">{{ $t('common.fields.phone') }}</span>
-              <span class="recapitulatif__valeur chiffres">{{ form.telephone }}</span>
-            </div>
-            <div class="recapitulatif__ligne">
-              <span class="pochoir">{{ $t('formationsPubliques.dialog.step2.montantARegler') }}</span>
-              <span class="lettrage chiffres recapitulatif__montant">
-                {{ montantLisible(selection?.prix ?? 0) }} {{ selection?.devise ?? 'GNF' }}
-              </span>
-            </div>
-          </div>
-          <p class="recapitulatif__note">
-            {{ $t('formationsPubliques.dialog.step2.note') }}
-          </p>
-          <q-banner v-if="messageErreur" class="note--erreur">
-            <template #avatar><q-icon name="error" /></template>
-            {{ messageErreur }}
-          </q-banner>
-        </q-card-section>
-
-        <!-- Étape 3 : demande déposée -->
-        <q-card-section v-if="etape === 3 && resultat">
-          <div class="recapitulatif__succes">
-            <div class="recapitulatif__tampon" aria-hidden="true">
-              <span class="pochoir">{{ $t('formationsPubliques.dialog.step3.demande') }}</span>
-              <span class="lettrage">{{ $t('formationsPubliques.dialog.step3.deposee') }}</span>
-            </div>
-            <p class="pochoir recapitulatif__ref">{{ $t('formationsPubliques.dialog.step3.numeroDossier') }}</p>
-            <p class="lettrage chiffres recapitulatif__numero">{{ resultat.numero }}</p>
-          </div>
-
-          <div class="plaque recapitulatif__paiement">
-            <div class="text-caption">{{ $t('formationsPubliques.dialog.step3.aReglerMobileMoney') }}</div>
-            <div class="lettrage chiffres recapitulatif__somme">
-              {{ montantLisible(resultat.montant) }} {{ resultat.devise }}
-            </div>
-            <p class="recapitulatif__paiement-texte">
-              <i18n-t keypath="formationsPubliques.dialog.step3.paiementTexte" tag="span">
-                <template #numero>{{ resultat.numero }}</template>
-                <template #confirmee
-                  ><strong>{{ $t('formationsPubliques.dialog.step3.confirmee') }}</strong></template
-                >
-              </i18n-t>
-            </p>
-          </div>
-
-          <q-banner class="note--info">
-            <template #avatar><q-icon name="hourglass_top" /></template>
-            <i18n-t keypath="formationsPubliques.dialog.step3.statutInfo" tag="span">
-              <template #statut
-                ><strong>{{ $t('formationsPubliques.dialog.step3.enAttentePaiement') }}</strong></template
-              >
-            </i18n-t>
-          </q-banner>
-        </q-card-section>
-
-        <q-card-actions align="right">
-          <template v-if="etape === 1">
-            <q-btn flat no-caps :label="$t('common.actions.close')" v-close-popup />
-            <q-btn
-              color="primary"
-              unelevated
-              no-caps
-              :label="$t('formationsPubliques.dialog.step1.voirRecap')"
-              :disable="!identiteValide"
-              @click="etape = 2"
-            >
-              <q-tooltip v-if="!identiteValide">
-                {{ $t('formationsPubliques.dialog.step1.renseignerAbord') }}
-              </q-tooltip>
-            </q-btn>
-          </template>
-          <template v-else-if="etape === 2">
-            <q-btn flat no-caps :label="$t('formationsPubliques.dialog.step2.retour')" @click="etape = 1" />
-            <q-btn
-              color="primary"
-              unelevated
-              no-caps
-              :label="$t('formationsPubliques.dialog.step2.deposer')"
-              :loading="depotEnCours"
-              @click="deposer"
-            />
-          </template>
-          <template v-else>
-            <q-btn flat no-caps :label="$t('common.actions.close')" v-close-popup @click="fermer" />
-            <q-btn
-              color="primary"
-              unelevated
-              no-caps
-              :label="$t('formationsPubliques.dialog.step3.inscrireAutre')"
-              @click="inscrireUnAutre"
-            />
-          </template>
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
+    <dialogue-inscription-formation v-model="dialogInscription" :formation="selection" />
   </q-page>
 </template>
 
@@ -283,30 +71,17 @@
  * l'écran de gestion `/formations-admin`, mais restreint côté serveur aux
  * formations publiées. Tout passe par `formationsService`.
  */
-import { computed, onMounted, ref } from 'vue';
-import { useI18n } from 'vue-i18n';
-import { formationsService, type FormationVitrine, type ResultatDepotInscription } from '@/shared/services/formations';
-import { dateLisible, montantLisible } from '@/shared/utils/libelles';
+import { onMounted, ref } from 'vue';
+import { formationsService, type FormationVitrine } from '@/shared/services/formations';
 import EtatVide from '@/shared/components/EtatVide.vue';
-
-const { t } = useI18n();
+import CarteFormationPublique from '@/features/public/components/CarteFormationPublique.vue';
+import DialogueInscriptionFormation from '@/features/public/components/DialogueInscriptionFormation.vue';
 
 const formations = ref<FormationVitrine[]>([]);
 const chargement = ref(true);
 
 const dialogInscription = ref(false);
 const selection = ref<FormationVitrine | null>(null);
-const etape = ref(1);
-const depotEnCours = ref(false);
-const messageErreur = ref('');
-const resultat = ref<ResultatDepotInscription | null>(null);
-
-const form = ref({ nomComplet: '', telephone: '', email: '', matricule: '' });
-
-/** Les deux champs obligatoires du dépôt : contrôlés dès l'étape 1. */
-const identiteValide = computed(
-  () => form.value.nomComplet.trim().length >= 2 && form.value.telephone.trim().length >= 6,
-);
 
 async function charger() {
   chargement.value = true;
@@ -314,61 +89,16 @@ async function charger() {
     const { data } = await formationsService.publiques();
     formations.value = Array.isArray(data) ? data : [];
   } catch {
-    /* l'intercepteur axios affiche le motif ; le catalogue reste vide */
+    // L'intercepteur axios affiche le motif ; le catalogue reste vide.
+    formations.value = [];
   } finally {
     chargement.value = false;
   }
 }
 
-function periodeLisible(f: FormationVitrine): string {
-  if (!f.dateDebut) return f.dateFin ? dateLisible(f.dateFin) : '';
-  if (!f.dateFin) return dateLisible(f.dateDebut);
-  return `${dateLisible(f.dateDebut)} → ${dateLisible(f.dateFin)}`;
-}
-
 function ouvrirInscription(f: FormationVitrine) {
   selection.value = f;
-  reinitialiserFormulaire();
   dialogInscription.value = true;
-}
-
-function reinitialiserFormulaire() {
-  form.value = { nomComplet: '', telephone: '', email: '', matricule: '' };
-  messageErreur.value = '';
-  resultat.value = null;
-  etape.value = 1;
-}
-
-function fermer() {
-  dialogInscription.value = false;
-}
-
-/** Enchaîner un second participant sur la même formation, sans ressortir. */
-function inscrireUnAutre() {
-  reinitialiserFormulaire();
-}
-
-async function deposer() {
-  messageErreur.value = '';
-  if (!identiteValide.value) {
-    messageErreur.value = t('formationsPubliques.messages.identiteObligatoire');
-    return;
-  }
-  depotEnCours.value = true;
-  try {
-    const { data } = await formationsService.inscriptionPublique(selection.value!.id, {
-      nomComplet: form.value.nomComplet.trim(),
-      telephone: form.value.telephone.trim(),
-      email: form.value.email.trim() || undefined,
-      matricule: form.value.matricule.trim() || undefined,
-    });
-    resultat.value = data;
-    etape.value = 3;
-  } catch (e: any) {
-    messageErreur.value = e?.response?.data?.message ?? t('formationsPubliques.messages.depotImpossible');
-  } finally {
-    depotEnCours.value = false;
-  }
 }
 
 onMounted(charger);
@@ -467,181 +197,6 @@ onMounted(charger);
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: var(--up-4);
-}
-
-// ----------------------------------------------------------------- carte
-.carte-formation {
-  padding: var(--up-4);
-  display: flex;
-  flex-direction: column;
-  gap: var(--up-3);
-}
-
-.carte-formation__tete {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--up-2);
-}
-
-.carte-formation__categorie {
-  color: var(--up-encre-douce);
-  margin: 0;
-}
-
-.carte-formation__places {
-  border: 0;
-  background: $vert-fond;
-  color: #{$vert};
-  border-radius: var(--up-pilule);
-  padding: 2px 10px;
-  white-space: nowrap;
-}
-
-.carte-formation__places--dernieres {
-  background: $jaune-fond;
-  color: $jaune-texte;
-}
-
-.carte-formation__titre {
-  font-size: 1.35rem;
-  margin: 0;
-  line-height: 1.12;
-}
-
-.carte-formation__description {
-  font-size: 0.92rem;
-  line-height: 1.5;
-  color: var(--up-encre-douce);
-  margin: 0;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.carte-formation__details {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--up-2) var(--up-3);
-  margin: 0;
-  border-top: var(--up-filet-fin);
-  padding-top: var(--up-3);
-
-  dt {
-    color: var(--up-encre-douce);
-  }
-  dd {
-    margin: 2px 0 0;
-    font-size: 0.95rem;
-  }
-}
-
-.carte-formation__prix {
-  border-top: var(--up-filet);
-  padding-top: var(--up-3);
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.carte-formation__prix-libelle {
-  color: var(--up-encre-douce);
-}
-
-.carte-formation__montant {
-  font-size: clamp(1.6rem, 1.1rem + 1.6vw, 2.3rem);
-  color: $vert;
-}
-
-.carte-formation__devise {
-  font-size: 0.7em;
-  letter-spacing: -0.01em;
-}
-
-.carte-formation__cta {
-  min-height: 52px;
-  margin-top: auto;
-}
-
-// ------------------------------------------------------------- récapitulatif
-.recapitulatif {
-  padding: var(--up-3);
-  display: grid;
-  gap: var(--up-2);
-}
-
-.recapitulatif__ligne {
-  display: flex;
-  justify-content: space-between;
-  gap: var(--up-3);
-  align-items: baseline;
-
-  .pochoir {
-    color: var(--up-encre-douce);
-  }
-}
-
-.recapitulatif__valeur {
-  text-align: right;
-  font-weight: 600;
-}
-
-.recapitulatif__montant {
-  color: $vert;
-  font-size: 1.3rem;
-}
-
-.recapitulatif__note {
-  font-size: 0.85rem;
-  line-height: 1.5;
-  color: var(--up-encre-douce);
-  margin: var(--up-3) 0 0;
-}
-
-.recapitulatif__succes {
-  display: grid;
-  gap: var(--up-2);
-  justify-items: start;
-}
-
-.recapitulatif__tampon {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--up-2);
-  background: $vert-fond;
-  color: #{$vert};
-  border-radius: var(--up-pilule);
-  padding: var(--up-2) var(--up-3);
-}
-
-.recapitulatif__ref {
-  color: var(--up-encre-douce);
-  margin: var(--up-2) 0 0;
-}
-
-.recapitulatif__numero {
-  font-size: clamp(1.7rem, 1.2rem + 2vw, 2.4rem);
-  margin: 0;
-}
-
-.recapitulatif__paiement {
-  padding: var(--up-4);
-  display: grid;
-  gap: var(--up-2);
-  margin-top: var(--up-3);
-}
-
-.recapitulatif__somme {
-  font-size: clamp(1.5rem, 1rem + 1.8vw, 2.2rem);
-  color: $vert;
-}
-
-.recapitulatif__paiement-texte {
-  font-size: 0.9rem;
-  line-height: 1.5;
-  margin: 0;
-  max-width: 46ch;
 }
 
 @media (max-width: 1023px) {

@@ -3,6 +3,7 @@ const assert = require('node:assert/strict'),
   fs = require('node:fs');
 const { randomUUID } = require('node:crypto');
 const { PrismaClient } = require('@prisma/client');
+const { ecrirePreuve } = require('./preuves.cjs');
 assert.ok(process.env.QA_ENV_FILE && process.env.QA_SESSION_FILE);
 const env = JSON.parse(fs.readFileSync(process.env.QA_ENV_FILE));
 const session = JSON.parse(fs.readFileSync(process.env.QA_SESSION_FILE));
@@ -32,8 +33,26 @@ async function call(token, method, path, body, expected = 200) {
 async function main() {
   const { ADMIN: admin, SCOLARITE: school, ETUDIANT: student, ENSEIGNANT: teacherToken } = session.sessions;
   assert.equal((await call(admin, 'GET', '/auth/me')).data.role, 'ADMIN');
+  // Les séances sont datées relativement à aujourd'hui : le rapport de
+  // couverture distingue les séances passées des séances à venir, une date
+  // figée rendrait le résultat dépendant du jour d'exécution. Le jour est
+  // pris à 12 h UTC pour que la date stockée reste la même quel que soit le
+  // fuseau de la base.
+  const aujourdhui = new Date();
+  const jour = (decalage) => {
+    const d = new Date(aujourdhui);
+    d.setUTCHours(12, 0, 0, 0);
+    d.setUTCDate(d.getUTCDate() + decalage);
+    return d;
+  };
+  const iso = (d) => d.toISOString().slice(0, 10);
+  const anneeCourante = aujourdhui.getUTCFullYear();
   year = await db.anneeAcademique.create({
-    data: { libelle: tag, dateDebut: new Date('2026-01-01'), dateFin: new Date('2026-12-31') },
+    data: {
+      libelle: tag,
+      dateDebut: new Date(Date.UTC(anneeCourante - 1, 0, 1)),
+      dateFin: new Date(Date.UTC(anneeCourante + 1, 11, 31)),
+    },
   });
   department = await db.departement.create({ data: { code: tag, nom: tag } });
   filiere = await db.filiere.create({ data: { code: tag, nom: tag, departementId: department.id } });
@@ -60,7 +79,9 @@ async function main() {
     });
     controllers.push(u.id);
   }
-  const dates = ['2026-10-01', '2026-10-02', '2026-10-03', '2026-10-20', '2026-10-04'];
+  // Trois séances passées (une visitée par l'agent prévu, une visitée par un
+  // collègue, une non visitée), une séance à venir, une séance non affectée.
+  const dates = [jour(-3), jour(-2), jour(-1), jour(1), jour(-4)];
   const rows = [];
   for (const date of dates)
     rows.push(
@@ -68,7 +89,7 @@ async function main() {
         data: {
           affectationId: assignment.id,
           anneeId: year.id,
-          date: new Date(date),
+          date,
           heureDebut: '08:00',
           heureFin: '10:00',
         },
@@ -79,7 +100,12 @@ async function main() {
   await db.controle.create({ data: { seanceId: rows[0].id, controleurId: controllers[0], statut: 'ABSENT' } });
   await db.controle.create({ data: { seanceId: rows[1].id, controleurId: controllers[1], statut: 'ABSENT' } });
   const path =
-    '/rapports/couverture-controleurs?dateDebut=2026-10-01&dateFin=2026-10-31&departementId=' + department.id;
+    '/rapports/couverture-controleurs?dateDebut=' +
+    iso(jour(-10)) +
+    '&dateFin=' +
+    iso(jour(10)) +
+    '&departementId=' +
+    department.id;
   await call(student, 'GET', path, null, 403);
   await call(teacherToken, 'GET', path, null, 403);
   const coverage = (await call(school, 'GET', path)).data;
@@ -98,8 +124,8 @@ async function main() {
     assert.equal(c[key], expected, key);
   assert.equal(coverage.nonAffectees.seancesPassees, 1);
   const dto = {
-    dateDebut: '2026-10-01',
-    dateFin: '2026-10-31',
+    dateDebut: iso(jour(-10)),
+    dateFin: iso(jour(10)),
     controleurId: controllers[0],
     departementId: department.id,
   };
@@ -161,10 +187,7 @@ main()
     }
     report.productionUntouched = true;
     report.limites = ['Tournées réelles, validation humaine et appareil terrain non qualifiés'];
-    fs.writeFileSync(
-      '../audit/recommandations-2026-10-06/tournees-couverture-http.json',
-      JSON.stringify(report, null, 2) + '\n',
-    );
+    ecrirePreuve('tournees-couverture-http.json', report);
     await db.$disconnect();
     console.log(
       JSON.stringify({ statut: report.statut, erreur: report.erreur, fixturesRestantes: report.fixturesRestantes }),

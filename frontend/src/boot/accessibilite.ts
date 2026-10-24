@@ -13,8 +13,8 @@ function nommerDialogues(racine: ParentNode) {
     const titre = dialogue.querySelector<HTMLElement>('h1, h2, h3, [role="heading"], .text-h6, .text-subtitle1');
     if (!titre?.textContent?.trim()) continue;
     if (!titre.id) {
-      let id = `unipresence-dialogue-titre-${prochainIdTitre++}`;
-      while (document.getElementById(id)) id = `unipresence-dialogue-titre-${prochainIdTitre++}`;
+      let id = `university-dialogue-titre-${prochainIdTitre++}`;
+      while (document.getElementById(id)) id = `university-dialogue-titre-${prochainIdTitre++}`;
       titre.id = id;
     }
     dialogue.setAttribute('aria-labelledby', titre.id);

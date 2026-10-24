@@ -3,6 +3,7 @@ const assert = require('node:assert/strict'),
   fs = require('node:fs');
 const { randomUUID } = require('node:crypto');
 const { PrismaClient } = require('@prisma/client');
+const { ecrirePreuve } = require('./preuves.cjs');
 assert.ok(process.env.QA_ENV_FILE && process.env.QA_SESSION_FILE);
 const env = JSON.parse(fs.readFileSync(process.env.QA_ENV_FILE));
 const session = JSON.parse(fs.readFileSync(process.env.QA_SESSION_FILE));
@@ -84,7 +85,7 @@ async function main() {
   await call(teacherToken, 'GET', '/seances/' + persisted[0].id, null, 404);
   await call(school, 'PUT', '/seances/' + persisted[0].id, { thematique: 'Thématique confidentielle QA' });
   await call(school, 'POST', '/seances/' + persisted[0].id + '/annuler', { motif: 'Motif confidentiel QA' }, 201);
-  assert.equal((await db.seance.findUniqueOrThrow({ where: { id: persisted[0].id } })).statut, 'ANNULEE');
+  assert.equal((await db.seance.findUniqueOrThrow({ where: { id: persisted[0].id } })).statut, 'ANNULE');
   const offlineId = randomUUID(),
     offline = {
       idClient: offlineId,
@@ -174,7 +175,7 @@ main()
       'Formulaires navigateur et acceptation humaine non qualifiés par cette recette',
       'Synchronisation des pointages et appareil terrain non qualifiés par cette recette',
     ];
-    fs.writeFileSync('../audit/recommandations-2026-10-06/planning-http.json', JSON.stringify(report, null, 2) + '\n');
+    ecrirePreuve('planning-http.json', report);
     await db.$disconnect();
     console.log(
       JSON.stringify({ statut: report.statut, erreur: report.erreur, fixturesRestantes: report.fixturesRestantes }),

@@ -1,0 +1,157 @@
+import { fondsComplet, projectionPubliqueDocument } from './access';
+import { Injectable, Logger } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
+import { PrismaService } from '../../../prisma/prisma.service';
+import { AuthUser } from '../../../common/decorators';
+import { paginer } from '../../../common/pagination';
+import { RechercheDocumentDto } from './bibliotheque.dto';
+
+const DOCUMENT_INCLUDE = {
+  departement: true,
+  enseignant: { select: { id: true, matricule: true, nom: true, prenom: true, departement: true } },
+  etudiant: { select: { id: true, matricule: true, nom: true, prenom: true } },
+  deposePar: { select: { id: true, nom: true, prenom: true, role: true } },
+} as const;
+
+/**
+ * Construit une chaîne `to_tsquery('french', ...)` sûre à partir d'une saisie
+ * libre : on ne garde que lettres (accentuées comprises), chiffres et
+ * espaces ; chaque token devient un préfixe `mot:*` (recherche large) et
+ * l'ensemble est joint en ET. Les accents sont conservés car le dictionnaire
+ * `french` ne les normalise pas — retirer l'accent ici empêcherait la
+ * concordance avec « réseau » dans le tsvector. Une saisie vide ou
+ * entièrement filtrée renvoie une chaîne vide — l'appelant doit alors
+ * court-circuiter la requête.
+ */
+function construireTsQuery(saisie: string): string {
+  const nettoye = saisie
+    .toLowerCase()
+    .replace(/[^a-z0-9àâäéèêëïîôöùûüçÿœæ\s]/gi, ' ')
+    .trim();
+  if (!nettoye) return '';
+  const tokens = nettoye
+    .split(/\s+/)
+    .filter((t) => t.length >= 2)
+    .slice(0, 12);
+  if (!tokens.length) return '';
+  return tokens.map((t) => `${t}:*`).join(' & ');
+}
+
+/**
+ * Retire le champ `fichier` (data-url base64) et `contenuTexte` (potentiellement
+ * volumineux) avant de renvoyer la ligne au front : ces colonnes ne sont utiles
+ * qu'au téléchargement et à la détection locale, jamais à l'affichage.
+ */
+function sansLourdePayload<T extends object>(doc: T): Omit<T, 'fichier' | 'contenuTexte'> {
+  const { fichier: _f, contenuTexte: _c, ...reste } = doc as T & { fichier?: unknown; contenuTexte?: unknown };
+  return reste as Omit<T, 'fichier' | 'contenuTexte'>;
+}
+
+interface LigneFts {
+  id: string;
+  rank: number;
+}
+
+interface DocumentAvecRang {
+  id: string;
+  rang: number;
+  [cle: string]: unknown;
+}
+
+/**
+ * Recherche plein texte (PostgreSQL FTS, dictionnaire `french`) sur le dépôt.
+ * Service isolé pour ne pas alourdir `bibliotheque.service` : la requête passe
+ * par `$queryRaw` (la colonne `recherche` est `tsvector` et n'est pas
+ * modélisée par Prisma), puis on ré-hydrate les documents complets avec
+ * `findMany({ id: { in: ids } })` pour conserver le même format JSON que la
+ * liste classique.
+ */
+@Injectable()
+export class RechercheService {
+  private readonly logger = new Logger(RechercheService.name);
+
+  constructor(private readonly prisma: PrismaService) {}
+
+  async rechercher(query: RechercheDocumentDto, utilisateur: AuthUser | null) {
+    // La recherche borne la page à 200 lignes (au-delà, le classement FTS
+    // devient illisible) : la limite est propre à ce service, le reste de la
+    // pagination est commun.
+    const pagination = paginer({ page: Math.max(1, Number(query.page ?? 1)), pageSize: query.pageSize });
+    const tsquery = construireTsQuery(query.q);
+    if (!tsquery) {
+      return {
+        data: [],
+        total: 0,
+        page: pagination.page,
+        pageSize: pagination.pageSize,
+      };
+    }
+
+    const limit = pagination.tout ? 1000 : Math.max(1, Math.min(200, pagination.pageSize));
+    const offset = pagination.skip;
+
+    // Un appelant anonyme est verrouillé sur les documents publiés : `?public=false`
+    // ne doit jamais pouvoir élargir la sélection côté SQL.
+    const publicFiltre = fondsComplet(utilisateur) ? (query.public ? query.public === 'true' : undefined) : true;
+
+    const conditions: Prisma.Sql[] = [Prisma.sql`recherche @@ to_tsquery('french', ${tsquery})`];
+    if (publicFiltre !== undefined) {
+      conditions.push(Prisma.sql`"public" = ${publicFiltre}`);
+    }
+    if (query.type) {
+      conditions.push(Prisma.sql`type = ${query.type}::"TypeDocument"`);
+    }
+    if (query.departementId) {
+      conditions.push(Prisma.sql`"departementId" = ${query.departementId}`);
+    }
+    if (query.anneeEdition) {
+      conditions.push(Prisma.sql`"anneeEdition" = ${query.anneeEdition}`);
+    }
+    const whereSql = Prisma.sql`WHERE ${Prisma.join(conditions, ' AND ')}`;
+
+    const ids = await this.prisma.$queryRaw<LigneFts[]>(Prisma.sql`
+      SELECT id, ts_rank(recherche, to_tsquery('french', ${tsquery})) AS rank
+      FROM "DocumentDepot"
+      ${whereSql}
+      ORDER BY rank DESC, "createdAt" DESC
+      LIMIT ${limit} OFFSET ${offset}
+    `);
+    const totalRow = await this.prisma.$queryRaw<Array<{ count: bigint }>>(Prisma.sql`
+      SELECT COUNT(*)::bigint AS count FROM "DocumentDepot" ${whereSql}
+    `);
+    const total = Number(totalRow[0]?.count ?? 0);
+
+    if (!ids.length) {
+      return {
+        data: [],
+        total,
+        page: pagination.tout ? 1 : pagination.page,
+        pageSize: pagination.tout ? Math.min(total, limit) : pagination.pageSize,
+      };
+    }
+
+    const docs = await this.prisma.documentDepot.findMany({
+      where: { id: { in: ids.map((l) => l.id) } },
+      include: DOCUMENT_INCLUDE,
+      omit: { fichier: true, contenuTexte: true },
+    });
+    const rangParId = new Map<string, number>(ids.map((l) => [l.id, l.rank]));
+    const ordonnes: DocumentAvecRang[] = docs
+      .map((d) => {
+        const nettoye = sansLourdePayload(d) as Record<string, unknown>;
+        const projete = fondsComplet(utilisateur) ? nettoye : projectionPubliqueDocument(nettoye);
+        projete.rang = rangParId.get(d.id) ?? 0;
+        return projete as DocumentAvecRang;
+      })
+      .sort((a, b) => (b.rang ?? 0) - (a.rang ?? 0));
+
+    this.logger.log(`Recherche « ${query.q} » → ${total} document(s) ; ${ids.length} affiché(s).`);
+
+    return {
+      data: ordonnes,
+      total,
+      page: pagination.tout ? 1 : pagination.page,
+      pageSize: pagination.tout ? Math.min(total, limit) : pagination.pageSize,
+    };
+  }
+}

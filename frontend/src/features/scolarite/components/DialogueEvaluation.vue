@@ -101,11 +101,11 @@
 import { computed, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
-import { api } from '@/boot/axios';
 import { useReferentielsStore } from '@/stores/referentiels';
 import ChampDate from '@/shared/components/ChampDate.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
 import { LIBELLE_TYPE_EVALUATION } from '@/shared/utils/libelles';
+import { evaluationsService } from '../services/evaluations';
 import type { AnneeAcademique, Evaluation, Matiere, Promotion, TypeEvaluation } from '@/types';
 
 const ouvert = defineModel<boolean>({ required: true });
@@ -189,8 +189,8 @@ async function enregistrer() {
       ...form.value,
       date: form.value.date || undefined,
     };
-    if (props.evaluation) await api.put(`/evaluations/${props.evaluation.id}`, payload);
-    else await api.post('/evaluations', payload);
+    if (props.evaluation) await evaluationsService.modifier(props.evaluation.id, payload);
+    else await evaluationsService.creer(payload);
     $q.notify({ type: 'positive', message: t('evaluations.dialogForm.saved') });
     emit('enregistre');
     ouvert.value = false;

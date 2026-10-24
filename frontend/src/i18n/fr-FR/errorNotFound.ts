@@ -2,7 +2,7 @@
 export default {
   code: 'Erreur 404',
   title: 'Page introuvable',
-  text: 'L’adresse {adresse} ne correspond à aucune page d’UniPrésence. Le lien est peut-être périmé, ou la rubrique a changé de nom.',
+  text: 'L’adresse {adresse} ne correspond à aucune page de l’application University. Le lien est peut-être périmé, ou la rubrique a changé de nom.',
   actions: {
     backHome: 'Retour à mon accueil',
     login: 'Se connecter',

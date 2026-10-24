@@ -43,7 +43,7 @@
           outlined
           dense
           :label="$t('resto.rechargeDialog.amount')"
-          suffix="GNF"
+          :suffix="DEVISE"
           :rules="[(v: number) => v >= 500 || $t('common.messages.errors.range')]"
         />
       </div>
@@ -88,19 +88,11 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
-import { api } from '@/boot/axios';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
-import { LIBELLE_MODE_PAIEMENT } from '@/shared/utils/libelles';
+import { DEVISE, LIBELLE_MODE_PAIEMENT, montantLisible } from '@/shared/utils/libelles';
 import { getAppLocale } from '@/boot/i18n';
-
-interface EtudiantOption {
-  id: string;
-  matricule: string;
-  nom: string;
-  prenom: string;
-  solde: number;
-  libelle: string;
-}
+import { restoService, type CorpsRecharge } from '../services/resto';
+import type { EtudiantOption } from '../types';
 
 /**
  * Recharge d'un portefeuille. Les selects rendent la valeur (`emit-value`) :
@@ -158,7 +150,7 @@ async function recharger() {
   if (!id) return;
   enregistrement.value = true;
   try {
-    const payload: Record<string, unknown> = {
+    const payload: CorpsRecharge = {
       montant: form.value.montant,
       mode: form.value.mode,
     };
@@ -166,12 +158,12 @@ async function recharger() {
       payload.operateur = form.value.operateur;
       payload.simuler = form.value.simuler;
     }
-    const { data } = await api.post(`/resto/portefeuilles/${id}/recharger`, payload);
+    const resultat = await restoService.recharger(id, payload);
     $q.notify({
-      type: data.immediat ? 'positive' : 'info',
-      message: data.immediat
-        ? t('resto.rechargeDialog.messages.credited', { balance: data.solde.toLocaleString(getAppLocale()) })
-        : t('resto.rechargeDialog.messages.pending', { reference: data.paiement.reference }),
+      type: resultat.immediat ? 'positive' : 'info',
+      message: resultat.immediat
+        ? t('resto.rechargeDialog.messages.credited', { balance: resultat.solde.toLocaleString(getAppLocale()) })
+        : t('resto.rechargeDialog.messages.pending', { reference: resultat.paiement?.reference }),
     });
     emit('enregistre');
     ouvert.value = false;
@@ -199,14 +191,14 @@ async function charger(hard = false) {
   if (!hard && tousEtudiants.value.length) return;
   chargementEtudiants.value = true;
   try {
-    const { data } = await api.get('/resto/portefeuilles', { params: { all: '1' } });
-    tousEtudiants.value = data.data.map((p: any) => ({
+    const page = await restoService.listePortefeuilles({ all: '1' });
+    tousEtudiants.value = page.data.map((p) => ({
       id: p.etudiant.id,
       matricule: p.etudiant.matricule,
       nom: p.etudiant.nom,
       prenom: p.etudiant.prenom,
       solde: p.solde,
-      libelle: `${p.etudiant.matricule} — ${p.etudiant.nom} ${p.etudiant.prenom} (${p.solde.toLocaleString(getAppLocale())} GNF)`,
+      libelle: `${p.etudiant.matricule} — ${p.etudiant.nom} ${p.etudiant.prenom} (${montantLisible(p.solde, DEVISE)})`,
     }));
     optionsEtudiants.value = tousEtudiants.value;
   } catch {

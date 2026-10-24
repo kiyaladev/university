@@ -81,6 +81,7 @@ export default {
     checkedBy: 'Contrôlé par',
     attestation: 'Attestation',
     signature: 'Signature',
+    signatureAlt: 'Signature du contrôleur au pointage',
     otherSessions: 'Ses autres séances',
     sessionsInRoom: 'Séances en {code}',
     correctCheck: 'Corriger le pointage',

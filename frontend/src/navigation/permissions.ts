@@ -1,4 +1,5 @@
 import type { Role } from '../types';
+import { PERSONNEL } from './roles';
 
 /**
  * Matrice des droits d'action de l'interface. Elle ne fait que masquer des
@@ -17,7 +18,6 @@ import type { Role } from '../types';
  * Un droit qui n'apparaît dans aucun des deux est contrôlé par un service
  * (propriétaire, statut) ou par une route publique : son commentaire le dit.
  */
-const PERSONNEL: Role[] = ['ADMIN', 'DIRECTION', 'SCOLARITE', 'CHEF_DEPARTEMENT', 'CONTROLEUR', 'ENSEIGNANT'];
 
 export const PERMISSIONS = {
   // Présences et organisation
@@ -39,6 +39,24 @@ export const PERMISSIONS = {
   'structure.supprimer': ['ADMIN'],
   'salles.gerer': ['ADMIN', 'SCOLARITE'],
   'salles.supprimer': ['ADMIN'],
+  /**
+   * Correction d'un pointage (`PUT /controles/:id`) : administration, direction,
+   * chef de département et contrôleur — les mêmes rôles que le pointage.
+   */
+  'pointages.corriger': ['CONTROLEUR', 'ADMIN', 'DIRECTION', 'CHEF_DEPARTEMENT'],
+  /** La suppression d'un pointage (`DELETE /controles/:id`) est plus rare que sa correction. */
+  'pointages.supprimer': ['ADMIN', 'DIRECTION'],
+  /**
+   * Moyens d'attestation d'un enseignant : code personnel et empreinte. Le
+   * contrôleur n'en est pas propriétaire : l'établissement les administre.
+   */
+  'attestation.moyens': ['ADMIN', 'SCOLARITE', 'CHEF_DEPARTEMENT', 'DIRECTION'],
+  /**
+   * Appareils de contrôle : leur liste et leur révocation. L'enrôlement
+   * (`POST /attestation/appareils`) n'est pas un droit d'écran : c'est
+   * l'appareil lui-même qui le réclame à sa première connexion.
+   */
+  'attestation.appareils': ['ADMIN', 'DIRECTION'],
 
   // Scolarité
   'etudiants.gerer': ['ADMIN', 'SCOLARITE', 'DIRECTION'],
@@ -91,6 +109,13 @@ export const PERMISSIONS = {
   'paiements.simuler': ['ADMIN', 'DIRECTION'],
   'paiements.annuler': ['ADMIN', 'DIRECTION'],
   'recettes.gerer': ['ADMIN', 'SCOLARITE'],
+  /**
+   * Grille des tarifs d'inscription (`GET /frais/gestion`) et leur écriture
+   * (`POST /frais`, `PUT /frais/:id`) : administration et scolarité.
+   */
+  'frais.gerer': ['ADMIN', 'SCOLARITE'],
+  /** La suppression d'un tarif (`DELETE /frais/:id`) est réservée à l'administration. */
+  'frais.supprimer': ['ADMIN'],
   'paie.creer': ['ADMIN', 'DIRECTION'],
   'paie.imprimer': ['ADMIN', 'SCOLARITE', 'DIRECTION'],
   /** Les quatre droits suivants se combinent avec le statut de la feuille. */

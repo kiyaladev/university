@@ -10,10 +10,10 @@ export default {
     NON_CONTROLE: 'Not controlled',
   },
   statut_seance: {
-    PLANIFIEE: 'Scheduled',
+    PLANIFIE: 'Scheduled',
     EN_COURS: 'In progress',
-    CONTROLEE: 'Controlled',
-    ANNULEE: 'Cancelled',
+    CONTROLE: 'Controlled',
+    ANNULE: 'Cancelled',
     NON_TENUE: 'Not held',
   },
   role: {
@@ -28,9 +28,9 @@ export default {
   statut_inscription: {
     BROUILLON: 'Draft',
     EN_ATTENTE_PAIEMENT: 'Pending payment',
-    PAYEE: 'Tuition paid',
-    VALIDEE: 'Validated',
-    ANNULEE: 'Cancelled',
+    PAYE: 'Tuition paid',
+    VALIDE: 'Validated',
+    ANNULE: 'Cancelled',
   },
   statut_paiement: {
     EN_ATTENTE: 'Pending',
@@ -52,8 +52,8 @@ export default {
   },
   statut_paie: {
     BROUILLON: 'Draft',
-    VALIDEE: 'Validated',
-    PAYEE: 'Paid',
+    VALIDE: 'Validated',
+    PAYE: 'Paid',
   },
   type_evaluation: {
     CC: 'Continuous assessment',
@@ -63,8 +63,8 @@ export default {
     TP: 'Lab work',
   },
   statut_evaluation: {
-    OUVERTE: 'Open',
-    CLOTUREE: 'Closed',
+    OUVERT: 'Open',
+    CLOTURE: 'Closed',
   },
   session_deliberation: {
     NORMALE: 'Regular session',
@@ -72,9 +72,11 @@ export default {
   },
   statut_deliberation: {
     BROUILLON: 'Draft',
-    VALIDEE: 'Validated',
+    // La délibération et l'encadrement partagent désormais le jeton VALIDE :
+    // une seule entrée, la nuance « lecture seule » reste portée par le
+    // namespace `statut_encadrement`.
+    VALIDE: 'Validated',
     PROPOSE: 'Proposed',
-    VALIDE: 'Validated (read-only)',
     SOUTENU: 'Defended (make-up validated)',
     ABANDONNE: 'Abandoned',
   },
@@ -91,12 +93,12 @@ export default {
     ASSIDUITE: 'Attendance certificate',
   },
   statut_attestation: {
-    EMISE: 'Issued',
-    REVOQUEE: 'Revoked',
+    EMIS: 'Issued',
+    REVOQUE: 'Revoked',
   },
   statut_notification: {
     EN_ATTENTE: 'Queued',
-    ENVOYEE: 'Sent',
+    ENVOYE: 'Sent',
     ECHOUE: 'Failed',
   },
   categorie_chambre: {
@@ -107,15 +109,15 @@ export default {
   },
   statut_chambre: {
     LIBRE: 'Free',
-    RESERVEE: 'Reserved',
-    OCCUPEE: 'Occupied',
+    RESERVE: 'Reserved',
+    OCCUPE: 'Occupied',
     MAINTENANCE: 'Maintenance',
   },
   statut_attribution: {
     EN_ATTENTE: 'Pending',
-    ACCORDEE: 'Granted',
-    REFUSEE: 'Refused',
-    RETIREE: 'Withdrawn',
+    ACCORDE: 'Granted',
+    REFUSE: 'Refused',
+    RETIRE: 'Withdrawn',
   },
   type_document: {
     MEMOIRE: 'Dissertation',
@@ -135,14 +137,14 @@ export default {
   },
   statut_consommation: {
     EN_ATTENTE: 'Pending',
-    VALIDEE: 'Validated',
-    ANNULEE: 'Cancelled',
+    VALIDE: 'Validated',
+    ANNULE: 'Cancelled',
   },
   statut_reservation: {
     EN_ATTENTE: 'Pending',
-    CONFIRMEE: 'Confirmed',
-    REFUSEE: 'Refused',
-    ANNULEE: 'Cancelled',
+    CONFIRME: 'Confirmed',
+    REFUSE: 'Refused',
+    ANNULE: 'Cancelled',
   },
   type_encadrement: {
     STAGE: 'Internship',
@@ -179,13 +181,13 @@ export default {
   },
   statut_formation: {
     BROUILLON: 'Draft',
-    PUBLIEE: 'Published',
-    COMPLETE: 'Full',
+    PUBLIE: 'Published',
+    COMPLET: 'Full',
   },
   statut_inscription_formation: {
     EN_ATTENTE: 'Pending',
-    CONFIRMEE: 'Confirmed',
-    ANNULEE: 'Cancelled',
+    CONFIRME: 'Confirmed',
+    ANNULE: 'Cancelled',
   },
   attestation: {
     AUCUNE: 'Not attested',
@@ -259,12 +261,12 @@ export default {
     ANNULE: 'Cancelled',
   },
   statut_reclamation: {
-    OUVERTE: 'Open',
+    OUVERT: 'Open',
     EN_COURS: 'In progress',
     EN_ATTENTE_REPONSE: 'Awaiting reply',
-    RESOLUE: 'Resolved',
-    FERMEE: 'Closed',
-    REJETEE: 'Rejected',
+    RESOLU: 'Resolved',
+    FERME: 'Closed',
+    REJETE: 'Rejected',
   },
   type_reclamation: {
     NOTE_MANQUANTE: 'Missing grade',
@@ -283,11 +285,11 @@ export default {
   },
   statut_demande: {
     EN_ATTENTE_PAIEMENT: 'Awaiting payment',
-    PAYEE: 'Paid',
+    PAYE: 'Paid',
     EN_TRAITEMENT: 'Processing',
-    PRETE: 'Ready',
+    PRET: 'Ready',
     REMISE: 'Issued',
-    REJETEE: 'Rejected',
+    REJETE: 'Rejected',
   },
   type_demande: {
     ATTESTATION_SCOLARITE: 'Certificate of enrolment',
@@ -299,8 +301,8 @@ export default {
     AUTRE: 'Other',
   },
   statut_carte: {
-    EMISE: 'Issued',
-    REVOQUEE: 'Revoked',
+    EMIS: 'Issued',
+    REVOQUE: 'Revoked',
   },
   type_ressource_vod: {
     AUDIO: 'Audio',
@@ -331,13 +333,13 @@ export default {
   },
   statut_election: {
     BROUILLON: 'Draft',
-    OUVERTE: 'Open',
-    CLOSE: 'Closed',
-    PROCLAMEE: 'Proclaimed',
-    ANNULEE: 'Cancelled',
+    OUVERT: 'Open',
+    CLOS: 'Closed',
+    PROCLAME: 'Proclaimed',
+    ANNULE: 'Cancelled',
   },
   statut_recette: {
-    ENCAISSEE: 'Collected',
+    ENCAISSE: 'Collected',
     A_ENCAISSER: 'To be collected',
   },
 };

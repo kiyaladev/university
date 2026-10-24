@@ -12,13 +12,15 @@
 import type { Logger } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
 import type { PrismaService } from '../../prisma/prisma.service';
-import type { MobileMoneyService } from '../../modules/inscription/mobile-money.service';
+import type { MobileMoneyService } from '../../modules/scolarite/inscription/mobile-money.service';
+import { toMontant } from './montant';
 
 /** Champs du paiement nécessaires à la demande opérateur. */
 export interface PaiementATransmettre {
   id: string;
   reference: string;
-  montant: number;
+  /** Montant stocké (`numeric(14,2)`) : converti en nombre à l'envoi. */
+  montant: Prisma.Decimal | number;
   devise: string;
   operateur: string | null;
   telephone: string | null;
@@ -96,7 +98,7 @@ export async function transmettreMobileMoney<T = unknown>(
   try {
     demande = await mobileMoney.demanderPaiement({
       reference: paiement.reference,
-      montant: paiement.montant,
+      montant: toMontant(paiement.montant),
       devise: paiement.devise,
       operateur: paiement.operateur ?? 'AUTRE',
       telephone: paiement.telephone,

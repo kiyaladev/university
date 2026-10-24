@@ -137,7 +137,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { api } from '@/boot/axios';
+import { attestationService } from '../services/attestation';
 import { usePointagesStore } from '@/stores/pointages';
 import ZoneSignature from './ZoneSignature.vue';
 import { CLE_PASSERELLE, LIBELLE_ATTESTATION, urlPasserelle } from '@/shared/utils/libelles';
@@ -146,6 +146,7 @@ import { etatLecteur, verifierEmpreinte } from '@/shared/services/empreinte';
 /** En dessous, inutile d'envoyer : le serveur refuserait de toute façon. */
 const SEUIL_INDICATIF = 40;
 import type { MoyensAttestation, Pointage, Seance } from '@/types';
+import { messageErreurApi } from '@/shared/utils/erreur-http';
 
 const pointages = usePointagesStore();
 const { t, te } = useI18n();
@@ -167,10 +168,6 @@ const lectureEnCours = ref(false);
 const erreurEmpreinte = ref('');
 
 const enseignantId = computed(() => props.seance?.affectation?.enseignant?.id ?? '');
-const nomEnseignant = computed(() => {
-  const e = props.seance?.affectation?.enseignant;
-  return e ? `${e.nom} ${e.prenom}` : t('pointage.attestation.teacher');
-});
 
 /** Moyen effectivement retenu, du plus fort au plus faible (même ordre que l'API). */
 const modeRetenu = computed(() => {
@@ -213,11 +210,7 @@ async function lireEmpreinte() {
   erreurEmpreinte.value = '';
   try {
     // Le gabarit enrôlé ne quitte le serveur que pour la comparaison locale.
-    const { data: gabarit } = await api.get(
-      `/attestation/enseignants/${enseignantId.value}/gabarit`,
-      // Silencieux : l'échec s'affiche dans le bandeau du lecteur d'empreinte.
-      { params: { seanceId: props.seance?.id }, silencieux: true },
-    );
+    const gabarit = await attestationService.gabarit(enseignantId.value, props.seance?.id);
 
     const lecture = await verifierEmpreinte(enseignantId.value, gabarit.template);
 
@@ -237,8 +230,9 @@ async function lireEmpreinte() {
         ...(lecture.appareilId ? { appareilId: lecture.appareilId } : {}),
       },
     });
-  } catch (e: any) {
-    erreurEmpreinte.value = e?.response?.data?.message ?? e?.message ?? t('pointage.attestation.unavailable');
+  } catch (e: unknown) {
+    erreurEmpreinte.value =
+      messageErreurApi(e) ?? (e instanceof Error ? e.message : undefined) ?? t('pointage.attestation.unavailable');
   } finally {
     lectureEnCours.value = false;
   }
@@ -252,17 +246,14 @@ watch(
     moyens.value = null;
     if (!id || !enseignantId.value) return;
 
-    const { data } = await api.get(`/attestation/enseignants/${enseignantId.value}/moyens`, {
-      params: { seanceId: id },
-    });
-    moyens.value = data;
+    moyens.value = await attestationService.moyens(enseignantId.value, id);
 
     // On propose d'emblée le moyen le plus fort dont dispose l'enseignant.
-    if (data.empreinte) onglet.value = 'empreinte';
-    else if (data.codePin) onglet.value = 'pin';
+    if (moyens.value.empreinte) onglet.value = 'empreinte';
+    else if (moyens.value.codePin) onglet.value = 'pin';
     else onglet.value = 'signature';
 
-    if (data.empreinte) void sonderPasserelle();
+    if (moyens.value.empreinte) void sonderPasserelle();
   },
   { immediate: true },
 );

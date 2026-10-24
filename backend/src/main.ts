@@ -1,17 +1,245 @@
 import 'reflect-metadata';
-import express from 'express';
-import { ValidationPipe, Logger, BadRequestException } from '@nestjs/common';
-import { NestFactory } from '@nestjs/core';
+import { Logger, BadRequestException } from '@nestjs/common';
+import { HttpAdapterHost, NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import helmet from 'helmet';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ValidationError } from 'class-validator';
 import { I18nContext } from 'nestjs-i18n';
 import { JwtService } from '@nestjs/jwt';
-import { JwtStrategy } from './modules/auth/jwt.strategy';
+import { JwtStrategy } from './modules/socle/auth/jwt.strategy';
 import { AppModule } from './app.module';
+import { ValidationPipeCompatStatuts } from './common/statuts';
+import { ErreurHttpFilter } from './common/filters/erreur-http.filter';
+import { t } from './common/i18n';
+
+/**
+ * Les `operationId` Swagger sont restés identiques à ceux d'avant le renommage
+ * des méthodes en français : par défaut, @nestjs/swagger les dérive du nom de
+ * la méthode du contrôleur (`SallesController_create`). Cette table restitue
+ * l'ancien nom pour chaque couple contrôleur/méthode, afin que les clients
+ * générés à partir du document OpenAPI continuent de pointer les mêmes
+ * opérations.
+ */
+const OPERATION_IDS_LEGACY: Record<string, Record<string, string>> = {
+  BibliothequeController: {
+    lister: 'liste',
+  },
+  ResidencesController: {
+    creer: 'create',
+    lister: 'findAll',
+    lire: 'findOne',
+    supprimer: 'remove',
+    modifier: 'update',
+  },
+  ChambresController: {
+    creer: 'create',
+    lister: 'findAll',
+    lire: 'findOne',
+    supprimer: 'remove',
+    modifier: 'update',
+  },
+  AttributionsController: {
+    lire: 'findOne',
+    lister: 'liste',
+  },
+  ElectionsController: {
+    lister: 'liste',
+  },
+  EquipementsController: {
+    lire: 'findOne',
+    lister: 'liste',
+  },
+  TicketsController: {
+    lire: 'findOne',
+    lister: 'liste',
+  },
+  ReclamationsController: {
+    lire: 'findOne',
+    lister: 'liste',
+  },
+  ReservationsController: {
+    creer: 'create',
+    lister: 'findAll',
+    lire: 'findOne',
+    supprimer: 'remove',
+    modifier: 'update',
+  },
+  RestoController: {
+    lire: 'detail',
+  },
+  VodController: {
+    lister: 'liste',
+  },
+  AttestationsController: {
+    lire: 'findOne',
+    lister: 'liste',
+  },
+  BadgesController: {
+    lister: 'liste',
+  },
+  CarteEtudianteController: {
+    lister: 'liste',
+  },
+  CourrierController: {
+    lire: 'detail',
+    lister: 'liste',
+  },
+  DocumentsDemandeController: {
+    lire: 'findOne',
+    lister: 'liste',
+  },
+  PaieController: {
+    lire: 'detail',
+    lister: 'liste',
+  },
+  RecettesController: {
+    lire: 'detail',
+    lister: 'liste',
+  },
+  ControleController: {
+    lire: 'findOne',
+    lister: 'liste',
+  },
+  JustificatifsController: {
+    lire: 'findOne',
+    lister: 'liste',
+    supprimer: 'remove',
+  },
+  CreneauxController: {
+    creer: 'create',
+    lister: 'findAll',
+    lire: 'findOne',
+    supprimer: 'remove',
+    modifier: 'update',
+  },
+  SeancesController: {
+    creer: 'create',
+    lister: 'findAll',
+    lire: 'findOne',
+    supprimer: 'remove',
+    modifier: 'update',
+  },
+  TirageController: {
+    lire: 'detail',
+    lister: 'liste',
+  },
+  ExamensController: {
+    lire: 'detail',
+    lister: 'liste',
+  },
+  FormationsController: {
+    lister: 'liste',
+  },
+  EtudiantsController: {
+    lire: 'detail',
+    lister: 'liste',
+    supprimer: 'remove',
+  },
+  FraisController: {
+    lister: 'liste',
+  },
+  PaiementsController: {
+    lister: 'liste',
+  },
+  InscriptionsController: {
+    lire: 'detail',
+    lister: 'liste',
+  },
+  EvaluationsController: {
+    lire: 'detail',
+  },
+  DeliberationsController: {
+    lire: 'detail',
+  },
+  TravauxEncadresController: {
+    lire: 'detail',
+    lister: 'liste',
+  },
+  ParametresController: {
+    lister: 'liste',
+  },
+  ServicesActifsController: {
+    lister: 'liste',
+  },
+  AffectationsController: {
+    creer: 'create',
+    lister: 'findAll',
+    lire: 'findOne',
+    supprimer: 'remove',
+    modifier: 'update',
+  },
+  AnneesController: {
+    creer: 'create',
+    lister: 'findAll',
+    lire: 'findOne',
+    supprimer: 'remove',
+    modifier: 'update',
+  },
+  DepartementsController: {
+    creer: 'create',
+    lister: 'findAll',
+    lire: 'findOne',
+    supprimer: 'remove',
+    modifier: 'update',
+  },
+  EnseignantsController: {
+    creer: 'create',
+    lister: 'findAll',
+    lire: 'findOne',
+    supprimer: 'remove',
+    modifier: 'update',
+  },
+  FilieresController: {
+    creer: 'create',
+    lister: 'findAll',
+    lire: 'findOne',
+    supprimer: 'remove',
+    modifier: 'update',
+  },
+  MatieresController: {
+    creer: 'create',
+    lister: 'findAll',
+    lire: 'findOne',
+    supprimer: 'remove',
+    modifier: 'update',
+  },
+  PromotionsController: {
+    creer: 'create',
+    lister: 'findAll',
+    lire: 'findOne',
+    supprimer: 'remove',
+    modifier: 'update',
+  },
+  SallesController: {
+    creer: 'create',
+    lister: 'findAll',
+    lire: 'findOne',
+    supprimer: 'remove',
+    modifier: 'update',
+  },
+  UsersController: {
+    creer: 'create',
+    lister: 'findAll',
+    lire: 'findOne',
+    supprimer: 'remove',
+    modifier: 'update',
+  },
+};
+
+/** Restitue l'`operationId` historique d'une opération, à défaut de celui par défaut. */
+function operationIdFactory(controllerKey: string, methodKey: string): string {
+  const legacy = OPERATION_IDS_LEGACY[controllerKey]?.[methodKey];
+  if (legacy) return `${controllerKey}_${legacy}`;
+  return controllerKey ? `${controllerKey}_${methodKey}` : methodKey;
+}
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { bodyParser: true });
+  // `bodyParser: false` : les analyseurs de corps sont enregistrés à la main
+  // juste après, avec la limite de 8 Mo. Le double enregistrement (option
+  // Nest + express) faisait venir deux fois le même middleware et la
+  // limite n'était appliquée que par le second.
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, { bodyParser: false });
 
   // En-têtes de sécurité. L'API ne sert que du JSON à une origine connue :
   // pas de CSP à composer, mais le reste (nosniff, HSTS, referrer) est gratuit.
@@ -51,15 +279,11 @@ async function bootstrap() {
         return m as string;
       }),
     );
-    return new BadRequestException({
-      statutCode: 400,
-      erreur: 'ValidationFailed',
-      messages,
-    });
+    return new BadRequestException(messages.length ? messages : t('common.validationFailed'));
   };
 
   app.useGlobalPipes(
-    new ValidationPipe({
+    new ValidationPipeCompatStatuts({
       whitelist: true,
       forbidNonWhitelisted: !enProduction,
       transform: true,
@@ -87,13 +311,18 @@ async function bootstrap() {
     credentials: true,
   });
 
-  // Les signatures manuscrites et pièces jointes transitent en base64.
-  app.use(express.json({ limit: '8mb' }));
-  app.use(express.urlencoded({ limit: '8mb', extended: true }));
+  // Les signatures manuscrites et pièces jointes transitent en base64 :
+  // une seule configuration des analyseurs de corps, avec la limite de 8 Mo.
+  app.useBodyParser('json', { limit: '8mb' });
+  app.useBodyParser('urlencoded', { limit: '8mb', extended: true });
+
+  // Format d'erreur unique : `{ statusCode, message, error }`, quelle que
+  // soit l'origine de l'erreur (validation, métier, base de données).
+  app.useGlobalFilters(new ErreurHttpFilter(app.get(HttpAdapterHost)));
 
   const config = new DocumentBuilder()
-    .setTitle('UniPrésence API')
-    .setDescription('Contrôle numérique de la présence des enseignants pendant les séances de cours')
+    .setTitle('University — API')
+    .setDescription('ERP universitaire : présence des enseignants, scolarité, finances, campus, documents.')
     .setVersion('1.0')
     .addBearerAuth()
     .build();
@@ -105,29 +334,29 @@ async function bootstrap() {
     app.use(['/api/docs', '/api/docs-json', '/api/docs-yaml'], async (req, res, next) => {
       const entete = req.headers.authorization ?? '';
       if (!entete.startsWith('Bearer ')) {
-        res.status(401).json({ statutCode: 401, message: 'Documentation désactivée' });
+        res.status(401).json({ statusCode: 401, message: 'Documentation désactivée', error: 'Unauthorized' });
         return;
       }
       try {
         const charge = await jwt.verifyAsync(entete.slice(7));
         const utilisateur = await identite.validate(charge);
         if (utilisateur.role !== 'ADMIN') {
-          res.status(403).json({ statutCode: 403, message: 'Réservé aux administrateurs' });
+          res.status(403).json({ statusCode: 403, message: 'Réservé aux administrateurs', error: 'Forbidden' });
           return;
         }
       } catch {
-        res.status(401).json({ statutCode: 401, message: 'Jeton invalide' });
+        res.status(401).json({ statusCode: 401, message: 'Jeton invalide', error: 'Unauthorized' });
         return;
       }
       next();
     });
   }
-  SwaggerModule.setup('api/docs', app, SwaggerModule.createDocument(app, config));
+  SwaggerModule.setup('api/docs', app, SwaggerModule.createDocument(app, config, { operationIdFactory }));
 
   const port = Number(process.env.PORT ?? 5031);
   const host = process.env.HOST ?? '0.0.0.0';
   await app.listen(port, host);
-  Logger.log(`UniPrésence API démarrée sur http://${host}:${port}/api`, 'Bootstrap');
+  Logger.log(`University API démarrée sur http://${host}:${port}/api`, 'Bootstrap');
 }
 
 void bootstrap();

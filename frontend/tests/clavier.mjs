@@ -17,11 +17,14 @@ try {
   assert.equal(await page.evaluate(() => document.activeElement.type), 'password');
   await page.keyboard.type('Passer@2026');
   await page.keyboard.press('Tab');
-  assert.equal(await page.evaluate(() => document.activeElement.getAttribute('aria-label')), 'Afficher le mot de passe');
+  assert.equal(
+    await page.evaluate(() => document.activeElement.getAttribute('aria-label')),
+    'Afficher le mot de passe',
+  );
   await page.keyboard.press('Tab');
   assert.equal(await page.evaluate(() => document.activeElement.type), 'submit');
   await page.keyboard.press('Enter');
-  await page.waitForURL(url => !url.hash.startsWith('#/connexion'));
+  await page.waitForURL((url) => !url.hash.startsWith('#/connexion'));
   checks.push('Connexion réalisable au clavier');
   await page.goto(base + '/#/audit', { waitUntil: 'networkidle' });
   const trigger = page.getByRole('button', { name: 'Détails', exact: true }).first();
@@ -35,11 +38,15 @@ try {
   }
   await page.keyboard.press('Escape');
   await page.getByRole('dialog').waitFor({ state: 'hidden' });
-  assert.ok(await trigger.evaluate(element => element === document.activeElement));
+  assert.ok(await trigger.evaluate((element) => element === document.activeElement));
   checks.push('Dialogue : focus contenu, fermeture Échap, retour au déclencheur');
   const groups = page.locator('.q-drawer .q-expansion-item');
   assert.equal(await groups.count(), 5);
-  const attendance = groups.filter({ hasText: 'Présences' }).first().locator('.q-expansion-item__container > .q-item').first();
+  const attendance = groups
+    .filter({ hasText: 'Présences' })
+    .first()
+    .locator('.q-expansion-item__container > .q-item')
+    .first();
   await attendance.focus();
   await page.keyboard.press('Enter');
   await page.locator('.q-drawer a[href="#/controle"]').waitFor();
@@ -51,4 +58,6 @@ try {
   const result = { date: new Date().toISOString(), checks };
   fs.writeFileSync(report, JSON.stringify(result, null, 2));
   console.log(JSON.stringify(result));
-} finally { await browser.close(); }
+} finally {
+  await browser.close();
+}

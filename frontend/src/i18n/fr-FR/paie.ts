@@ -74,7 +74,7 @@ export default {
       month: 'Mois *',
       year: 'Année *',
       periodHint:
-        'La feuille « {label} » couvre du premier au dernier jour du mois. Les heures contrôlées depuis UniPrésence sont ensuite agrégées ligne par ligne.',
+        'La feuille « {label} » couvre du premier au dernier jour du mois. Les heures contrôlées dans University sont ensuite agrégées ligne par ligne.',
       create: 'Créer la feuille',
       draftHint:
         'La feuille est en brouillon : recalculez-la pour agréger les heures contrôlées, puis faites-la valider par la direction.',
@@ -85,7 +85,7 @@ export default {
     recalculate: {
       title: 'Recalculer',
       message:
-        'Agréger les heures contrôlées d’UniPrésence sur la feuille « {libelle} » ? Les lignes seront recréées (les commentaires sont conservés).',
+        'Agréger les heures contrôlées dans University sur la feuille « {libelle} » ? Les lignes seront recréées (les commentaires sont conservés).',
       ok: 'Recalculer',
     },
     validate: {

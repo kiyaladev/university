@@ -2,6 +2,7 @@
 const assert = require('node:assert/strict'),
   fs = require('node:fs');
 const { PrismaClient } = require('@prisma/client');
+const { ecrirePreuve } = require('./preuves.cjs');
 assert.ok(process.env.QA_ENV_FILE && process.env.QA_SESSION_FILE);
 const env = JSON.parse(fs.readFileSync(process.env.QA_ENV_FILE));
 const session = JSON.parse(fs.readFileSync(process.env.QA_SESSION_FILE));
@@ -89,7 +90,7 @@ async function main() {
   report.proclamations = proclamations.map((x) => x.status);
   const results = (await call(student, 'GET', '/elections/' + electionId + '/resultats')).data;
   assert.equal(await db.voteElection.count({ where: { electionId } }), 2);
-  assert.equal((await db.election.findUnique({ where: { id: electionId } })).statut, 'PROCLAMEE');
+  assert.equal((await db.election.findUnique({ where: { id: electionId } })).statut, 'PROCLAME');
   const logs = await db.auditLog.findMany({ where: { entiteId: electionId } });
   for (const action of ['ELECTION_OUVERTE', 'ELECTION_CLOSE', 'ELECTION_PROCLAMEE'])
     assert.equal(logs.filter((l) => l.action === action).length, 1);
@@ -132,7 +133,7 @@ main()
       'Impression physique non qualifiée',
       'Route HTTP de connexion non qualifiée par cette fixture',
     ];
-    fs.writeFileSync('../audit/recommandations-2026-10-06/elections.json', JSON.stringify(report, null, 2) + '\n');
+    ecrirePreuve('elections.json', report);
     await db.$disconnect();
     console.log(
       JSON.stringify({ statut: report.statut, erreur: report.erreur, fixturesSupprimees: report.fixturesSupprimees }),

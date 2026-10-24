@@ -5,7 +5,10 @@ const path = require('node:path');
 const ts = require('typescript');
 
 const racine = path.resolve(__dirname, '..');
-const sortie = process.argv[2] || path.resolve(racine, '../audit/recommandations/inventaire-routes.json');
+const { dossierPreuves } = require('./preuves.cjs');
+// La preuve part dans le dossier du jour : une preuve déjà versionnée ne doit
+// pas être réécrite par un nouvel inventaire.
+const sortie = process.argv[2] || path.join(dossierPreuves(), 'inventaire-routes.json');
 const fichiers = [];
 function parcourir(dir) {
   for (const entree of fs.readdirSync(dir, { withFileTypes: true })) {

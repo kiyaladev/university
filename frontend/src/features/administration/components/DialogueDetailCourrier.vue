@@ -118,7 +118,6 @@ import PastilleStatut from '@/shared/components/PastilleStatut.vue';
 import { computed, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
-import { api } from '@/boot/axios';
 import { useAuthStore } from '@/stores/auth';
 import EtapesCircuit from '@/shared/components/EtapesCircuit.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
@@ -126,6 +125,7 @@ import { useConfirmation } from '@/shared/composables/useConfirmation';
 import { dateHeureLisible } from '@/shared/utils/libelles';
 import type { CircuitCourrier, Courrier } from '@/types';
 import { ouvrirImpression } from '@/shared/services/impression';
+import { courrierService } from '../services/courrier';
 
 const ouvert = defineModel<boolean>({ required: true });
 const props = defineProps<{ courrierId: string | null }>();
@@ -161,7 +161,7 @@ const peutCloturer = computed(
 
 function peutParapher(etape: CircuitCourrier) {
   if (courrier.value?.statut !== 'EN_CIRCUIT' || etape.statut !== 'EN_CIRCUIT') return false;
-  if (courrier.value.circuits.some((e) => e.ordre < etape.ordre && e.statut !== 'TRAITE')) return false;
+  if ((courrier.value.circuits ?? []).some((e) => e.ordre < etape.ordre && e.statut !== 'TRAITE')) return false;
   if (auth.peut('courrier.parapherTout')) return true;
   const roles: Record<string, string[]> = {
     SCOLARITE: ['Secrétariat', 'Secrétariat général', 'Scolarité', 'Archives'],
@@ -174,10 +174,7 @@ async function charger() {
   if (!props.courrierId) return;
   chargementInitial.value = true;
   try {
-    const { data } = await api.get(`/courrier/${props.courrierId}`);
-    courrier.value = data;
-  } catch {
-    /* notifié par l'intercepteur */
+    courrier.value = await courrierService.lire(props.courrierId);
   } finally {
     chargementInitial.value = false;
   }
@@ -193,13 +190,11 @@ async function validerParaphe() {
   if (!courrier.value || !etapeAParapher.value) return;
   envoi.value = true;
   try {
-    await api.post(`/courrier/${courrier.value.id}/parapher/${etapeAParapher.value.id}`, formParaphe.value);
+    await courrierService.parapher(courrier.value.id, etapeAParapher.value.id, formParaphe.value);
     $q.notify({ type: 'positive', message: t('courrier.detail.stamped') });
     dialogParaphe.value = false;
     await charger();
     emit('modifie');
-  } catch {
-    /* notifié par l'intercepteur */
   } finally {
     envoi.value = false;
   }
@@ -226,14 +221,10 @@ async function cloturer() {
     danger: true,
   });
   if (!ok) return;
-  try {
-    await api.post(`/courrier/${c.id}/cloturer`, {});
-    $q.notify({ type: 'positive', message: t('courrier.messages.closed') });
-    await charger();
-    emit('modifie');
-  } catch {
-    /* notifié par l'intercepteur */
-  }
+  await courrierService.cloturer(c.id);
+  $q.notify({ type: 'positive', message: t('courrier.messages.closed') });
+  await charger();
+  emit('modifie');
 }
 
 function imprimer() {

@@ -33,7 +33,7 @@ export interface PaginatedFormations {
 
 /**
  * Fiche telle que la vitrine publique la présente : le serveur n'expose que
- * les formations PUBLIEE et y ajoute les places restantes.
+ * les formations PUBLIE et y ajoute les places restantes.
  */
 export interface FormationVitrine {
   id: string;

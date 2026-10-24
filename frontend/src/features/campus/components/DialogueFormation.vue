@@ -62,7 +62,7 @@
       <div class="col-12 col-sm-4">
         <q-select
           v-model="form.devise"
-          :options="['GNF']"
+          :options="[DEVISE]"
           outlined
           dense
           emit-value
@@ -124,10 +124,10 @@
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useQuasar } from 'quasar';
-import { api } from '@/boot/axios';
 import ChampDate from '@/shared/components/ChampDate.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
-import { LIBELLE_STATUT_FORMATION } from '@/shared/utils/libelles';
+import { DEVISE, LIBELLE_STATUT_FORMATION } from '@/shared/utils/libelles';
+import { formationsAdminService } from '../services/formations';
 import type { Formation, StatutFormation } from '@/types';
 
 const ouvert = defineModel<boolean>({ required: true });
@@ -150,7 +150,7 @@ const form = ref({
   description: '',
   categorie: '',
   prix: 0 as number | null,
-  devise: 'GNF',
+  devise: DEVISE,
   dureeHeures: null as number | null,
   dateDebut: '',
   dateFin: '',
@@ -168,7 +168,7 @@ watch(ouvert, (o) => {
       description: f.description ?? '',
       categorie: f.categorie ?? '',
       prix: f.prix ?? 0,
-      devise: f.devise ?? 'GNF',
+      devise: f.devise ?? DEVISE,
       dureeHeures: f.dureeHeures ?? null,
       dateDebut: f.dateDebut ?? '',
       dateFin: f.dateFin ?? '',
@@ -182,7 +182,7 @@ watch(ouvert, (o) => {
       description: '',
       categorie: '',
       prix: 0,
-      devise: 'GNF',
+      devise: DEVISE,
       dureeHeures: null,
       dateDebut: '',
       dateFin: '',
@@ -212,10 +212,10 @@ async function enregistrer() {
       statut: form.value.statut,
     };
     if (props.formation) {
-      await api.put(`/formations/${props.formation.id}`, payload);
+      await formationsAdminService.modifier(props.formation.id, payload);
       $q.notify({ type: 'positive', message: t('formationsAdmin.dialog.messages.updated') });
     } else {
-      await api.post('/formations', payload);
+      await formationsAdminService.creer(payload);
       $q.notify({ type: 'positive', message: t('formationsAdmin.dialog.messages.created') });
     }
     emit('enregistre');

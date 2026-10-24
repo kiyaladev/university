@@ -31,6 +31,12 @@ const ECRANS: Partial<Record<Permission, string[]>> = {
   'demandesDocuments.traiter': ['/demandes-docs'],
   'plagiat.decider': ['/plagiat'],
   'elections.voterDepuisGestion': ['/elections', '/elections/vote'],
+  'frais.gerer': ['/frais'],
+  'frais.supprimer': ['/frais'],
+  'attestation.moyens': ['/moyens-attestation'],
+  'attestation.appareils': ['/moyens-attestation'],
+  'pointages.corriger': ['/corrections-pointages'],
+  'pointages.supprimer': ['/corrections-pointages'],
 };
 
 describe('matrice des droits', () => {

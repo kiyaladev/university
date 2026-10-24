@@ -80,7 +80,7 @@ export default {
     },
     emptyState: {
       title: 'No sends logged',
-      detail: 'The register keeps a trace of every SMS sent from UniPrésence.',
+      detail: 'The register keeps a trace of every SMS sent by University.',
       noneMatchFilters: 'None match the current filters.',
       startBroadcast: 'Send a notice from the Broadcast tab to get started.',
       goToBroadcast: 'Go to broadcast',

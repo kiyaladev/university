@@ -66,7 +66,7 @@
           </div>
           <div>
             <span class="pochoir reclamation-meta__libelle">{{ $t('common.fields.createdOn') }}</span>
-            <span>{{ dateHeureLisible(reclamation.creeLe) }}</span>
+            <span>{{ dateHeureLisible(reclamation.createdAt) }}</span>
           </div>
           <div v-if="reclamation.escaladeLe">
             <span class="pochoir reclamation-meta__libelle">{{ $t('reclamations.dialog.detail.escalatedOn') }}</span>
@@ -118,7 +118,7 @@
                     {{ libelleRoleCourt(m.auteur.role) }}
                   </span>
                 </q-item-label>
-                <q-item-label caption>{{ dateHeureLisible(m.creeLe) }}</q-item-label>
+                <q-item-label caption>{{ dateHeureLisible(m.createdAt) }}</q-item-label>
                 <div class="q-mt-xs" style="white-space: pre-wrap">{{ m.contenu }}</div>
                 <div v-if="m.joint" class="q-mt-xs">
                   <a :href="m.joint" target="_blank" rel="noopener">
@@ -159,9 +159,9 @@
           <q-btn
             v-if="
               estStaff &&
-              reclamation.statut !== 'FERMEE' &&
-              reclamation.statut !== 'REJETEE' &&
-              reclamation.statut !== 'RESOLUE'
+              reclamation.statut !== 'FERME' &&
+              reclamation.statut !== 'REJETE' &&
+              reclamation.statut !== 'RESOLU'
             "
             outline
             color="primary"
@@ -174,9 +174,9 @@
           <q-btn
             v-if="
               auth.aRole(['ADMIN', 'DIRECTION']) &&
-              reclamation.statut !== 'FERMEE' &&
-              reclamation.statut !== 'REJETEE' &&
-              reclamation.statut !== 'RESOLUE'
+              reclamation.statut !== 'FERME' &&
+              reclamation.statut !== 'REJETE' &&
+              reclamation.statut !== 'RESOLU'
             "
             outline
             color="warning"
@@ -189,7 +189,7 @@
           <q-btn
             v-if="
               auth.aRole(['ADMIN', 'DIRECTION']) &&
-              (reclamation.statut === 'RESOLUE' || reclamation.statut === 'FERMEE' || reclamation.statut === 'REJETEE')
+              (reclamation.statut === 'RESOLU' || reclamation.statut === 'FERME' || reclamation.statut === 'REJETE')
             "
             outline
             color="positive"
@@ -226,9 +226,9 @@ import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useQuasar } from 'quasar';
 import { useRouter } from 'vue-router';
-import { api } from '@/boot/axios';
 import EtapesCircuit, { type Transition } from '@/shared/components/EtapesCircuit.vue';
 import { useAuthStore } from '@/stores/auth';
+import { useConfirmation } from '@/shared/composables/useConfirmation';
 import {
   LIBELLE_PRIORITE_RECLAMATION,
   LIBELLE_ROLE,
@@ -236,7 +236,9 @@ import {
   LIBELLE_TYPE_RECLAMATION,
   dateHeureLisible,
 } from '@/shared/utils/libelles';
-import type { PrioriteReclamation, Reclamation, StatutReclamation, TypeReclamation, Utilisateur } from '@/types';
+import { reclamationsService } from '../services/reclamations';
+import type { PrioriteReclamation, Reclamation, StatutReclamation, TypeReclamation } from '../types';
+import type { Utilisateur } from '@/types';
 
 const props = defineProps<{
   modelValue: boolean;
@@ -255,6 +257,7 @@ const $q = useQuasar();
 const { t: $t } = useI18n();
 const auth = useAuthStore();
 const router = useRouter();
+const { confirmerAvecSaisie } = useConfirmation();
 
 /** Rebond vers le dossier de l'étudiant concerné, filtré sur lui. */
 function ouvrirDossier(nomRoute: 'demandes-docs' | 'cartes-etudiantes') {
@@ -272,38 +275,38 @@ const estStaff = computed(() => auth.aRole(['ADMIN', 'DIRECTION', 'SCOLARITE']))
 const peutOuvrirDossier = computed(() => auth.peut('reclamations.ouvrirDossier'));
 
 const ETAPES_RECLAMATION = computed(() => [
-  { identifiant: 'OUVERTE', libelle: $t('reclamations.dialog.detail.opened'), icone: 'inbox' },
+  { identifiant: 'OUVERT', libelle: $t('reclamations.dialog.detail.opened'), icone: 'inbox' },
   { identifiant: 'EN_COURS', libelle: $t('reclamations.dialog.detail.inProgress'), icone: 'autorenew' },
   { identifiant: 'EN_ATTENTE_REPONSE', libelle: $t('reclamations.dialog.detail.awaitingReply'), icone: 'forum' },
-  { identifiant: 'RESOLUE', libelle: $t('reclamations.dialog.detail.resolved'), icone: 'check_circle' },
+  { identifiant: 'RESOLU', libelle: $t('reclamations.dialog.detail.resolved'), icone: 'check_circle' },
 ]);
 
 const peutPoster = computed(() => {
   if (!props.reclamation) return false;
-  const clos: StatutReclamation[] = ['RESOLUE', 'FERMEE', 'REJETEE'];
+  const clos: StatutReclamation[] = ['RESOLU', 'FERME', 'REJETE'];
   return !clos.includes(props.reclamation.statut);
 });
 
 const transitionsAutorisees = computed<Transition[]>(() => {
   if (!props.reclamation) return [];
   if (!estStaff.value) return [];
-  const clos: StatutReclamation[] = ['RESOLUE', 'FERMEE', 'REJETEE'];
+  const clos: StatutReclamation[] = ['RESOLU', 'FERME', 'REJETE'];
   if (clos.includes(props.reclamation.statut)) return [];
 
   const possibles: Transition[] = [];
-  if (props.reclamation.statut === 'OUVERTE') {
+  if (props.reclamation.statut === 'OUVERT') {
     possibles.push({ cible: 'EN_COURS', label: $t('reclamations.dialog.detail.takeOwnership'), icone: 'autorenew' });
   }
   if (props.reclamation.statut === 'EN_COURS') {
     possibles.push({ cible: 'EN_ATTENTE_REPONSE', label: $t('reclamations.dialog.detail.awaitReply'), icone: 'forum' });
     possibles.push({
-      cible: 'RESOLUE',
+      cible: 'RESOLU',
       label: $t('reclamations.dialog.detail.markResolved'),
       icone: 'check_circle',
       couleur: 'positive',
     });
     possibles.push({
-      cible: 'REJETEE',
+      cible: 'REJETE',
       label: $t('common.actions.reject'),
       icone: 'block',
       couleur: 'negative',
@@ -313,13 +316,13 @@ const transitionsAutorisees = computed<Transition[]>(() => {
   if (props.reclamation.statut === 'EN_ATTENTE_REPONSE') {
     possibles.push({ cible: 'EN_COURS', label: $t('common.actions.resume'), icone: 'autorenew' });
     possibles.push({
-      cible: 'RESOLUE',
+      cible: 'RESOLU',
       label: $t('reclamations.dialog.detail.markResolved'),
       icone: 'check_circle',
       couleur: 'positive',
     });
     possibles.push({
-      cible: 'REJETEE',
+      cible: 'REJETE',
       label: $t('common.actions.reject'),
       icone: 'block',
       couleur: 'negative',
@@ -358,12 +361,10 @@ async function posterMessage() {
   if (!props.reclamation || !messageCourant.value.trim()) return;
   enCours.value = 'message';
   try {
-    await api.post(`/reclamations/${props.reclamation.id}/messages`, {
-      contenu: messageCourant.value.trim(),
-    });
-    const maj = await api.get(`/reclamations/${props.reclamation.id}`);
-    props.reclamation.messages = (maj.data as Reclamation).messages;
-    props.reclamation.statut = (maj.data as Reclamation).statut;
+    await reclamationsService.ajouterMessage(props.reclamation.id, messageCourant.value.trim());
+    const maj = await reclamationsService.lire(props.reclamation.id);
+    props.reclamation.messages = maj.messages;
+    props.reclamation.statut = maj.statut;
     messageCourant.value = '';
     $q.notify({ type: 'positive', message: $t('reclamations.dialog.detail.messageSent') });
   } finally {
@@ -371,37 +372,44 @@ async function posterMessage() {
   }
 }
 
-async function changerStatut(cible: StatutReclamation) {
+/**
+ * Un statut de réclamation, parmi ceux que connaît le dossier.
+ *
+ * Le stepper émet une cible en texte ; le garde-fou évite qu'une cible
+ * inconnue parte vers l'API.
+ */
+function estStatutReclamation(valeur: string): valeur is StatutReclamation {
+  return Object.keys(LIBELLE_STATUT_RECLAMATION).some((cle) => cle === valeur);
+}
+
+async function changerStatut(cible: string) {
   if (!props.reclamation) return;
+  if (!estStatutReclamation(cible)) return;
   let commentaire = '';
-  if (cible === 'REJETEE') {
+  if (cible === 'REJETE') {
     // Le motif est celui saisi dans l'invite : il arrive par le callback,
     // jamais en relisant le DOM d'un dialogue déjà fermé.
-    const motif = await new Promise<string | null>((resolve) => {
-      $q.dialog({
-        title: $t('reclamations.dialog.detail.rejectTitle'),
-        message: $t('reclamations.dialog.detail.rejectPrompt'),
-        prompt: { model: '', isValid: (v: string) => v.trim().length >= 3, type: 'textarea' },
-        cancel: true,
-        ok: { label: $t('common.actions.reject'), color: 'negative' },
-      })
-        .onOk((valeur: string) => resolve(valeur))
-        .onCancel(() => resolve(null));
+    // Le motif est obligatoire (3 caractères au moins), comme côté API : le
+    // bouton de validation reste désactivé en dessous.
+    const motif = await confirmerAvecSaisie({
+      titre: $t('reclamations.dialog.detail.rejectTitle'),
+      message: $t('reclamations.dialog.detail.rejectPrompt'),
+      ok: $t('common.actions.reject'),
+      danger: true,
+      minLength: 3,
+      multiligne: true,
     });
-    if (motif === null || !motif.trim()) return;
+    if (motif === null) return;
     commentaire = motif.trim();
   }
   enCours.value = 'statut';
   try {
-    const { data } = await api.put(`/reclamations/${props.reclamation.id}/statut`, {
-      statut: cible,
-      ...(commentaire ? { commentaire } : {}),
-    });
+    const data = await reclamationsService.changerStatut(props.reclamation.id, cible, commentaire);
     $q.notify({
-      type: cible === 'REJETEE' ? 'warning' : 'positive',
+      type: cible === 'REJETE' ? 'warning' : 'positive',
       message: $t('reclamations.dialog.detail.statusChanged', { status: libelleStatut(cible) }),
     });
-    emit('change', data as Reclamation);
+    emit('change', data);
     Object.assign(props.reclamation, data);
   } finally {
     enCours.value = '';
@@ -418,7 +426,7 @@ function ouvrirAssigner() {
     message: $t('reclamations.dialog.detail.assignPrompt'),
     options: {
       type: 'radio',
-      model: props.reclamation?.assigneAId ?? null,
+      model: props.reclamation?.assigneAId ?? '',
       items: props.membresStaff.map((u) => ({
         label: `${u.prenom} ${u.nom}`,
         value: u.id,
@@ -430,9 +438,9 @@ function ouvrirAssigner() {
     if (!props.reclamation || !assigneAId) return;
     enCours.value = 'assigner';
     try {
-      const { data } = await api.put(`/reclamations/${props.reclamation.id}/assigner`, { assigneAId });
+      const data = await reclamationsService.assigner(props.reclamation.id, assigneAId);
       $q.notify({ type: 'positive', message: $t('reclamations.dialog.detail.assigned') });
-      emit('assigne', data as Reclamation);
+      emit('assigne', data);
       Object.assign(props.reclamation, data);
     } finally {
       enCours.value = '';
@@ -444,9 +452,9 @@ async function declencherEscalade() {
   if (!props.reclamation) return;
   enCours.value = 'escalader';
   try {
-    const { data } = await api.post(`/reclamations/${props.reclamation.id}/escalader`);
+    const data = await reclamationsService.escalader(props.reclamation.id);
     $q.notify({ type: 'warning', message: $t('reclamations.dialog.detail.escalated') });
-    emit('escalade', data as Reclamation);
+    emit('escalade', data);
     Object.assign(props.reclamation, data);
   } finally {
     enCours.value = '';
@@ -455,21 +463,22 @@ async function declencherEscalade() {
 
 function cloturer() {
   if (!props.reclamation) return;
-  $q.dialog({
-    title: $t('reclamations.dialog.detail.closingNoteTitle'),
+  confirmerAvecSaisie({
+    titre: $t('reclamations.dialog.detail.closingNoteTitle'),
     message: $t('reclamations.dialog.detail.closingNotePrompt'),
-    prompt: { model: '', isValid: (v: string) => v.trim().length >= 3, type: 'textarea' },
-    cancel: true,
-    ok: { label: $t('reclamations.dialog.detail.record'), color: 'positive' },
-  }).onOk(async (noteClotureValue: string) => {
-    if (!props.reclamation || !noteClotureValue.trim()) return;
+    ok: $t('reclamations.dialog.detail.record'),
+    couleur: 'positive',
+    // La note de clôture est obligatoire (3 caractères au moins), comme côté
+    // API : le bouton de validation reste désactivé en dessous.
+    minLength: 3,
+    multiligne: true,
+  }).then(async (noteClotureValue) => {
+    if (!props.reclamation || noteClotureValue === null) return;
     enCours.value = 'cloturer';
     try {
-      const { data } = await api.post(`/reclamations/${props.reclamation.id}/cloturer`, {
-        noteCloture: noteClotureValue.trim(),
-      });
+      const data = await reclamationsService.cloturer(props.reclamation.id, noteClotureValue.trim());
       $q.notify({ type: 'positive', message: $t('reclamations.dialog.detail.closingNoteRecorded') });
-      emit('cloture', data as Reclamation);
+      emit('cloture', data);
       Object.assign(props.reclamation, data);
     } finally {
       enCours.value = '';

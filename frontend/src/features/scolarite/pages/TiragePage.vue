@@ -73,7 +73,7 @@
         <div class="col-12 q-pb-sm">
           <q-card flat bordered class="carte">
             <q-card-section>
-              <div v-for="c in p.cols.filter((c) => c.name !== 'actions')" :key="c.name" class="q-mb-sm">
+              <div v-for="c in colonnesSansActions(p.cols)" :key="c.name" class="q-mb-sm">
                 <div class="text-caption text-grey-7">{{ c.label }}</div>
                 <template v-if="c.name === 'examen'"
                   >{{ p.row.examen?.codeExamen }} · {{ p.row.examen?.intitule }}</template
@@ -234,7 +234,6 @@ import { computed, onMounted, reactive, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { useRouter } from 'vue-router';
-import { api } from '@/boot/axios';
 
 import { useAuthStore } from '@/stores/auth';
 import ActionsSecondaires from '@/shared/components/ActionsSecondaires.vue';
@@ -248,8 +247,11 @@ import EtatVide from '@/shared/components/EtatVide.vue';
 import { pageApi, useListePaginee } from '@/shared/composables/useListePaginee';
 import { useConfirmation } from '@/shared/composables/useConfirmation';
 import { LIBELLE_STADE_TIRAGE, dateHeureLisible } from '@/shared/utils/libelles';
-import type { Examen, StadeTirage, Tirage, ChipFiltre } from '@/types';
+import { colonnesSansActions } from '@/shared/utils/colonnes';
+import type { Examen, StadeTirage, Tirage, ChipFiltre, FiltresPage } from '@/types';
 import { ouvrirImpression } from '@/shared/services/impression';
+import { examensService } from '../services/examens';
+import { tirageService } from '../services/tirage';
 
 const $q = useQuasar();
 const auth = useAuthStore();
@@ -264,7 +266,7 @@ const tirageAImprimer = ref<string | null>(null);
 /** Examen sur lequel la page a été ouverte depuis la fiche d'un examen. */
 const examenFiltre = ref<Examen | null>(null);
 
-const filtres = ref<Record<string, any>>({
+const filtres = ref<FiltresPage>({
   recherche: '',
   examenId: null as string | null,
   stade: null as StadeTirage | null,
@@ -279,15 +281,11 @@ const liste = reactive(
     // `/tirage` ne filtre pas sur le texte : voir `tiragesFiltres`.
     clesLocales: ['recherche'],
     charger: ({ filtres: f, ...p }) =>
-      api
-        .get('/tirage', {
-          params: {
-            ...pageApi(p),
-            examenId: f.examenId || undefined,
-            stade: f.stade || undefined,
-          },
-        })
-        .then((r) => r.data),
+      tirageService.liste({
+        ...pageApi(p),
+        examenId: f.examenId || undefined,
+        stade: f.stade || undefined,
+      }),
   }),
 );
 
@@ -443,7 +441,7 @@ async function avancer(t: Tirage) {
   });
   if (!ok) return;
   try {
-    await api.post(`/tirage/${t.id}/${routeSuivant}`, { stade });
+    await tirageService.avancer(t.id, routeSuivant, stade);
     notifierStade(stade);
     await liste.recharger();
   } catch {
@@ -471,7 +469,7 @@ async function annuler(t: Tirage) {
   });
   if (!ok) return;
   try {
-    await api.post(`/tirage/${t.id}/annuler`);
+    await tirageService.annuler(t.id);
     $q.notify({ type: 'positive', message: translate('tirage.messages.cancelled') });
     await liste.recharger();
   } catch {
@@ -485,8 +483,7 @@ onMounted(async () => {
   const examenId = filtres.value.examenId;
   if (examenId) {
     try {
-      const { data } = await api.get(`/examens/${examenId}`);
-      examenFiltre.value = data;
+      examenFiltre.value = await examensService.lire(examenId);
     } catch {
       examenFiltre.value = null;
     }

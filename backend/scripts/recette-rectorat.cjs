@@ -11,7 +11,7 @@ assert.ok(['127.0.0.1', 'localhost'].includes(database.hostname));
 assert.equal(env.PORT, '15041');
 const api = 'http://127.0.0.1:15041/api';
 const prisma = new PrismaClient({ datasources: { db: { url: env.DATABASE_URL } } });
-let studentId, snapshotId;
+let studentId, inscriptionId, snapshotId;
 async function request(token, method, route, body, status = 200) {
   const response = await fetch(api + route, {
     method,
@@ -42,8 +42,9 @@ async function main() {
   const student = await prisma.etudiant.create({ data: { matricule: tag, nom: 'Recette', prenom: 'Consolidation' } });
   studentId = student.id;
   const inscription = await prisma.inscription.create({
-    data: { numero: tag, etudiantId: student.id, anneeId: year.id, promotionId: promotion.id, statut: 'VALIDEE' },
+    data: { numero: tag, etudiantId: student.id, anneeId: year.id, promotionId: promotion.id, statut: 'VALIDE' },
   });
+  inscriptionId = inscription.id;
   const current = await request(direction, 'GET', route);
   assert.equal(current.effectifTotal, before.effectifTotal + 1);
   assert.equal(
@@ -55,7 +56,7 @@ async function main() {
   snapshotId = snapshot.id;
   assert.equal(snapshot.donnees.effectifTotal, current.effectifTotal);
   assert.equal(snapshot.genereParId, account.id);
-  await prisma.inscription.update({ where: { id: inscription.id }, data: { statut: 'ANNULEE' } });
+  await prisma.inscription.update({ where: { id: inscription.id }, data: { statut: 'ANNULE' } });
   const after = await request(admin, 'GET', route);
   assert.equal(after.effectifTotal, before.effectifTotal);
   const persisted = await prisma.statistiqueMesrs.findUniqueOrThrow({ where: { id: snapshot.id } });
@@ -99,6 +100,8 @@ main()
   })
   .finally(async () => {
     if (snapshotId) await prisma.statistiqueMesrs.delete({ where: { id: snapshotId } });
+    // L'inscription référence l'étudiant (Restrict) : elle part d'abord.
+    if (inscriptionId) await prisma.inscription.delete({ where: { id: inscriptionId } });
     if (studentId) await prisma.etudiant.delete({ where: { id: studentId } });
     await prisma.$disconnect();
   });

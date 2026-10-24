@@ -6,5 +6,7 @@
   "compteSignatureNonChef": "The signing account does not head this department or is no longer active.",
   "departementIntrouvable": "Department not found.",
   "releveSemaineComplete": "The report must cover a full week, from Monday to Sunday.",
-  "signatureNonIntegrable": "The signature image cannot be embedded in the PDF."
+  "signatureNonIntegrable": "The signature image cannot be embedded in the PDF.",
+  "la_date_de_debut_doit_preceder_ou_egaler_la_date_de_fin": "The start date must be before or equal to the end date.",
+  "la_periode_ne_peut_depasser_n_jours": "A report period cannot exceed {jours} days."
 }

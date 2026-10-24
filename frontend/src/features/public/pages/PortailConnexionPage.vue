@@ -170,8 +170,8 @@ import { ref } from 'vue';
 import { useQuasar } from 'quasar';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
-import { api } from '@/boot/axios';
 import { useAuthStore } from '@/stores/auth';
+import { portailService } from '@/features/public/services/portail';
 
 const $q = useQuasar();
 const auth = useAuthStore();
@@ -185,8 +185,8 @@ const erreur = ref('');
 const envoi = ref(false);
 const codeDemande = ref(false);
 
-function messageErreur(e: any): string {
-  const donnees = e?.response?.data?.message;
+function messageErreur(e: unknown): string {
+  const donnees = (e as { response?: { data?: { message?: string | string[] } } } | null)?.response?.data?.message;
   return Array.isArray(donnees) ? donnees.join(' · ') : (donnees ?? t('portailConnexion.messages.genericError'));
 }
 
@@ -207,14 +207,14 @@ async function demanderCode() {
   try {
     // La réponse est volontairement identique pour un numéro connu ou non :
     // le portail ne révèle jamais quels numéros figurent au registre.
-    await api.post('/portail/otp', { telephone: telephone.value }, { silencieux: true });
+    await portailService.demanderCode({ telephone: telephone.value });
     erreur.value = '';
     code.value = '';
     codeDemande.value = true;
     if (renvoi) {
       $q.notify({ type: 'positive', message: t('portailConnexion.messages.codeResent') });
     }
-  } catch (e: any) {
+  } catch (e: unknown) {
     erreur.value = messageErreur(e);
   } finally {
     envoi.value = false;
@@ -230,7 +230,7 @@ async function entrer() {
     // profond vers une rubrique précis perdait ici sa destination.
     const suite = route.query.suite as string | undefined;
     await router.push(suite ?? '/portail');
-  } catch (e: any) {
+  } catch (e: unknown) {
     code.value = '';
     erreur.value = messageErreur(e) || t('portailConnexion.messages.invalidCode');
   }

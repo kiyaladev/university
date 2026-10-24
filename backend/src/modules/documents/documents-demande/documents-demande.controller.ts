@@ -1,0 +1,135 @@
+import { Body, Controller, Get, Param, Post, Put, Query, Res } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { Role } from '@prisma/client';
+import type { Response } from 'express';
+import { CurrentUser, Roles, ProtectedDocument, DocumentScope } from '../../../common/decorators';
+import type { AuthUser } from '../../../common/decorators';
+import { DocumentsDemandeService } from './documents-demande.service';
+import {
+  CreateDemandeDto,
+  CreateTarifDto,
+  DocumentsDemandeQueryDto,
+  LancerTraitementDto,
+  MarquerPreteDto,
+  MesDemandesQueryDto,
+  ModePaiementDto,
+  UpdateTarifDto,
+  PayerDto,
+  RemettreDto,
+  RejeterDemandeDto,
+} from './documents-demande.dto';
+
+/** Le registre est lisible par la direction ; seul le personnel de guichet le traite. */
+const ROLES_LECTURE = [Role.ADMIN, Role.SCOLARITE, Role.DIRECTION] as const;
+const ROLES_GESTION = [Role.ADMIN, Role.SCOLARITE] as const;
+
+@ApiTags('Demandes de documents')
+@ApiBearerAuth()
+@Controller('documents-demande')
+export class DocumentsDemandeController {
+  constructor(private readonly service: DocumentsDemandeService) {}
+
+  // ---------- lecture : vues étudiant
+
+  @Roles(Role.ETUDIANT)
+  @Get('mes')
+  mes(@Query() query: MesDemandesQueryDto, @CurrentUser() user: AuthUser) {
+    return this.service.mesDemandes(query, user);
+  }
+
+  // ---------- lecture : registre
+
+  @Roles(...ROLES_LECTURE)
+  @Get()
+  lister(@Query() query: DocumentsDemandeQueryDto, @CurrentUser() user: AuthUser) {
+    return this.service.lister(query, user);
+  }
+
+  @Roles(...ROLES_LECTURE)
+  @Get('dashboard')
+  dashboard() {
+    return this.service.dashboard();
+  }
+
+  // ---------- tarifs
+
+  @Get('tarifs')
+  tarifs() {
+    return this.service.listeTarifs();
+  }
+
+  @Roles(Role.ADMIN)
+  @Post('tarifs')
+  creerTarif(@Body() dto: CreateTarifDto, @CurrentUser() user: AuthUser) {
+    return this.service.creerTarif(dto, user);
+  }
+
+  @Roles(Role.ADMIN)
+  @Put('tarifs/:id')
+  modifierTarif(@Param('id') id: string, @Body() dto: UpdateTarifDto, @CurrentUser() user: AuthUser) {
+    return this.service.modifierTarif(id, dto, user);
+  }
+
+  // ---------- détail
+
+  @Roles(Role.ADMIN, Role.SCOLARITE, Role.DIRECTION, Role.ETUDIANT)
+  @Get(':id')
+  lire(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.service.findOnePour(id, user);
+  }
+
+  // ---------- cycle étudiant
+
+  @Roles(Role.ETUDIANT)
+  @Post()
+  creer(@Body() dto: CreateDemandeDto, @CurrentUser() user: AuthUser) {
+    return this.service.creer(dto, user);
+  }
+
+  @Roles(Role.ETUDIANT)
+  @Post(':id/payer')
+  payer(@Param('id') id: string, @Body() dto: PayerDto, @CurrentUser() user: AuthUser) {
+    return this.service.payer(id, dto, user);
+  }
+
+  // ---------- cycle scolarité / admin
+
+  @Roles(...ROLES_GESTION)
+  @Post(':id/confirmer-paiement')
+  confirmerPaiement(@Param('id') id: string, @Body() dto: ModePaiementDto, @CurrentUser() user: AuthUser) {
+    return this.service.confirmerPaiement(id, dto, user);
+  }
+
+  @Roles(...ROLES_GESTION)
+  @Post(':id/lancer-traitement')
+  lancerTraitement(@Param('id') id: string, @Body() _dto: LancerTraitementDto, @CurrentUser() user: AuthUser) {
+    return this.service.lancerTraitement(id, user);
+  }
+
+  @Roles(...ROLES_GESTION)
+  @Post(':id/prete')
+  marquerPrete(@Param('id') id: string, @Body() dto: MarquerPreteDto, @CurrentUser() user: AuthUser) {
+    return this.service.marquerPrete(id, dto, user);
+  }
+
+  @Roles(...ROLES_GESTION)
+  @Post(':id/remettre')
+  remettre(@Param('id') id: string, @Body() dto: RemettreDto, @CurrentUser() user: AuthUser) {
+    return this.service.remettre(id, dto, user);
+  }
+
+  @Roles(...ROLES_GESTION)
+  @Post(':id/rejeter')
+  rejeter(@Param('id') id: string, @Body() dto: RejeterDemandeDto, @CurrentUser() user: AuthUser) {
+    return this.service.rejeter(id, dto, user);
+  }
+
+  // ---------- impression : le jeton est contrôlé par la garde globale
+
+  @ProtectedDocument(Role.ADMIN, Role.SCOLARITE, Role.ETUDIANT)
+  @DocumentScope('demandeDocument', { [Role.ETUDIANT]: 'etudiantId' })
+  @Get(':id/imprimer')
+  async imprimer(@Param('id') id: string, @Res() res: Response) {
+    res.type('html').send(await this.service.documentImprimable(id));
+  }
+}

@@ -19,11 +19,11 @@
  */
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import type { ChipFiltre } from '@/types';
+import type { ChipFiltre, FiltresPage, ValeurFiltre } from '@/types';
 
 const props = withDefaults(
   defineProps<{
-    modelValue?: Record<string, any>;
+    modelValue?: FiltresPage;
     placeholder?: string;
     /**
      * Rappel des filtres actifs. Un chip n'est décrochable que si le parent dit
@@ -47,7 +47,7 @@ const props = withDefaults(
   },
 );
 const emit = defineEmits<{
-  'update:modelValue': [value: Record<string, any>];
+  'update:modelValue': [value: FiltresPage];
 }>();
 const { t } = useI18n();
 /** Aide par défaut traduite : une valeur par défaut de prop ne suivrait pas la langue. */
@@ -55,7 +55,7 @@ const placeholderEffectif = computed(() => props.placeholder ?? t('common.search
 
 const filtres = computed(() => ({ ...(props.modelValue ?? {}) }));
 
-function setFiltre(cle: string, valeur: any) {
+function setFiltre(cle: string, valeur: ValeurFiltre) {
   const nv = { ...filtres.value };
   if (valeur === undefined || valeur === null || valeur === '' || (Array.isArray(valeur) && valeur.length === 0)) {
     delete nv[cle];

@@ -70,312 +70,25 @@
       </template>
     </barre-filtres>
 
-    <q-table
-      v-if="modeVue === 'tableau'"
-      flat
-      bordered
-      class="carte"
+    <inscriptions-liste-panel
+      :mode="modeVue"
       :rows="liste.lignes"
-      :columns="colonnes"
-      row-key="id"
-      :loading="liste.chargement"
-      :pagination="{ rowsPerPage: 0 }"
-    >
-      <template #loading
-        ><q-linear-progress indeterminate color="primary" :aria-label="$t('common.messages.loading')"
-      /></template>
-      <template #no-data>
-        <etat-vide icone="how_to_reg" :titre="messageVide">
-          <template #action>
-            <div class="q-gutter-sm">
-              <q-btn
-                v-if="filtresActifs"
-                outline
-                no-caps
-                icon="refresh"
-                :label="$t('common.actions.reset_filters')"
-                @click="reinitialiser"
-              />
-              <q-btn
-                v-if="peutGerer"
-                unelevated
-                color="primary"
-                no-caps
-                icon="add"
-                :label="$t('inscriptions.actions.new')"
-                @click="dialogInscription = true"
-              />
-            </div>
-          </template>
-        </etat-vide>
-      </template>
-
-      <template #body-cell-etudiant="p">
-        <q-td :props="p">
-          <div>{{ p.row.etudiant?.nom }} {{ p.row.etudiant?.prenom }}</div>
-          <div class="text-caption text-grey-7">{{ p.row.etudiant?.matricule }}</div>
-        </q-td>
-      </template>
-
-      <template #body-cell-promotion="p">
-        <q-td :props="p">
-          <q-chip dense outline color="primary">{{ p.row.promotion?.nom }}</q-chip>
-          <div class="text-caption text-grey-7">{{ p.row.annee?.libelle }}</div>
-        </q-td>
-      </template>
-
-      <template #body-cell-statut="p">
-        <q-td :props="p">
-          <PastilleStatut domaine="inscription" :statut="p.row.statut" />
-        </q-td>
-      </template>
-
-      <template #body-cell-montantFrais="p">
-        <q-td :props="p" class="text-right text-weight-medium">
-          {{ montantLisible(p.row.montantFrais) }}
-        </q-td>
-      </template>
-
-      <template #body-cell-paye="p">
-        <q-td :props="p" class="text-right chiffres">
-          <span :class="{ 'text-positive text-weight-medium': resteAPayer(p.row) === 0 }">
-            {{ montantLisible(montantPaye(p.row)) }}
-          </span>
-        </q-td>
-      </template>
-
-      <template #body-cell-solde="p">
-        <q-td :props="p" class="text-right text-weight-medium chiffres">
-          <span :class="{ 'text-negative': resteAPayer(p.row) > 0 }">
-            {{ montantLisible(resteAPayer(p.row)) }}
-          </span>
-        </q-td>
-      </template>
-
-      <template #body-cell-dateInscription="p">
-        <q-td :props="p">
-          {{ dateLisible(p.row.dateInscription ?? p.row.createdAt) }}
-        </q-td>
-      </template>
-
-      <template #body-cell-actions="p">
-        <q-td :props="p" class="text-right">
-          <q-btn
-            v-if="peutEncaisserDossier(p.row)"
-            flat
-            dense
-            no-caps
-            color="primary"
-            icon="payments"
-            :aria-label="$t('inscriptions.table.actions.collectAria')"
-            :label="$t('inscriptions.table.actions.collectAria')"
-            @click="encaisser(p.row)"
-          >
-            <q-tooltip>
-              {{ $t('inscriptions.table.actions.collectTooltip', { amount: montantLisible(resteAPayer(p.row)) }) }}
-            </q-tooltip>
-          </q-btn>
-          <q-btn
-            v-if="peutValider(p.row)"
-            flat
-            dense
-            no-caps
-            color="positive"
-            icon="verified"
-            :aria-label="$t('inscriptions.table.actions.validateAria')"
-            :label="$t('inscriptions.table.actions.validateAria')"
-            @click="valider(p.row)"
-          >
-            <q-tooltip>{{ $t('inscriptions.table.actions.validateTooltip') }}</q-tooltip>
-          </q-btn>
-          <actions-secondaires>
-            <q-btn
-              v-close-popup
-              flat
-              dense
-              no-caps
-              icon="receipt_long"
-              :aria-label="$t('inscriptions.table.actions.viewPaymentsAria')"
-              :label="$t('inscriptions.table.actions.viewPaymentsAria')"
-              @click="voirPaiements(p.row)"
-            >
-              <q-tooltip>{{ $t('inscriptions.table.actions.viewPaymentsTooltip') }}</q-tooltip>
-            </q-btn>
-            <q-btn
-              v-close-popup
-              v-if="peutAnnuler(p.row)"
-              flat
-              dense
-              no-caps
-              color="negative"
-              icon="cancel"
-              :aria-label="$t('inscriptions.table.actions.cancelAria')"
-              :label="$t('inscriptions.table.actions.cancelAria')"
-              @click="annuler(p.row)"
-            >
-              <q-tooltip>{{ $t('inscriptions.table.actions.cancelTooltip') }}</q-tooltip>
-            </q-btn>
-            <q-btn
-              v-close-popup
-              flat
-              dense
-              no-caps
-              icon="print"
-              :aria-label="$t('inscriptions.table.actions.printAria')"
-              :label="$t('inscriptions.table.actions.printAria')"
-              @click="imprimer(p.row)"
-            >
-              <q-tooltip>{{ $t('inscriptions.table.actions.printTooltip') }}</q-tooltip>
-            </q-btn>
-            <q-btn
-              v-close-popup
-              flat
-              dense
-              no-caps
-              color="primary"
-              icon="person"
-              :aria-label="$t('inscriptions.table.actions.viewStudentAria')"
-              :label="$t('inscriptions.table.actions.viewStudentAria')"
-              @click="voirEtudiant(p.row)"
-            >
-              <q-tooltip>{{ $t('inscriptions.table.actions.viewStudentTooltip') }}</q-tooltip>
-            </q-btn>
-          </actions-secondaires>
-        </q-td>
-      </template>
-    </q-table>
-
-    <q-linear-progress
-      :aria-label="$t('common.messages.loading')"
-      v-if="modeVue === 'cartes' && liste.chargement"
-      indeterminate
-      color="primary"
-      class="q-mb-sm"
+      :chargement="liste.chargement"
+      :message-vide="messageVide"
+      :filtres-actifs="filtresActifs"
+      :peut-gerer="peutGerer"
+      :peut-encaisser="peutEncaisser"
+      :droit-valider="droitValider"
+      :droit-annuler="droitAnnuler"
+      @encaisser="encaisser"
+      @valider="valider"
+      @annuler="annuler"
+      @imprimer="imprimer"
+      @voir-paiements="voirPaiements"
+      @voir-etudiant="voirEtudiant"
+      @reinitialiser="reinitialiser"
+      @creer="dialogInscription = true"
     />
-
-    <div v-else-if="modeVue === 'cartes'" class="inscriptions-cartes">
-      <q-card v-for="d in liste.lignes" :key="d.id" flat bordered class="carte inscriptions-cartes__carte">
-        <q-card-section>
-          <div class="row items-center q-mb-xs">
-            <PastilleStatut domaine="inscription" :statut="d.statut" />
-            <q-space />
-            <div class="text-caption text-grey-7">{{ d.numero }}</div>
-          </div>
-          <div class="text-subtitle1 text-weight-medium">{{ d.etudiant?.nom }} {{ d.etudiant?.prenom }}</div>
-          <div class="text-caption text-grey-7">
-            {{ d.etudiant?.matricule }} · {{ d.promotion?.nom }} · {{ d.annee?.libelle }}
-          </div>
-          <div class="row q-mt-sm q-col-gutter-sm">
-            <div class="col-4">
-              <div class="text-caption text-grey-7">{{ $t('inscriptions.cards.fees') }}</div>
-              <div class="text-weight-medium chiffres">{{ montantLisible(d.montantFrais) }}</div>
-            </div>
-            <div class="col-4">
-              <div class="text-caption text-grey-7">{{ $t('inscriptions.cards.paid') }}</div>
-              <div class="text-weight-medium chiffres text-positive">
-                {{ montantLisible(montantPaye(d)) }}
-              </div>
-            </div>
-            <div class="col-4">
-              <div class="text-caption text-grey-7">{{ $t('inscriptions.cards.balance') }}</div>
-              <div class="text-weight-medium chiffres" :class="{ 'text-negative': resteAPayer(d) > 0 }">
-                {{ montantLisible(resteAPayer(d)) }}
-              </div>
-            </div>
-          </div>
-          <div class="text-caption text-grey-7 q-mt-xs">
-            {{ dateLisible(d.dateInscription ?? d.createdAt) }}
-          </div>
-        </q-card-section>
-        <q-separator />
-        <q-card-actions align="right" class="q-gutter-xs">
-          <q-btn
-            v-if="peutEncaisserDossier(d)"
-            flat
-            dense
-            color="primary"
-            icon="payments"
-            no-caps
-            :label="$t('inscriptions.cards.actions.collect')"
-            @click="encaisser(d)"
-          />
-          <q-btn
-            v-if="peutValider(d)"
-            flat
-            dense
-            color="positive"
-            icon="verified"
-            no-caps
-            :label="$t('common.actions.validate')"
-            @click="valider(d)"
-          />
-          <actions-secondaires>
-            <q-btn
-              v-close-popup
-              flat
-              dense
-              icon="receipt_long"
-              no-caps
-              :label="$t('common.fields.payments')"
-              @click="voirPaiements(d)"
-            />
-            <q-btn
-              v-close-popup
-              v-if="peutAnnuler(d)"
-              flat
-              dense
-              color="negative"
-              icon="cancel"
-              no-caps
-              :label="$t('common.actions.cancel')"
-              @click="annuler(d)"
-            />
-            <q-btn
-              v-close-popup
-              flat
-              dense
-              color="primary"
-              icon="print"
-              no-caps
-              :label="$t('inscriptions.cards.actions.certificate')"
-              @click="imprimer(d)"
-            />
-            <q-btn
-              v-close-popup
-              flat
-              dense
-              icon="person"
-              no-caps
-              :label="$t('common.fields.student')"
-              @click="voirEtudiant(d)"
-            />
-          </actions-secondaires>
-        </q-card-actions>
-      </q-card>
-      <etat-vide v-if="!liste.lignes.length" icone="how_to_reg" :titre="messageVide">
-        <template #action>
-          <div class="q-gutter-sm">
-            <q-btn
-              v-if="filtresActifs"
-              outline
-              no-caps
-              icon="refresh"
-              :label="$t('common.actions.reset_filters')"
-              @click="reinitialiser"
-            />
-            <q-btn
-              v-if="peutGerer"
-              unelevated
-              color="primary"
-              no-caps
-              icon="add"
-              :label="$t('inscriptions.actions.new')"
-              @click="dialogInscription = true"
-            />
-          </div>
-        </template>
-      </etat-vide>
-    </div>
 
     <barre-pagination
       v-if="liste.lignes.length"
@@ -395,132 +108,49 @@
     <dialogue-etudiant v-model="dialogFicheEtudiant" :etudiant="etudiantEdite" @enregistre="liste.recharger()" />
 
     <!-- Dialog : aperçu de l'étudiant -->
-    <q-dialog v-model="dialogEtudiant">
-      <q-card style="width: 520px; max-width: 95vw">
-        <q-card-section class="row items-center">
-          <div class="col">
-            <div class="text-h6">{{ etudiantApercu?.nom }} {{ etudiantApercu?.prenom }}</div>
-            <div class="text-caption text-grey-7">
-              {{ etudiantApercu?.matricule }}
-            </div>
-          </div>
-          <q-btn flat round dense icon="close" :aria-label="$t('common.actions.close')" v-close-popup />
-        </q-card-section>
-        <q-card-section class="q-pt-none">
-          <q-linear-progress
-            :aria-label="$t('common.messages.loading')"
-            v-if="chargementEtudiant"
-            indeterminate
-            color="primary"
-          />
-          <div v-else-if="!etudiantApercu" class="text-center q-pa-md text-grey-7">
-            {{ $t('inscriptions.studentDialog.unavailable') }}
-          </div>
-          <q-list v-else separator dense>
-            <q-item>
-              <q-item-section>
-                <q-item-label caption>{{ $t('inscriptions.studentDialog.sex') }}</q-item-label>
-                <q-item-label>{{ etudiantApercu?.sexe ?? '—' }}</q-item-label>
-              </q-item-section>
-            </q-item>
-            <q-item>
-              <q-item-section>
-                <q-item-label caption>{{ $t('inscriptions.studentDialog.birthDate') }}</q-item-label>
-                <q-item-label>{{ dateLisible(etudiantApercu?.dateNaissance) }}</q-item-label>
-              </q-item-section>
-            </q-item>
-            <q-item>
-              <q-item-section>
-                <q-item-label caption>{{ $t('common.fields.phone') }}</q-item-label>
-                <q-item-label>{{ etudiantApercu?.telephone ?? '—' }}</q-item-label>
-              </q-item-section>
-            </q-item>
-            <q-item>
-              <q-item-section>
-                <q-item-label caption>{{ $t('common.fields.emailShort') }}</q-item-label>
-                <q-item-label>{{ etudiantApercu?.email ?? '—' }}</q-item-label>
-              </q-item-section>
-            </q-item>
-            <q-item>
-              <q-item-section>
-                <q-item-label caption>{{ $t('inscriptions.studentDialog.address') }}</q-item-label>
-                <q-item-label>{{ etudiantApercu?.adresse ?? '—' }}</q-item-label>
-              </q-item-section>
-            </q-item>
-            <q-item>
-              <q-item-section>
-                <q-item-label caption>{{ $t('inscriptions.studentDialog.portalAccount') }}</q-item-label>
-                <q-item-label>
-                  {{ etudiantApercu?.user ? etudiantApercu.user.email : $t('inscriptions.studentDialog.none') }}
-                </q-item-label>
-              </q-item-section>
-            </q-item>
-          </q-list>
-        </q-card-section>
-        <q-card-actions align="right">
-          <q-btn flat no-caps :label="$t('common.actions.close')" v-close-popup />
-          <q-btn
-            v-if="etudiantApercu"
-            flat
-            no-caps
-            icon="groups"
-            :label="$t('inscriptions.studentDialog.registry')"
-            @click="ouvrirRegistreEtudiant"
-          />
-          <q-btn
-            v-if="etudiantApercu && peutGerer"
-            flat
-            no-caps
-            icon="payments"
-            :label="$t('inscriptions.studentDialog.hisPayments')"
-            @click="voirPaiementsEtudiant"
-          />
-          <q-btn
-            v-if="peutGerer && etudiantApercu"
-            color="primary"
-            unelevated
-            no-caps
-            icon="edit"
-            :label="$t('inscriptions.studentDialog.editRecord')"
-            @click="ouvrirModificationEtudiant"
-          />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
+    <inscriptions-apercu-etudiant
+      v-model="dialogEtudiant"
+      :etudiant="etudiantApercu"
+      :chargement="chargementEtudiant"
+      :peut-gerer="peutGerer"
+      @ouvrir-registre="ouvrirRegistreEtudiant"
+      @voir-paiements="voirPaiementsEtudiant"
+      @modifier="ouvrirModificationEtudiant"
+    />
   </q-page>
 </template>
 
 <script setup lang="ts">
-import PastilleStatut from '@/shared/components/PastilleStatut.vue';
-import ActionsSecondaires from '@/shared/components/ActionsSecondaires.vue';
-import { usePresentationListe } from '@/shared/composables/usePresentationListe';
-import EnTetePage from '@/shared/components/EnTetePage.vue';
 import { computed, onMounted, reactive, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { useQuasar, type QTableColumn } from 'quasar';
+import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
-import { api } from '@/boot/axios';
 import { useAuthStore } from '@/stores/auth';
 import { useReferentielsStore } from '@/stores/referentiels';
 import DialogueInscription from '../components/DialogueInscription.vue';
 import DialoguePaiement from '@/shared/components/DialoguePaiement.vue';
 import DialogueEtudiant from '../components/DialogueEtudiant.vue';
+import InscriptionsListePanel from '../components/InscriptionsListePanel.vue';
+import InscriptionsApercuEtudiant from '../components/InscriptionsApercuEtudiant.vue';
+import EnTetePage from '@/shared/components/EnTetePage.vue';
 import BarreFiltres from '@/shared/components/BarreFiltres.vue';
 import BarrePagination from '@/shared/components/BarrePagination.vue';
 import ChampDate from '@/shared/components/ChampDate.vue';
-import EtatVide from '@/shared/components/EtatVide.vue';
 import { texteApi, useListePaginee } from '@/shared/composables/useListePaginee';
+import { usePresentationListe } from '@/shared/composables/usePresentationListe';
 import { useConfirmation } from '@/shared/composables/useConfirmation';
 import { ouvrirImpression } from '@/shared/services/impression';
-import { LIBELLE_STATUT_INSCRIPTION, dateLisible, montantLisible } from '@/shared/utils/libelles';
+import { LIBELLE_STATUT_INSCRIPTION, dateLisible } from '@/shared/utils/libelles';
+import { inscriptionsService } from '../services/inscriptions';
+import { etudiantsService } from '../services/etudiants';
 import type {
   AnneeAcademique,
   Etudiant,
   Inscription,
-  Paiement,
   Promotion,
   StatutInscription,
   ChipFiltre,
+  FiltresPage,
 } from '@/types';
 
 const $q = useQuasar();
@@ -541,7 +171,7 @@ const modeVue = usePresentationListe();
  * date d'inscription, à défaut la date de création du dossier. `etudiant`
  * (`/inscriptions?etudiant=<id>`) restreint aux dossiers d'un étudiant.
  */
-const filtres = ref<Record<string, any>>({
+const filtres = ref<FiltresPage>({
   recherche: '',
   statut: null,
   anneeId: null,
@@ -557,21 +187,17 @@ const liste = reactive(
     // Premier chargement une fois les filtres d'ouverture posés (onMounted).
     immediat: false,
     charger: ({ page, pageSize, filtres: f }) =>
-      api
-        .get('/inscriptions', {
-          params: {
-            page,
-            pageSize,
-            search: texteApi(f.recherche),
-            anneeId: f.anneeId || undefined,
-            promotionId: f.promotionId || undefined,
-            statut: f.statut || undefined,
-            dateDebut: f.dateDebut || undefined,
-            dateFin: f.dateFin || undefined,
-            etudiantId: f.etudiant || undefined,
-          },
-        })
-        .then((r) => r.data),
+      inscriptionsService.liste({
+        page,
+        pageSize,
+        search: texteApi(f.recherche),
+        anneeId: f.anneeId || undefined,
+        promotionId: f.promotionId || undefined,
+        statut: f.statut || undefined,
+        dateDebut: f.dateDebut || undefined,
+        dateFin: f.dateFin || undefined,
+        etudiantId: f.etudiant || undefined,
+      }),
   }),
 );
 /** Fiche de l'étudiant ciblé, pour annoncer son nom. */
@@ -591,6 +217,8 @@ const dialogFicheEtudiant = ref(false);
 const peutGerer = computed(() => auth.peut('inscriptions.gerer'));
 /** Encaisser, c'est créer un paiement : mêmes rôles que `POST /paiements`. */
 const peutEncaisser = computed(() => auth.peut('paiements.creer'));
+const droitValider = computed(() => auth.peut('inscriptions.valider'));
+const droitAnnuler = computed(() => auth.peut('inscriptions.annuler'));
 
 const optionsAnnees = computed(() => annees.value.map((a) => ({ label: a.libelle, value: a.id })));
 const optionsPromotions = computed(() =>
@@ -601,29 +229,6 @@ const optionsPromotions = computed(() =>
 const optionsStatuts = computed(() =>
   Object.entries(LIBELLE_STATUT_INSCRIPTION).map(([value, label]) => ({ value, label })),
 );
-
-const colonnes = computed<QTableColumn[]>(() => [
-  { name: 'numero', label: t('inscriptions.table.columns.number'), field: 'numero', align: 'left', sortable: true },
-  { name: 'etudiant', label: t('common.fields.student'), field: 'etudiant', align: 'left' },
-  { name: 'promotion', label: t('inscriptions.table.columns.promotion'), field: 'promotion', align: 'left' },
-  { name: 'statut', label: t('common.fields.status'), field: 'statut', align: 'left', sortable: true },
-  {
-    name: 'montantFrais',
-    label: t('inscriptions.table.columns.fees'),
-    field: 'montantFrais',
-    align: 'right',
-    sortable: true,
-  },
-  { name: 'paye', label: t('inscriptions.table.columns.paid'), field: 'paye', align: 'right' },
-  { name: 'solde', label: t('inscriptions.table.columns.balance'), field: 'solde', align: 'right' },
-  {
-    name: 'dateInscription',
-    label: t('inscriptions.table.columns.enrolledOn'),
-    field: 'dateInscription',
-    align: 'left',
-  },
-  { name: 'actions', label: '', field: 'id', align: 'right' },
-]);
 
 /** Au moins un critère est posé : l'état vide se répare en réinitialisant. */
 const filtresActifs = computed(() =>
@@ -691,25 +296,10 @@ const chips = computed(() => {
   return cs;
 });
 
-/** Somme réellement encaissée sur le dossier (seuls les paiements réussis comptent). */
-function montantPaye(dossier: Inscription): number {
-  return (dossier.paiements ?? []).filter((p: Paiement) => p.statut === 'REUSSI').reduce((t, p) => t + p.montant, 0);
-}
-
-/** Reste dû sur les frais d'inscription. */
-function resteAPayer(dossier: Inscription): number {
-  return Math.max(0, dossier.montantFrais - montantPaye(dossier));
-}
-
-const peutValider = (d: Inscription) => auth.peut('inscriptions.valider') && d.statut === 'PAYEE';
-const peutAnnuler = (d: Inscription) => auth.peut('inscriptions.annuler') && !['VALIDEE', 'ANNULEE'].includes(d.statut);
-/** Un dossier annulé ne s'encaisse plus, un dossier soldé non plus. */
-const peutEncaisserDossier = (d: Inscription) => peutEncaisser.value && d.statut !== 'ANNULEE' && resteAPayer(d) > 0;
-
 /** Encaissement : le dialogue s'ouvre sur le dossier, au montant restant dû. */
-function encaisser(row: Inscription) {
+function encaisser(row: Inscription, reste: number) {
   paiementInscriptionId.value = row.id;
-  paiementMontantInitial.value = resteAPayer(row);
+  paiementMontantInitial.value = reste;
   dialogPaiement.value = true;
 }
 
@@ -731,7 +321,7 @@ async function valider(dossier: Inscription) {
   });
   if (!ok) return;
   try {
-    await api.put(`/inscriptions/${dossier.id}/valider`);
+    await inscriptionsService.valider(dossier.id);
   } catch {
     return;
   }
@@ -748,7 +338,7 @@ async function annuler(dossier: Inscription) {
   });
   if (!ok) return;
   try {
-    await api.put(`/inscriptions/${dossier.id}/annuler`);
+    await inscriptionsService.annuler(dossier.id);
   } catch {
     return;
   }
@@ -765,8 +355,7 @@ async function voirEtudiant(dossier: Inscription) {
   chargementEtudiant.value = true;
   etudiantApercu.value = null;
   try {
-    const { data } = await api.get(`/etudiants/${dossier.etudiantId}`);
-    etudiantApercu.value = data;
+    etudiantApercu.value = await etudiantsService.lire(dossier.etudiantId);
   } catch {
     etudiantApercu.value = null;
   } finally {
@@ -823,9 +412,9 @@ function retirerEtudiantCible() {
  */
 async function appliquerEtudiantCible(id: string) {
   try {
-    const { data } = await api.get(`/etudiants/${id}`);
-    etudiantCible.value = data;
-    filtres.value.recherche = data.matricule;
+    const fiche = await etudiantsService.lire(id);
+    etudiantCible.value = fiche;
+    filtres.value.recherche = fiche.matricule;
     // Le dossier cherché peut relever d'une autre année que l'année active.
     filtres.value.anneeId = null;
   } catch {
@@ -856,14 +445,3 @@ onMounted(async () => {
   if (JSON.stringify(filtres.value) === avant) await liste.recharger();
 });
 </script>
-
-<style scoped lang="scss">
-.inscriptions-cartes {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: var(--up-3);
-}
-.inscriptions-cartes__carte {
-  background: var(--up-plaque);
-}
-</style>

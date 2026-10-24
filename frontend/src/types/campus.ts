@@ -3,21 +3,42 @@
 import type { AnneeAcademique, Departement, Enseignant, Salle } from './referentiels';
 import type { Etudiant, StatutPaiement } from './registre';
 
-export type CategorieChambre = 'CHAMBRE_SIMPLE' | 'CHAMBRE_PARTAGEE' | 'STUDIO' | 'APPARTEMENT';
-export type StatutChambre = 'LIBRE' | 'RESERVEE' | 'OCCUPEE' | 'MAINTENANCE';
-export type StatutAttributionLogement = 'EN_ATTENTE' | 'ACCORDEE' | 'REFUSEE' | 'RETIREE';
-export type TypeDocument = 'MEMOIRE' | 'THESE' | 'ARTICLE' | 'RAPPORT' | 'SUPPORT_COURS' | 'ARCHIVE' | 'AUTRE';
-export type TypeRepas = 'PETIT_DEJEUNER' | 'DEJEUNER' | 'COLLATION' | 'DINER' | 'AUTRE';
-export type StatutConsommation = 'EN_ATTENTE' | 'VALIDEE' | 'ANNULEE';
-export type StatutReservationSalle = 'EN_ATTENTE' | 'CONFIRMEE' | 'REFUSEE' | 'ANNULEE';
-export type TypeEncadrement = 'STAGE' | 'MEMOIRE' | 'RAPPORT';
-export type StatutEncadrement = 'PROPOSE' | 'VALIDE' | 'EN_COURS' | 'SOUTENU' | 'ABANDONNE';
-export type CategorieIncident =
-  'VIDEO' | 'SON' | 'RESEAU' | 'ELECTRICITE' | 'MOBILIER' | 'INFORMATIQUE' | 'CLIMATISATION' | 'AUTRE';
-export type PrioriteTicket = 'BASSE' | 'NORMALE' | 'HAUTE';
-export type StatutTicket = 'OUVERT' | 'EN_COURS' | 'RESOLU' | 'CLOTURE';
-export type StatutFormation = 'BROUILLON' | 'PUBLIEE' | 'COMPLETE';
-export type StatutInscriptionFormation = 'EN_ATTENTE' | 'CONFIRMEE' | 'ANNULEE';
+/** Énumérations générées depuis le schéma Prisma (voir `types/generated/enums.ts`). */
+import type {
+  CategorieChambre,
+  CategorieIncident,
+  PrioriteTicket,
+  StatutAttributionLogement,
+  StatutChambre,
+  StatutConsommation,
+  StatutEncadrement,
+  StatutFormation,
+  StatutInscriptionFormation,
+  StatutReservationSalle,
+  StatutSuspicionPlagiat,
+  StatutTicket,
+  TypeDocument,
+  TypeEncadrement,
+  TypeRepas,
+} from './generated/enums';
+
+export type {
+  CategorieChambre,
+  CategorieIncident,
+  PrioriteTicket,
+  StatutAttributionLogement,
+  StatutChambre,
+  StatutConsommation,
+  StatutEncadrement,
+  StatutFormation,
+  StatutInscriptionFormation,
+  StatutReservationSalle,
+  StatutSuspicionPlagiat,
+  StatutTicket,
+  TypeDocument,
+  TypeEncadrement,
+  TypeRepas,
+} from './generated/enums';
 
 export interface Residence {
   id: string;
@@ -98,7 +119,7 @@ export interface SuspicionPlagiat {
   documentAId: string;
   documentBId: string;
   score: number;
-  statut: 'EN_ATTENTE' | 'ACQUITTE' | 'CONFIRME';
+  statut: StatutSuspicionPlagiat;
   detecteLe: string;
   acquitteParId?: string | null;
   acquitteLe?: string | null;
@@ -129,7 +150,7 @@ export interface ReservationSalle {
   responsable?: string | null;
   statut: StatutReservationSalle;
   refuseMotif?: string | null;
-  creeLe: string;
+  createdAt: string;
   salle?: Salle;
   demandeurId?: string | null;
   demandeur?: { id: string; nom: string; prenom: string } | null;
@@ -168,7 +189,14 @@ export interface Soutenance {
   president?: Pick<Enseignant, 'id' | 'nom' | 'prenom'> | null;
 }
 
-export interface EquipementCampus {
+/**
+ * Fiche d'équipement suivie par le helpdesk (signalement par QR).
+ *
+ * Ce n'est pas l'inventaire patrimonial : l'écran « Patrimoine » porte un
+ * autre type (`EquipementPatrimoine`), avec catégorie, valeur et
+ * réparations. Les deux inventaires sont distincts côté base.
+ */
+export interface EquipementHelpdesk {
   id: string;
   libelle: string;
   emplacement?: string | null;
@@ -191,7 +219,7 @@ export interface TicketSupport {
   traiteLe?: string | null;
   clicheLe?: string | null;
   createdAt: string;
-  equipement?: EquipementCampus | null;
+  equipement?: EquipementHelpdesk | null;
   utilisateur?: { id: string; nom: string; prenom: string } | null;
   traitePar?: { id: string; nom: string; prenom: string } | null;
 }
@@ -224,6 +252,6 @@ export interface InscriptionFormation {
   statut: StatutInscriptionFormation;
   paiementId?: string | null;
   inscriteLe: string;
-  formation?: Formation;
+  formation?: Formation | null;
   etudiant?: Etudiant | null;
 }

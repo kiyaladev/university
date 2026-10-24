@@ -13,34 +13,15 @@
  * (chip « modifié » / « enregistré ») et par groupe (compteur X/Y).
  */
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
-
-export interface LigneSaisie {
-  inscriptionId: string;
-  numero: string;
-  matricule: string;
-  nom: string;
-  prenom: string;
-  note: number | null;
-  present: boolean;
-  /** Note brute venant du serveur (null si jamais saisie) */
-  noteOriginale: number | null;
-  /** Présence telle que reçue du serveur : marquer un absent est une modification. */
-  presentOriginal: boolean;
-}
+import type { LigneEvaluation, SaisieNotes } from '../services/evaluations';
+import type { LigneSaisie } from './NotesSaisie.types';
+import type { Note } from '@/types';
 
 const props = withDefaults(
   defineProps<{
     evaluationId: string;
-    inscriptions: Array<{
-      inscriptionId: string;
-      numero: string;
-      matricule: string;
-      nom: string;
-      prenom: string;
-      note?: number | null;
-      present?: boolean;
-    }>;
-    notesExistantes?: Array<{ inscriptionId: string; note?: number | null; present?: boolean }>;
+    inscriptions: LigneEvaluation[];
+    notesExistantes?: Note[];
     /** Lecture seule (évaluation clôturée, ou utilisateur non autorisé) */
     lectureSeule?: boolean;
     /** Raison affichée si lecture seule */
@@ -54,9 +35,7 @@ const props = withDefaults(
 );
 
 const emit = defineEmits<{
-  enregistrer: [
-    payload: { evaluationId: string; notes: Array<{ inscriptionId: string; note: number | null; present: boolean }> },
-  ];
+  enregistrer: [payload: SaisieNotes];
 }>();
 
 const lignes = ref<LigneSaisie[]>([]);
@@ -67,11 +46,14 @@ const sauvegardeFaite = ref(false);
 function construireLignes() {
   const mapExist = new Map(props.notesExistantes.map((n) => [n.inscriptionId, n]));
   lignes.value = props.inscriptions.map((ins) => {
-    const existant = mapExist.get(ins.inscriptionId);
+    // L'API renvoie toujours l'identifiant d'inscription ; le repli évite
+    // qu'une ligne sans identifiant casse la recherche de la note existante.
+    const inscriptionId = ins.inscriptionId ?? '';
+    const existant = mapExist.get(inscriptionId);
     const note = existant?.note ?? ins.note ?? null;
     const present = existant?.present ?? ins.present ?? true;
     return {
-      inscriptionId: ins.inscriptionId,
+      inscriptionId,
       numero: ins.numero,
       matricule: ins.matricule,
       nom: ins.nom,

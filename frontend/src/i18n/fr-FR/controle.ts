@@ -55,7 +55,7 @@ export default {
     pointer: 'Pointer',
     correct: 'corriger',
     room: 'salle {code}',
-    cancelled: 'Annulée',
+    cancelled: 'Annulé',
   },
   footer: {
     roomSingular: 'salle',

@@ -7,9 +7,9 @@ export const NIVEAUX = ['L1', 'L2', 'L3', 'M1', 'M2', 'DOCTORAT'];
 export const LIBELLE_STATUT_INSCRIPTION: Record<string, string> = traduireLibelles('statut_inscription', {
   BROUILLON: 'Brouillon',
   EN_ATTENTE_PAIEMENT: 'En attente de paiement',
-  PAYEE: 'Frais payés',
-  VALIDEE: 'Validée',
-  ANNULEE: 'Annulée',
+  PAYE: 'Frais payés',
+  VALIDE: 'Validé',
+  ANNULE: 'Annulé',
 });
 
 export const LIBELLE_TYPE_EVALUATION: Record<string, string> = traduireLibelles('type_evaluation', {
@@ -21,8 +21,8 @@ export const LIBELLE_TYPE_EVALUATION: Record<string, string> = traduireLibelles(
 });
 
 export const LIBELLE_STATUT_EVALUATION: Record<string, string> = traduireLibelles('statut_evaluation', {
-  OUVERTE: 'Ouverte',
-  CLOTUREE: 'Clôturée',
+  OUVERT: 'Ouvert',
+  CLOTURE: 'Clôturé',
 });
 
 export const LIBELLE_SESSION_DELIBERATION: Record<string, string> = traduireLibelles('session_deliberation', {
@@ -32,9 +32,11 @@ export const LIBELLE_SESSION_DELIBERATION: Record<string, string> = traduireLibe
 
 export const LIBELLE_STATUT_DELIBERATION: Record<string, string> = traduireLibelles('statut_deliberation', {
   BROUILLON: 'Brouillon',
-  VALIDEE: 'Validée',
+  // La délibération et l'encadrement partagent désormais le jeton VALIDE :
+  // une seule entrée, la nuance « lecture seule » reste portée par le
+  // namespace `statut_encadrement`.
+  VALIDE: 'Validé',
   PROPOSE: 'Proposé',
-  VALIDE: 'Validé (lecture seule)',
   SOUTENU: 'Soutenu (rattrapage validé)',
   ABANDONNE: 'Abandonné',
 });
@@ -54,8 +56,8 @@ export const LIBELLE_TYPE_ATTESTATION: Record<string, string> = traduireLibelles
 });
 
 export const LIBELLE_STATUT_ATTESTATION: Record<string, string> = traduireLibelles('statut_attestation', {
-  EMISE: 'Émise',
-  REVOQUEE: 'Révoquée',
+  EMIS: 'Émis',
+  REVOQUE: 'Révoqué',
 });
 
 /**
@@ -64,6 +66,6 @@ export const LIBELLE_STATUT_ATTESTATION: Record<string, string> = traduireLibell
  * attestation sont deux gestes métier séparés, qui peuvent diverger demain.
  */
 export const LIBELLE_STATUT_CARTE: Record<StatutCarteEtudiante, string> = traduireLibelles('statut_carte', {
-  EMISE: 'Émise',
-  REVOQUEE: 'Révoquée',
+  EMIS: 'Émis',
+  REVOQUE: 'Révoqué',
 });

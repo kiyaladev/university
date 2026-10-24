@@ -1,7 +1,7 @@
 /** Espace commun — chaînes partagées entre pages. */
 export default {
   app: {
-    name: 'UniPrésence',
+    name: 'University',
   },
   actions: {
     add: 'Ajouter',
@@ -199,6 +199,7 @@ export default {
   },
   search: {
     noResults: 'Aucun résultat',
+    loadError: 'Liste indisponible : le chargement a échoué.',
     advanced: 'Filtres',
     hideAdvanced: 'Masquer les filtres',
     defaultPlaceholder: 'Rechercher (matricule, nom, référence…)',
@@ -209,6 +210,13 @@ export default {
     unexpected: 'Erreur inattendue du serveur (code {statut}).',
     tooManyLogins: 'Trop de tentatives de connexion. Patientez un quart d’heure avant de réessayer.',
     tooManyRequests: 'Trop de requêtes envoyées. Patientez une minute.',
+    sessionExpired: 'Session expirée : reconnectez-vous.',
+  },
+  impression: {
+    nothingToPrint: 'Aucun document à imprimer.',
+    generationFailed: 'Le document n’a pas pu être généré.',
+    generationFailedMany: 'Les documents n’ont pas pu être générés.',
+    exportFailed: 'L’export n’a pas pu être généré.',
   },
   units: {
     hours: '{n} h',
@@ -224,5 +232,8 @@ export default {
   format: {
     quoted: '« {texte} »',
     emptyValue: '—',
+  },
+  champDate: {
+    calendar: 'Ouvrir le calendrier',
   },
 };

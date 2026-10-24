@@ -128,14 +128,11 @@ import { computed, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
-import { api } from '@/boot/axios';
 import ChampDate from '@/shared/components/ChampDate.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
-import type { Etudiant, Promotion } from '@/types';
-
-interface EtudiantAvecInscriptions extends Etudiant {
-  inscriptions?: { promotionId?: string; promotion?: Promotion | null }[];
-}
+import { etudiantsService } from '../services/etudiants';
+import type { EtudiantAvecInscriptions } from '../types';
+import type { Etudiant } from '@/types';
 
 const ouvert = defineModel<boolean>({ required: true });
 const props = defineProps<{ etudiant?: Etudiant | null }>();
@@ -221,8 +218,8 @@ async function enregistrer() {
       payload.motDePasse = form.value.motDePasse || undefined;
       if (form.value.emailCompte) payload.email = form.value.emailCompte;
     }
-    if (props.etudiant) await api.put(`/etudiants/${props.etudiant.id}`, payload);
-    else await api.post('/etudiants', payload);
+    if (props.etudiant) await etudiantsService.modifier(props.etudiant.id, payload);
+    else await etudiantsService.creer(payload);
     $q.notify({ type: 'positive', message: t('etudiants.dialogForm.saved') });
     emit('enregistre');
     ouvert.value = false;

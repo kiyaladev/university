@@ -2,7 +2,7 @@
  * Jeu de données de démonstration : une faculté guinéenne type, son emploi du
  * temps, et six semaines de contrôles déjà effectués.
  *
- *   bun run seed        (ou : npx ts-node prisma/seed.ts)
+ *   bun run seed        (ou : npx ts-node -r tsconfig-paths/register prisma/seed.ts)
  */
 import {
   CandidatElection,
@@ -54,6 +54,8 @@ const heure = (m: number) => `${String(Math.floor(m / 60)).padStart(2, '0')}:${S
 async function main() {
   if (process.env.NODE_ENV === 'production') throw new Error('Le seed de démonstration est interdit en production.');
   console.log('→ Nettoyage…');
+  // L'ordre de suppression suit les règles onDelete du schéma : une table
+  // référencée en RESTRICT doit être vidée avant celle qui la référence.
   // Modules récents : suppression en cascade pour idempotence
   await prisma.vueVOD.deleteMany();
   await prisma.coursVOD.deleteMany();
@@ -86,9 +88,14 @@ async function main() {
   await prisma.seance.deleteMany();
   await prisma.creneau.deleteMany();
   await prisma.affectation.deleteMany();
+  // Evaluation.matiereId est en RESTRICT : les notes et les évaluations
+  // partent avant les matières, sinon la suppression d'une matière évaluée
+  // serait refusée par la base.
+  await prisma.note.deleteMany();
+  await prisma.evaluation.deleteMany();
   await prisma.matiere.deleteMany();
   await prisma.ticketSupport.deleteMany();
-  await prisma.equipementCampus.deleteMany();
+  await prisma.equipementHelpdesk.deleteMany();
   await prisma.recharge.deleteMany();
   await prisma.consommationResto.deleteMany();
   await prisma.portefeuilleResto.deleteMany();
@@ -100,8 +107,6 @@ async function main() {
   await prisma.attestation.deleteMany();
   await prisma.deliberationLigne.deleteMany();
   await prisma.deliberation.deleteMany();
-  await prisma.note.deleteMany();
-  await prisma.evaluation.deleteMany();
   await prisma.paiement.deleteMany();
   await prisma.inscription.deleteMany();
   await prisma.inscriptionFormation.deleteMany();
@@ -109,6 +114,9 @@ async function main() {
   await prisma.soutenance.deleteMany();
   await prisma.travailEncadre.deleteMany();
   await prisma.reservationSalle.deleteMany();
+  // Frais référence une promotion (RESTRICT) : les frais sont vidés avant
+  // les promotions, sinon la suppression des promotions serait refusée.
+  await prisma.frais.deleteMany();
   await prisma.promotion.deleteMany();
   await prisma.filiere.deleteMany();
   await prisma.enseignant.deleteMany();
@@ -417,7 +425,7 @@ async function main() {
           type: c.type,
           salleId: c.salleId,
           thematique: piocher(themes),
-          statut: StatutSeance.PLANIFIEE,
+          statut: StatutSeance.PLANIFIE,
         },
       });
       creees++;
@@ -499,7 +507,7 @@ async function main() {
       await prisma.seance.update({
         where: { id: seance.id },
         data: {
-          statut: present ? StatutSeance.CONTROLEE : StatutSeance.NON_TENUE,
+          statut: present ? StatutSeance.CONTROLE : StatutSeance.NON_TENUE,
         },
       });
       controles++;
@@ -612,7 +620,7 @@ async function main() {
         etudiantId: etudiants[0].id,
         anneeId: annee.id,
         promotionId: promotions[0].id,
-        statut: StatutInscription.VALIDEE,
+        statut: StatutInscription.VALIDE,
         montantFrais: 500000,
         dateInscription: new Date(),
         valideeParId: users[2].id,
@@ -635,7 +643,7 @@ async function main() {
         etudiantId: etudiants[2].id,
         anneeId: annee.id,
         promotionId: promotions[0].id,
-        statut: StatutInscription.PAYEE,
+        statut: StatutInscription.PAYE,
         montantFrais: 500000,
       },
     }),
@@ -877,7 +885,7 @@ async function main() {
   });
   // Scans d'exemple (5 étudiants déjà scannés pour le partiel)
   const inscriptionsL1 = await prisma.inscription.findMany({
-    where: { promotionId: promoL1Info.id, statut: 'VALIDEE' },
+    where: { promotionId: promoL1Info.id, statut: 'VALIDE' },
   });
   for (let i = 0; i < Math.min(5, inscriptionsL1.length); i++) {
     await prisma.scanExamen.create({
@@ -939,7 +947,7 @@ async function main() {
   await Promise.all([
     prisma.recetteExterne.create({
       data: {
-        numero: 'REC-2026-00001',
+        numero: 'RECX-2026-00001',
         type: 'LOCATION_AMPHI',
         libelle: 'Location Amphithéâtre A — Colloque AUF',
         description: 'Colloque sous-régional 2 jours',
@@ -950,7 +958,7 @@ async function main() {
     }),
     prisma.recetteExterne.create({
       data: {
-        numero: 'REC-2026-00002',
+        numero: 'RECX-2026-00002',
         type: 'ANALYSE_LABO',
         libelle: 'Analyse spectrométrique — Échantillon CMDT-2026-008',
         description: 'Spectrométrie IR + UV-Vis',
@@ -962,7 +970,7 @@ async function main() {
     }),
     prisma.recetteExterne.create({
       data: {
-        numero: 'REC-2026-00003',
+        numero: 'RECX-2026-00003',
         type: 'PRESTATION_FORMATION',
         libelle: 'Formation continue Excel avancé — Cohorte 1',
         description: '24h sur 4 jours, 18 participants',
@@ -973,7 +981,7 @@ async function main() {
     }),
     prisma.recetteExterne.create({
       data: {
-        numero: 'REC-2026-00004',
+        numero: 'RECX-2026-00004',
         type: 'PRESTATION_CONSEIL',
         libelle: 'Audit organisationnel — Service pédagogique',
         montant: 450000,
@@ -1003,13 +1011,13 @@ async function main() {
               contenu:
                 'Bonjour, j\u2019ai composé mon CC le 12 mai mais la note n\u2019apparaît pas dans mon bulletin. Merci de vérifier.',
               nomAffichage: 'Sory DOUMBOUYA',
-              creeLe: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000),
+              createdAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000),
             },
             {
               contenu: 'Bonjour, nous vérifions avec l\u2019enseignant et revenons vers vous sous 48h.',
               auteurId: scolariteUser.id,
               nomAffichage: 'Scolarité',
-              creeLe: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+              createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
             },
           ],
         },
@@ -1025,7 +1033,7 @@ async function main() {
         description: 'Ma note de maths affiche 7/20 mais j\u2019ai eu 14/20 à l\u2019examen.',
         etudiantId: etudiants[1].id,
         priorite: 'HAUTE',
-        statut: 'RESOLUE',
+        statut: 'RESOLU',
         assigneAId: scolariteUser.id,
         fermeLe: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
         messages: {
@@ -1047,7 +1055,7 @@ async function main() {
         nomAuteur: 'Étudiant L3 INFO',
         emailAuteur: 'anonyme@ugan.gn',
         priorite: 'URGENTE',
-        statut: 'OUVERTE',
+        statut: 'OUVERT',
         departementId: info.id,
       },
     }),
@@ -1069,7 +1077,7 @@ async function main() {
         motif: 'Dossier de bourse',
         etudiantId: etudiants[0].id,
         frais: 25000,
-        statut: 'PRETE',
+        statut: 'PRET',
         notification: 'Votre attestation est prête au guichet',
         traiteParId: scolariteUser.id,
       },
@@ -1092,7 +1100,7 @@ async function main() {
         motif: 'Carte perdue',
         etudiantId: etudiants[2].id,
         frais: 50000,
-        statut: 'PAYEE',
+        statut: 'PAYE',
       },
     }),
     prisma.demandeDocument.create({
@@ -1117,7 +1125,7 @@ async function main() {
         etudiantId: e.id,
         qrToken: `UP-CARTE-${randomBytes(10).toString('base64url')}`,
         dateValidite: validite,
-        statut: 'EMISE',
+        statut: 'EMIS',
         creeParId: scolariteUser.id,
       },
     });
@@ -1242,7 +1250,7 @@ async function main() {
         anneeId: anneeActive!.id,
         semestre: 1,
         date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-        statut: 'CLOTUREE',
+        statut: 'CLOTURE',
       },
     }),
     prisma.evaluation.create({
@@ -1255,7 +1263,7 @@ async function main() {
         anneeId: anneeActive!.id,
         semestre: 1,
         date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
-        statut: 'CLOTUREE',
+        statut: 'CLOTURE',
       },
     }),
     prisma.evaluation.create({
@@ -1268,7 +1276,7 @@ async function main() {
         anneeId: anneeActive!.id,
         semestre: 1,
         date: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000),
-        statut: 'CLOTUREE',
+        statut: 'CLOTURE',
       },
     }),
     prisma.evaluation.create({
@@ -1281,7 +1289,7 @@ async function main() {
         anneeId: anneeActive!.id,
         semestre: 1,
         date: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000),
-        statut: 'CLOTUREE',
+        statut: 'CLOTURE',
       },
     }),
     prisma.evaluation.create({
@@ -1294,7 +1302,7 @@ async function main() {
         anneeId: anneeActive!.id,
         semestre: 1,
         date: new Date(Date.now() - 28 * 24 * 60 * 60 * 1000),
-        statut: 'CLOTUREE',
+        statut: 'CLOTURE',
       },
     }),
   ]);
@@ -1323,7 +1331,7 @@ async function main() {
       anneeId: anneeActive!.id,
       promotionId: promoL1Info.id,
       session: 'NORMALE',
-      statut: 'VALIDEE',
+      statut: 'VALIDE',
       tauxReussite: 100,
       creeParId: scolariteUser.id,
       valideeParId: adminUser.id,
@@ -1411,7 +1419,7 @@ async function main() {
           anneeId: anneeActive!.id,
           promotionId: promoL1Info.id,
           etudiantId: (await prisma.inscription.findUnique({ where: { id: ligne.inscriptionId } }))!.etudiantId,
-          statut: 'EMISE',
+          statut: 'EMIS',
           emiseParId: scolariteUser.id,
           qrToken: `UP-ATT-${randomBytes(12).toString('base64url')}`,
         },
@@ -1429,14 +1437,14 @@ async function main() {
         annee: 2026,
         dateDebut: dateOnly('2026-08-01'),
         dateFin: dateOnly('2026-08-31'),
-        statut: 'VALIDEE',
+        statut: 'VALIDE',
         creeParId: adminUser.id,
         valideeParId: adminUser.id,
       },
     });
     for (const ens of vacataires) {
       const heures = Math.round((8 + Math.random() * 16) * 10) / 10;
-      const montantNet = heures * ens.tauxHoraire;
+      const montantNet = heures * Number(ens.tauxHoraire);
       await prisma.lignePaie.create({
         data: {
           feuilleId: feuille.id,
@@ -1462,7 +1470,7 @@ async function main() {
       dateOuverture: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
       dateCloture: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       nbSieges: 2,
-      statut: 'OUVERTE',
+      statut: 'OUVERT',
       creeParId: scolariteUser.id,
     },
   });
@@ -1528,7 +1536,7 @@ async function main() {
       dateOuverture: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
       dateCloture: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
       nbSieges: 3,
-      statut: 'PROCLAMEE',
+      statut: 'PROCLAME',
       creeParId: directionUser.id,
     },
   });
@@ -1560,7 +1568,7 @@ async function main() {
   const maintenant = Date.now();
   for (let i = 0; i < 30; i++) {
     const date = new Date(maintenant - i * 24 * 60 * 60 * 1000);
-    const statut: 'ENVOYEE' | 'ECHOUE' = i % 3 === 0 ? 'ECHOUE' : 'ENVOYEE';
+    const statut: 'ENVOYE' | 'ECHOUE' = i % 3 === 0 ? 'ECHOUE' : 'ENVOYE';
     await prisma.notification.create({
       data: {
         telephone: `62200000${i % 10}`,
@@ -1568,7 +1576,7 @@ async function main() {
         destinataireNom: 'Destinataire test',
         etudiantId: etudiants[i % etudiants.length].id,
         statut,
-        envoyeLe: statut === 'ENVOYEE' ? date : null,
+        envoyeLe: statut === 'ENVOYE' ? date : null,
         envoyeParId: adminUser.id,
         createdAt: date,
         ...(statut === 'ECHOUE' ? { erreur: 'Passerelle SMS indisponible' } : {}),
@@ -1680,7 +1688,7 @@ async function main() {
     // Choisit une promotion au hasard
     const promo = piocher(allPromotionsList);
     const frais = 500000 + piocher([0, 25000, 50000, 100000]);
-    const statut = piocher(['VALIDEE', 'VALIDEE', 'VALIDEE', 'PAYEE', 'PAYEE', 'EN_ATTENTE_PAIEMENT']);
+    const statut = piocher(['VALIDE', 'VALIDE', 'VALIDE', 'PAYE', 'PAYE', 'EN_ATTENTE_PAIEMENT']);
     const anneeCible = allAnnee!;
     try {
       await prisma.inscription.create({
@@ -1692,10 +1700,10 @@ async function main() {
           statut: statut as any,
           montantFrais: frais,
           dateInscription:
-            statut === 'VALIDEE'
+            statut === 'VALIDE'
               ? new Date(Date.now() - 60 * 24 * 60 * 60 * 1000)
               : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-          valideeLe: statut === 'VALIDEE' ? new Date(Date.now() - 50 * 24 * 60 * 60 * 1000) : null,
+          valideeLe: statut === 'VALIDE' ? new Date(Date.now() - 50 * 24 * 60 * 60 * 1000) : null,
         },
       });
     } catch {
@@ -1706,7 +1714,7 @@ async function main() {
   // ---------- 3. Beaucoup de paiements ----------
   const allInscriptions = await prisma.inscription.findMany({ include: { etudiant: true } });
   const modesPaiement = ['MOBILE_MONEY', 'MOBILE_MONEY', 'ESPECES', 'VIREMENT'];
-  const operateurs = ['ORANGE_MONEY', 'MTN_MOMO'];
+  const operateurs = ['ORANGE_MONEY', 'MTN_MOMO'] as const;
   for (let i = 0; i < 30; i++) {
     const ins = allInscriptions[i % allInscriptions.length];
     const mode = modesPaiement[i % modesPaiement.length];
@@ -1751,7 +1759,7 @@ async function main() {
             anneeId: allAnnee!.id,
             semestre: 1,
             date: new Date(Date.now() - (i * 30 + 20) * 24 * 60 * 60 * 1000),
-            statut: 'CLOTUREE',
+            statut: 'CLOTURE',
           },
         });
         evalsByPromo.set(promo.id, (evalsByPromo.get(promo.id) ?? 0) + 1);
@@ -1801,7 +1809,7 @@ async function main() {
   const deliberationsCreees: { delib: Deliberation; promo: (typeof allPromotionsList)[number] }[] = [];
   for (const promo of allPromotionsList) {
     for (const session of ['NORMALE', 'RATTRAPAGE']) {
-      const insList = (inscriptionsByPromo.get(promo.id) ?? []).filter((i) => i.statut === 'VALIDEE');
+      const insList = (inscriptionsByPromo.get(promo.id) ?? []).filter((i) => i.statut === 'VALIDE');
       if (insList.length === 0) continue;
       const existante = await prisma.deliberation.findFirst({
         where: { anneeId: allAnnee!.id, promotionId: promo.id, session: session as any },
@@ -1815,7 +1823,7 @@ async function main() {
           anneeId: allAnnee!.id,
           promotionId: promo.id,
           session: session as any,
-          statut: session === 'NORMALE' ? 'VALIDEE' : 'BROUILLON',
+          statut: session === 'NORMALE' ? 'VALIDE' : 'BROUILLON',
           creeParId: scolariteUser.id,
           valideeParId: session === 'NORMALE' ? adminUser.id : null,
           valideeLe: session === 'NORMALE' ? new Date(Date.now() - 10 * 24 * 60 * 60 * 1000) : null,
@@ -1945,7 +1953,7 @@ async function main() {
         anneeId: ins.anneeId,
         promotionId: ins.promotionId,
         etudiantId: ins.etudiantId,
-        statut: 'EMISE',
+        statut: 'EMIS',
         emiseParId: scolariteUser.id,
         qrToken: `UP-ATT-${randomBytes(12).toString('base64url')}`,
       },
@@ -2082,7 +2090,7 @@ async function main() {
   }
 
   // ---------- 12. Helpdesk: +20 tickets ----------
-  const equipementsCampus = await prisma.equipementCampus.findMany();
+  const equipementsHelpdesk = await prisma.equipementHelpdesk.findMany();
   for (let i = 0; i < 20; i++) {
     const categorie = piocher(['VIDEO', 'SON', 'RESEAU', 'ELECTRICITE', 'MOBILIER', 'INFORMATIQUE']);
     const priorite = piocher(['BASSE', 'NORMALE', 'NORMALE', 'HAUTE', 'HAUTE']);
@@ -2091,7 +2099,7 @@ async function main() {
     await prisma.ticketSupport.create({
       data: {
         numero: `TKT-2026-${String(100 + i).padStart(4, '0')}`,
-        equipementId: equipementsCampus.length > 0 ? equipementsCampus[0].id : null,
+        equipementId: equipementsHelpdesk.length > 0 ? equipementsHelpdesk[0].id : null,
         categorie: categorie as any,
         description: `Problème ${categorie.toLowerCase()} signalé pendant un cours`,
         priorite: priorite as any,
@@ -2145,7 +2153,7 @@ async function main() {
           repas: type as any,
           montant: prixRepas[type],
           cantine: 'Restaurant universitaire',
-          statut: 'VALIDEE',
+          statut: 'VALIDE',
           valideurId: validateur.id,
           valideLe: date,
           consommeLe: date,
@@ -2180,16 +2188,16 @@ async function main() {
           chambreId: chambre.id,
           etudiantId: etu.id,
           anneeId: allAnnee!.id,
-          statut: piocher(['EN_ATTENTE', 'ACCORDEE', 'ACCORDEE']) as any,
+          statut: piocher(['EN_ATTENTE', 'ACCORDE', 'ACCORDE']) as any,
           critereScore: Math.floor(Math.random() * 60) + 40,
           accordeeLe: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
           accorderParId: adminUser.id,
         },
       });
       if (i % 4 === 0) {
-        await prisma.chambre.update({ where: { id: chambre.id }, data: { statut: 'OCCUPEE' } });
+        await prisma.chambre.update({ where: { id: chambre.id }, data: { statut: 'OCCUPE' } });
       } else {
-        await prisma.chambre.update({ where: { id: chambre.id }, data: { statut: 'RESERVEE' } });
+        await prisma.chambre.update({ where: { id: chambre.id }, data: { statut: 'RESERVE' } });
       }
     }
   }
@@ -2256,7 +2264,7 @@ async function main() {
         reclamationId: r.id,
         contenu: 'Avez-vous des nouvelles de ma demande ? Cordialement.',
         nomAffichage: r.anonyme ? 'Étudiant' : r.nomAuteur || 'Étudiant',
-        creeLe: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+        createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
       },
     });
   }
@@ -2264,7 +2272,7 @@ async function main() {
   // ---------- 18. Notifications étendues (90 jours) ----------
   for (let i = 0; i < 100; i++) {
     const date = new Date(Date.now() - i * 18 * 60 * 60 * 1000); // tous les 18h
-    const statut = i % 4 === 0 ? 'ECHOUE' : 'ENVOYEE';
+    const statut = i % 4 === 0 ? 'ECHOUE' : 'ENVOYE';
     const etu = piocher(etudiantsAvecTel);
     await prisma.notification.create({
       data: {
@@ -2292,7 +2300,7 @@ async function main() {
       'ATTESTATION_FREQUENTATION',
       'ATTESTATION_REUSSITE',
     ]);
-    const statut = piocher(['EN_ATTENTE_PAIEMENT', 'PAYEE', 'EN_TRAITEMENT', 'PRETE', 'REMISE']);
+    const statut = piocher(['EN_ATTENTE_PAIEMENT', 'PAYE', 'EN_TRAITEMENT', 'PRET', 'REMISE']);
     const frais = type === 'RELEVE_NOTES' ? 35000 : type === 'DUPLICATA_CARTE' ? 50000 : 25000;
     try {
       await prisma.demandeDocument.create({
@@ -2303,7 +2311,7 @@ async function main() {
           etudiantId: etu.id,
           frais,
           statut: statut as any,
-          notification: statut === 'PRETE' ? 'Votre document est prêt au guichet' : null,
+          notification: statut === 'PRET' ? 'Votre document est prêt au guichet' : null,
           traiteParId: statut !== 'EN_ATTENTE_PAIEMENT' ? scolariteUser.id : null,
           remiseLe: statut === 'REMISE' ? new Date(Date.now() - i * 24 * 60 * 60 * 1000) : null,
         },
@@ -2323,7 +2331,7 @@ async function main() {
         dateOuverture: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
         dateCloture: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
         nbSieges: 2,
-        statut: 'OUVERTE',
+        statut: 'OUVERT',
         creeParId: scolariteUser.id,
       },
     });
@@ -2378,7 +2386,7 @@ async function main() {
         dateOuverture: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000),
         dateCloture: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
         nbSieges: 2,
-        statut: 'PROCLAMEE',
+        statut: 'PROCLAME',
         creeParId: directionUser.id,
       },
     });
@@ -2444,14 +2452,14 @@ async function main() {
         dateFin: new Date(Date.now() + 35 * 24 * 60 * 60 * 1000),
         lieu: 'Campus UGAN',
         capacite: places,
-        statut: 'PUBLIEE',
+        statut: 'PUBLIE',
         creeParId: adminUser.id,
       },
     });
     // Inscriptions
     for (let i = 0; i < Math.min(5, places); i++) {
       const etu = piocher(allEtudiants2);
-      const statut = piocher(['EN_ATTENTE_PAIEMENT', 'CONFIRMEE', 'CONFIRMEE']);
+      const statut = piocher(['EN_ATTENTE_PAIEMENT', 'CONFIRME', 'CONFIRME']);
       try {
         await prisma.inscriptionFormation.create({
           data: {
@@ -2545,7 +2553,7 @@ async function main() {
             : 450000;
     await prisma.recetteExterne.create({
       data: {
-        numero: `REC-2026-${String(100 + i).padStart(4, '0')}`,
+        numero: `RECX-2026-${String(100 + i).padStart(5, '0')}`,
         type: type as any,
         libelle: `${type} - ${date.toLocaleDateString('fr-FR')}`,
         montant,
@@ -2567,7 +2575,7 @@ async function main() {
   ];
   for (let i = 0; i < 20; i++) {
     const [type, sujet] = piocher(sujetsReclamation);
-    const status = piocher(['OUVERTE', 'EN_COURS', 'EN_ATTENTE_REPONSE', 'RESOLUE', 'FERMEE']);
+    const status = piocher(['OUVERT', 'EN_COURS', 'EN_ATTENTE_REPONSE', 'RESOLU', 'FERME']);
     const etu = piocher(allEtudiants2);
     await prisma.reclamation.create({
       data: {
@@ -2578,15 +2586,15 @@ async function main() {
         etudiantId: etu.id,
         priorite: piocher(['BASSE', 'NORMALE', 'NORMALE', 'HAUTE', 'URGENTE']) as any,
         statut: status as any,
-        assigneAId: status !== 'OUVERTE' ? scolariteUser.id : null,
+        assigneAId: status !== 'OUVERT' ? scolariteUser.id : null,
         delaiEscaladeHeures: 48,
-        fermeLe: status === 'FERMEE' ? new Date(Date.now() - 2 * 24 * 60 * 60 * 1000) : null,
+        fermeLe: status === 'FERME' ? new Date(Date.now() - 2 * 24 * 60 * 60 * 1000) : null,
         messages: {
           create: [
             {
               contenu: `Bonjour, j'ai un problème: ${sujet.toLowerCase()}.`,
               nomAffichage: `${etu.nom} ${etu.prenom}`,
-              creeLe: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+              createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
             },
           ],
         },

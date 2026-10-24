@@ -72,9 +72,9 @@
 import { ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
-import { api } from '@/boot/axios';
 import ChampDate from '@/shared/components/ChampDate.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
+import { patrimoineService, type CorpsReparation } from '../services/patrimoine';
 import { dateHeureLisible } from '@/shared/utils/libelles';
 import type { EquipementPatrimoine, ReparationMateriel } from '@/types';
 
@@ -105,19 +105,18 @@ watch(ouvert, (o) => {
 
 async function valider() {
   if (!props.equipement) return;
-  const base = `/patrimoine/equipements/${props.equipement.id}/reparation`;
   enregistrement.value = true;
   try {
     if (props.mode === 'declarer') {
-      const payload: Record<string, unknown> = { description: form.value.description.trim() };
+      const payload: CorpsReparation = { description: form.value.description.trim() };
       if (form.value.prestataire.trim()) payload.prestataire = form.value.prestataire.trim();
       if (form.value.cout != null) payload.cout = form.value.cout;
       if (form.value.dateResolution) payload.dateResolution = form.value.dateResolution;
-      await api.post(base, payload);
+      await patrimoineService.declarerReparation(props.equipement.id, payload);
       $q.notify({ type: 'positive', message: t('helpdesk.repairDialog.saved') });
     } else {
       const note = form.value.noteResolution.trim();
-      await api.post(`${base}/resoudre`, note ? { noteResolution: note } : {});
+      await patrimoineService.resoudreReparation(props.equipement.id, note ? { noteResolution: note } : {});
       $q.notify({ type: 'positive', message: t('helpdesk.repairDialog.resolved') });
     }
     ouvert.value = false;

@@ -83,7 +83,9 @@ async function demarrer() {
       await video.value.play();
     }
 
-    const detecteur = new (window as any).BarcodeDetector({ formats: ['qr_code'] });
+    const Constructeur = window.BarcodeDetector;
+    if (!Constructeur) throw new Error('BarcodeDetector indisponible');
+    const detecteur = new Constructeur({ formats: ['qr_code'] });
     boucle = window.setInterval(async () => {
       if (!video.value) return;
       try {

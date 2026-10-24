@@ -1,0 +1,29 @@
+{
+  "date": "2026-10-23T15:34:13.563Z",
+  "statut": "valide",
+  "scope": "Relevé avec deux séances propres, une présence et une séance étrangère exclue",
+  "documents": [
+    {
+      "numero": "RH-2026-09AAEE-68CEEE62",
+      "bytes": 3858,
+      "hashMatches": true,
+      "auditMatches": true
+    },
+    {
+      "numero": "RH-2026-09AAEE-27244536",
+      "bytes": 3858,
+      "hashMatches": true,
+      "auditMatches": true
+    }
+  ],
+  "contentVerified": {
+    "ownTeacherIncluded": true,
+    "otherDepartmentExcluded": true,
+    "planned": 2,
+    "controlled": 1,
+    "hours": 2
+  },
+  "fixturesRestantes": 0,
+  "physicalAndHumanValidationPending": true,
+  "productionUntouched": true
+}

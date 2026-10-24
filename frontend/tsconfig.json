@@ -1,5 +1,9 @@
 {
   "extends": "./.quasar/tsconfig.json",
-  "compilerOptions": {},
+  "compilerOptions": {
+    // Mode strict : `strictNullChecks` et `noImplicitAny` sont activés, ce qui
+    // impose de typer les données issues du réseau et de traiter les `null`.
+    "strict": true
+  },
   "exclude": ["dist", "node_modules", "quasar.config.*.temporary.compiled*"]
 }

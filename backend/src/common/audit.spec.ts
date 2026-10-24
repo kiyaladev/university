@@ -46,6 +46,18 @@ describe('journaliser', () => {
     const { client: c } = client();
     await expect(journaliser(c, user, 'A', 'E', 'e')).resolves.toEqual({ id: 'log-1' });
   });
+
+  it("n'écrit pas ip quand elle est inconnue", async () => {
+    const { create, client: c } = client();
+    await journaliser(c, user, 'ACTION', 'Entite', 'e1', 'Motif');
+    expect('ip' in create.mock.calls[0][0].data).toBe(false);
+  });
+
+  it("écrit l'adresse de l'appelant quand elle est fournie", async () => {
+    const { create, client: c } = client();
+    await journaliser(c, user, 'ACTION', 'Entite', 'e1', 'Motif', '203.0.113.7');
+    expect(create.mock.calls[0][0].data).toMatchObject({ ip: '203.0.113.7' });
+  });
 });
 
 describe('avantApres', () => {

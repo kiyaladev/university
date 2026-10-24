@@ -11,17 +11,14 @@ const javascript = ts
   // Le service est chargé par une URL `data:` : l'alias `@/boot/i18n` du projet
   // n'y est pas résolvable. Ses messages ne portent que des clés de
   // traduction : un stub suffit à faire tourner le service hors application.
-  .replace(
-    /import\s+\{\s*i18n\s*\}\s+from\s+['"]@\/boot\/i18n['"];?/,
-    'const i18n = { global: { t: (cle) => cle } };',
-  );
+  .replace(/import\s+\{\s*i18n\s*\}\s+from\s+['"]@\/boot\/i18n['"];?/, 'const i18n = { global: { t: (cle) => cle } };');
 assert.ok(!javascript.includes('@/boot/i18n'), "l'import i18n doit être neutralisé");
 const moduleBase64 = Buffer.from(javascript).toString('base64');
 const serveur = http.createServer((_req, res) => {
   res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
   res.end('<!doctype html><title>Test coffre hors ligne</title>');
 });
-await new Promise(resolve => serveur.listen(0, '127.0.0.1', resolve));
+await new Promise((resolve) => serveur.listen(0, '127.0.0.1', resolve));
 const adresse = serveur.address();
 const browser = await chromium.launch();
 
@@ -41,10 +38,14 @@ try {
     const stockage = localStorage.getItem(cle);
     const relu = await lireFileChiffree(cle, 'compte-controleur', []);
     let autreCompteRefuse = false;
-    try { await lireFileChiffree(cle, 'autre-compte', []); } catch { autreCompteRefuse = true; }
+    try {
+      await lireFileChiffree(cle, 'autre-compte', []);
+    } catch {
+      autreCompteRefuse = true;
+    }
 
     const db = await new Promise((resolve, reject) => {
-      const demande = indexedDB.open('unipresence-file-crypto-v1', 1);
+      const demande = indexedDB.open('university-file-crypto-v1', 1);
       demande.onsuccess = () => resolve(demande.result);
       demande.onerror = () => reject(demande.error);
     });
@@ -66,7 +67,11 @@ try {
     const alteree = `${stockage.slice(0, -2)}AA`;
     localStorage.setItem(cleAlteree, alteree);
     let alterationRefusee = false;
-    try { await lireFileChiffree(cleAlteree, 'compte-controleur', []); } catch { alterationRefusee = true; }
+    try {
+      await lireFileChiffree(cleAlteree, 'compte-controleur', []);
+    } catch {
+      alterationRefusee = true;
+    }
 
     return {
       prefixe: stockage.startsWith('upf1:'),
@@ -137,5 +142,5 @@ try {
   );
 } finally {
   await browser.close();
-  await new Promise(resolve => serveur.close(resolve));
+  await new Promise((resolve) => serveur.close(resolve));
 }

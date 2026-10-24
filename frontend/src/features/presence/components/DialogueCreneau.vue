@@ -100,6 +100,21 @@
       <template #avatar><q-icon name="warning" /></template>
       {{ erreur }}
     </q-banner>
+
+    <!-- Suppression : elle retire la ligne de l'emploi du temps, d'où la
+         confirmation explicite avant d'envoyer la requête. -->
+    <template #actions>
+      <q-btn
+        v-if="creneau"
+        flat
+        no-caps
+        color="negative"
+        icon="delete"
+        :label="t('common.actions.delete')"
+        :loading="suppression"
+        @click="supprimerCreneau"
+      />
+    </template>
   </dialogue-formulaire>
 </template>
 
@@ -107,11 +122,14 @@
 import { computed, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
-import { api } from '@/boot/axios';
+import { affectationsService, libelleAffectation } from '../services/affectations';
+import { creneauxService } from '../services/creneaux';
 import { TYPES_COURS } from '@/shared/utils/libelles';
 import ChampDate from '@/shared/components/ChampDate.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
+import { useConfirmation } from '@/shared/composables/useConfirmation';
 import type { Affectation, Creneau, Salle } from '@/types';
+import { messageErreurApi } from '@/shared/utils/erreur-http';
 
 const ouvert = defineModel<boolean>({ required: true });
 const props = defineProps<{ creneau?: Creneau | null; salles: Salle[] }>();
@@ -119,7 +137,9 @@ const emit = defineEmits<{ enregistre: [] }>();
 
 const $q = useQuasar();
 const { t } = useI18n();
+const { confirmer } = useConfirmation();
 const enregistrement = ref(false);
+const suppression = ref(false);
 const erreur = ref('');
 const affectations = ref<Affectation[]>([]);
 const optionsAffectations = ref<{ label: string; value: string }[]>([]);
@@ -170,13 +190,12 @@ function viderPeriode() {
 
 const optionsSalles = computed(() => props.salles.map((s) => ({ label: `${s.code} — ${s.nom}`, value: s.id })));
 
-const libelle = (a: Affectation) =>
-  `${a.enseignant?.nom} ${a.enseignant?.prenom} · ${a.matiere?.code} · ${a.promotion?.nom}`;
+const libelle = (a: Affectation) => libelleAffectation(a);
 
 async function filtrer(saisie: string, maj: (fn: () => void) => void) {
   if (!affectations.value.length) {
-    const { data } = await api.get('/affectations', { params: { all: '1' } });
-    affectations.value = data.data;
+    const page = await affectationsService.toutes();
+    affectations.value = page.data;
   }
   maj(() => {
     const q = saisie.toLowerCase();
@@ -214,16 +233,49 @@ async function enregistrer() {
       dateFin: form.value.dateFin || null,
     };
     // Silencieux : le motif (conflit d'emploi du temps…) s'affiche dans le bandeau.
-    if (props.creneau) await api.put(`/creneaux/${props.creneau.id}`, charge, { silencieux: true });
-    else await api.post('/creneaux', charge, { silencieux: true });
+    if (props.creneau) await creneauxService.modifier(props.creneau.id, charge);
+    else await creneauxService.creer(charge);
     $q.notify({ type: 'positive', message: t('emploiDuTemps.slotDialog.saved') });
     emit('enregistre');
     ouvert.value = false;
-  } catch (e: any) {
+  } catch (e: unknown) {
     // Les conflits d'emploi du temps sont renvoyés en 400 par l'API.
-    erreur.value = e.response?.data?.message ?? t('emploiDuTemps.slotDialog.saveFailed');
+    erreur.value = messageErreurApi(e) ?? t('emploiDuTemps.slotDialog.saveFailed');
   } finally {
     enregistrement.value = false;
+  }
+}
+
+/**
+ * Suppression du créneau. Le serveur refuse quand l'année est close : le
+ * motif est alors affiché dans le bandeau, comme pour l'enregistrement.
+ */
+async function supprimerCreneau() {
+  const c = props.creneau;
+  if (!c) return;
+  const ok = await confirmer({
+    titre: t('emploiDuTemps.slotDialog.deleteTitle'),
+    message: t('emploiDuTemps.slotDialog.deleteMessage', {
+      day: t(`common.days.${c.jourSemaine}`).toLowerCase(),
+      start: c.heureDebut,
+      end: c.heureFin,
+    }),
+    ok: t('common.actions.yes_delete'),
+    danger: true,
+  });
+  if (!ok) return;
+
+  suppression.value = true;
+  erreur.value = '';
+  try {
+    await creneauxService.supprimer(c.id);
+    $q.notify({ type: 'positive', message: t('emploiDuTemps.slotDialog.deleted') });
+    emit('enregistre');
+    ouvert.value = false;
+  } catch (e: unknown) {
+    erreur.value = messageErreurApi(e) ?? t('emploiDuTemps.slotDialog.deleteFailed');
+  } finally {
+    suppression.value = false;
   }
 }
 </script>

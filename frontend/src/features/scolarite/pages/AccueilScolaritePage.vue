@@ -43,13 +43,20 @@
 import EnTetePage from '@/shared/components/EnTetePage.vue';
 import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { api } from '@/boot/axios';
+import type { Inscription } from '@/types';
+import { demandesDocumentsService, type TableauBordDemandes } from '../services/documents-demande';
+import { inscriptionsService } from '../services/inscriptions';
 const { t } = useI18n();
 const chargement = ref(false);
 const erreur = ref('');
-const dossiers = ref<any[]>([]);
+const dossiers = ref<Inscription[]>([]);
 const inscriptions = ref<number | null>(null);
-const documents = ref<any>(null);
+const documents = ref<TableauBordDemandes | null>(null);
+/** Documents à traiter : le compteur de l'écran, sans arrondi ni repli. */
+const documentsAPreparer = computed(() => {
+  if (!documents.value) return null;
+  return (documents.value.PAYE ?? Number.NaN) + (documents.value.EN_TRAITEMENT ?? Number.NaN);
+});
 const files = computed(() => [
   {
     title: t('accueilScolarite.readyRegistrations'),
@@ -59,13 +66,13 @@ const files = computed(() => [
   },
   {
     title: t('accueilScolarite.documentsToProcess'),
-    count: documents.value ? documents.value.PAYEE + documents.value.EN_TRAITEMENT : null,
+    count: documentsAPreparer.value,
     icon: 'description',
     to: '/demandes-docs',
   },
   {
     title: t('accueilScolarite.documentsToDeliver'),
-    count: documents.value?.PRETE,
+    count: documents.value?.PRET,
     icon: 'task_alt',
     to: '/demandes-docs',
   },
@@ -74,14 +81,14 @@ async function charger() {
   chargement.value = true;
   erreur.value = '';
   const resultats = await Promise.allSettled([
-    api.get('/inscriptions', { params: { statut: 'PAYEE', pageSize: 8 } }),
-    api.get('/documents-demande/dashboard'),
+    inscriptionsService.liste({ statut: 'PAYE', pageSize: 8 }),
+    demandesDocumentsService.tableauBord(),
   ]);
   if (resultats[0].status === 'fulfilled') {
-    dossiers.value = resultats[0].value.data.data;
-    inscriptions.value = resultats[0].value.data.total;
+    dossiers.value = resultats[0].value.data;
+    inscriptions.value = resultats[0].value.total ?? null;
   }
-  if (resultats[1].status === 'fulfilled') documents.value = resultats[1].value.data;
+  if (resultats[1].status === 'fulfilled') documents.value = resultats[1].value;
   if (resultats.some((resultat) => resultat.status === 'rejected')) erreur.value = t('accueilScolarite.error');
   chargement.value = false;
 }

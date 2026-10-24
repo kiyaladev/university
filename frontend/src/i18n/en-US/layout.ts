@@ -20,6 +20,9 @@ export default {
   offline: 'Offline',
   install: 'Install on this device',
   installHelp: 'Open your rounds from the home screen',
+  installed: '{name} is installed on this device',
+  installDeferred: 'Installation postponed',
+  installDeferredHint: 'You can start it again from this menu.',
   downloadAndroid: 'Download the Android app',
   androidHelp: 'Required for a fingerprint reader connected to the phone',
   changePassword: 'Change my password',
@@ -33,7 +36,7 @@ export default {
   publicNav: {
     services: 'Public services',
     menu: 'Services',
-    footer: 'UniPrésence — university public services',
+    footer: 'University — the university’s public services',
     personalArea: 'Personal area',
     staffLogin: 'Staff sign-in',
     staffLoginHelp: 'University staff',

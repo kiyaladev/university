@@ -237,11 +237,20 @@ const enregistrement = ref(false);
 const justificatifsEnAttente = ref(0);
 const installable = ref(false);
 
+/**
+ * Invite d'installation que le navigateur déclenche (`beforeinstallprompt`).
+ * L'événement n'est pas dans les types du DOM : on en décrit le minimum.
+ */
+interface InviteInstallation {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
+}
+
 // Passer à `true` quand `university.apk` est publié dans /telechargement/
 // (scripts/apk.sh, docs/android.md) : sans fichier, le lien mènerait à une 404.
 const APK_PUBLIE = false;
 const proposerApk = computed(() => APK_PUBLIE && /android/i.test(navigator.userAgent) && !surAndroid());
-let invite: any = null;
+let invite: InviteInstallation | null = null;
 
 const { t } = useI18n();
 const titrePage = computed(() => titreRoute(route.meta.titre));
@@ -355,13 +364,13 @@ async function changerMotDePasse() {
 function preparerInstallation() {
   window.addEventListener('beforeinstallprompt', (e: Event) => {
     e.preventDefault();
-    invite = e as any;
+    invite = e as unknown as InviteInstallation;
     installable.value = true;
   });
   window.addEventListener('appinstalled', () => {
     installable.value = false;
     invite = null;
-    $q.notify({ type: 'positive', message: 'UniPrésence est installée sur cet appareil' });
+    $q.notify({ type: 'positive', message: t('layout.installed', { name: t('common.app.name') }) });
   });
 }
 
@@ -371,8 +380,8 @@ async function installer() {
   const { outcome } = await invite.userChoice;
   if (outcome !== 'accepted') {
     $q.notify({
-      message: 'Installation reportée',
-      caption: 'Vous pourrez la relancer depuis ce menu.',
+      message: t('layout.installDeferred'),
+      caption: t('layout.installDeferredHint'),
       icon: 'info',
     });
   }
@@ -434,7 +443,7 @@ onMounted(async () => {
   font-size: 1.0625rem;
   font-weight: 600;
   letter-spacing: -0.021em;
-  line-height: 1.3; // laisse respirer l'accent de « UniPrésence »
+  line-height: 1.3; // laisse respirer les lettres de « University »
   color: var(--up-craie-fixe);
 }
 

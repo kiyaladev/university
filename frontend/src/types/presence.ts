@@ -12,6 +12,11 @@ import type {
   TypeJustificatif,
 } from './referentiels';
 
+/** Énumérations générées depuis le schéma Prisma (voir `types/generated/enums.ts`). */
+import type { AttestationMode, MethodeVerification } from './generated/enums';
+
+export type { AttestationMode, MethodeVerification } from './generated/enums';
+
 export interface Controle {
   id: string;
   seanceId: string;
@@ -23,7 +28,7 @@ export interface Controle {
   effectifPresent?: number | null;
   thematiqueTraitee?: string | null;
   observation?: string | null;
-  methode: 'MANUEL' | 'QR_SALLE' | 'GEOLOCALISATION' | 'SIGNATURE';
+  methode: MethodeVerification;
   latitude?: number | null;
   longitude?: number | null;
   distanceMetres?: number | null;
@@ -74,8 +79,6 @@ export interface Seance {
   controleurAssigne?: { id: string; nom: string; prenom: string } | null;
   justificatif?: Justificatif | null;
 }
-
-export type AttestationMode = 'AUCUNE' | 'SIGNATURE' | 'CODE_PIN' | 'EMPREINTE';
 
 /** Résultat signé par la passerelle biométrique locale. */
 export interface PreuveEmpreinte {

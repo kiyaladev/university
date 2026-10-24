@@ -1,0 +1,13 @@
+{
+  // Le seed (`prisma/seed.ts`) vit hors de `src/` : il n'était vérifié par
+  // aucun `tsc`, et une erreur de type y passait inaperçue jusqu'au premier
+  // `bun run seed` sur une base de production. Ce tsconfig le vérifie seul,
+  // sans élargir la compilation principale (qui reste sur le dossier `src`).
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "incremental": false
+  },
+  "include": ["prisma/seed.ts"],
+  "exclude": ["node_modules", "dist"]
+}

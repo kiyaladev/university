@@ -21,8 +21,9 @@ env:
 
 jobs:
   verifier:
+    name: Vérifications (types, tests, lint)
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
 
@@ -34,9 +35,11 @@ jobs:
         with:
           bun-version: 1.4.2
 
-      # Les bun.lock (format 3) sont produits par bun 1.4.2. Un `bun install`
-      # lancé avec bun 1.3.x les réécrit en format 1 et aplatit les overrides
-      # imbriqués : ce contrôle le refuse (voir docs/suivi.md).
+      # Les bun.lock sont produits par bun 1.4.2 (format 3 pour le backend et
+      # le frontend, format 2 pour la passerelle biométrique). Un `bun install`
+      # lancé avec bun 1.3.x les réécrit dans un format plus ancien et
+      # aplatit les overrides imbriqués : ce contrôle le refuse (voir
+      # docs/suivi.md).
       - name: Installation backend
         working-directory: backend
         run: bun install --frozen-lockfile
@@ -48,6 +51,12 @@ jobs:
       - name: Prisma generate
         working-directory: backend
         run: bunx prisma generate
+
+      # Le schéma est réparti par domaine dans `backend/prisma/schema/` :
+      # `prisma validate` vérifie l'ensemble des fichiers d'un coup.
+      - name: Validation du schéma Prisma
+        working-directory: backend
+        run: bunx prisma validate
 
       - name: Typecheck backend
         working-directory: backend
@@ -65,13 +74,111 @@ jobs:
         working-directory: frontend
         run: bun run test:unit
 
-      # Non bloquant au début : la dette existante ne produit que des avertissements.
+      # Le lint passe à 0 erreur des deux côtés : il est bloquant.
       - name: Lint backend
         working-directory: backend
-        continue-on-error: true
         run: bun run lint
 
       - name: Lint frontend
         working-directory: frontend
-        continue-on-error: true
         run: bun run lint
+
+      # Le backend et le frontend passent au format Prettier : le contrôle est
+      # bloquant, comme le lint.
+      - name: Format backend
+        working-directory: backend
+        run: bun run format:check
+
+      - name: Format frontend
+        working-directory: frontend
+        run: bun run format:check
+
+      # Les énumérations du frontend sont générées depuis le schéma Prisma :
+      # le fichier versionné doit correspondre au schéma, sinon la CI échoue.
+      - name: Types frontend synchronisés avec le schéma Prisma
+        run: bun run types:verifier
+
+  build:
+    name: Compilations
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+
+      - name: Installation backend
+        working-directory: backend
+        run: bun install --frozen-lockfile
+
+      - name: Installation frontend
+        working-directory: frontend
+        run: bun install --frozen-lockfile
+
+      - name: Prisma generate
+        working-directory: backend
+        run: bunx prisma generate
+
+      - name: Compilation backend
+        working-directory: backend
+        run: bun run build
+
+      # La compilation du frontend sort dans un dossier temporaire : le
+      # dossier servi par nginx n'est jamais touché par une CI.
+      - name: Compilation frontend (dossier temporaire)
+        working-directory: frontend
+        env:
+          QA_BUILD_DIR: /tmp/university-ci-pwa
+        run: bun run build
+
+      - name: Vérification de la sortie du frontend
+        run: test -f /tmp/university-ci-pwa/index.html
+
+  scripts:
+    name: Scripts d'exploitation
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      # Les scripts de sauvegarde sont testés sans PostgreSQL ni SSH :
+      # pg_dump, pg_restore et rsync sont simulés par des doublures.
+      - name: Test des scripts de sauvegarde
+        run: node --test scripts/backup-db.spec.mjs scripts/sauvegarde-hors-serveur.spec.mjs
+
+      - name: Vérification de la syntaxe des scripts shell
+        run: |
+          for script in scripts/*.sh; do bash -n "$script"; done
+
+  biometrie:
+    name: Passerelle biométrique
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+
+      - name: Installation biometrie
+        working-directory: biometrie
+        run: bun install --frozen-lockfile
+
+      - name: Typecheck biometrie
+        working-directory: biometrie
+        run: bun run typecheck

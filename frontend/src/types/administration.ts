@@ -3,12 +3,24 @@
 import type { AnneeAcademique, Matiere, Promotion, Role, Salle } from './referentiels';
 import type { Etudiant, Inscription, Paiement } from './registre';
 
-export type TypeCourrier = 'ENTRANT' | 'SORTANT';
-export type StatutCourrier = 'RECU' | 'ENREGISTRE' | 'EN_CIRCUIT' | 'TRAITE' | 'CLASSE' | 'ARCHIVE';
-export type TypeExamen = 'PARTIEL' | 'FINAL' | 'RATTRAPAGE' | 'CONTROLE_CONTINU';
-export type StatutExamen = 'PLANIFIE' | 'EN_COURS' | 'TERMINE' | 'ANNULE';
-export type StadeTirage = 'PROGRAMME' | 'IMPRIME' | 'MIS_SOUS_PLI' | 'DISTRIBUE' | 'RECUPERE' | 'ANNULE';
-export type TypeRecette = 'ANALYSE_LABO' | 'LOCATION_AMPHI' | 'PRESTATION_FORMATION' | 'PRESTATION_CONSEIL' | 'AUTRE';
+/** Énumérations générées depuis le schéma Prisma (voir `types/generated/enums.ts`). */
+import type {
+  StadeTirage,
+  StatutCourrier,
+  StatutExamen,
+  TypeCourrier,
+  TypeExamen,
+  TypeRecette,
+} from './generated/enums';
+
+export type {
+  StadeTirage,
+  StatutCourrier,
+  StatutExamen,
+  TypeCourrier,
+  TypeExamen,
+  TypeRecette,
+} from './generated/enums';
 
 export interface CircuitCourrier {
   id: string;

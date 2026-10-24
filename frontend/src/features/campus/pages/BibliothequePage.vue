@@ -30,47 +30,14 @@
     <!-- Recherche globale + auto-complétion preview -->
     <div class="row q-col-gutter-md q-mb-md items-start">
       <div class="col-12 col-sm-6">
-        <q-select
-          v-model="rechercheSelectionnee"
-          use-input
-          hide-selected
-          fill-input
-          input-debounce="350"
-          clearable
-          outlined
-          dense
-          :options="suggestions"
-          option-value="id"
-          option-label="titre"
-          emit-value
-          map-options
-          :placeholder="$t('bibliotheque.search.placeholder')"
-          :loading="chargementSuggestions"
-          @filter="rechercherSuggestions"
-          @update:model-value="surSelectionSuggestion"
-          @filter-abort="() => {}"
-        >
-          <template #prepend><q-icon name="search" /></template>
-          <template #no-option>
-            <q-item>
-              <q-item-section class="text-grey">
-                {{ rechercheTexte ? $t('bibliotheque.search.noResults') : $t('bibliotheque.search.typeToSearch') }}
-              </q-item-section>
-            </q-item>
-          </template>
-          <template #option="scope">
-            <q-item v-bind="scope.itemProps">
-              <q-item-section>
-                <q-item-label>{{ scope.opt.titre }}</q-item-label>
-                <q-item-label caption>
-                  <span>{{ LIBELLE_TYPE_DOCUMENT[scope.opt.type] ?? scope.opt.type }}</span>
-                  <span v-if="scope.opt.auteurs"> · {{ scope.opt.auteurs }}</span>
-                  <span v-if="scope.opt.departement?.nom"> · {{ scope.opt.departement.nom }}</span>
-                </q-item-label>
-              </q-item-section>
-            </q-item>
-          </template>
-        </q-select>
+        <bibliotheque-recherche
+          :selection="rechercheSelectionnee"
+          :suggestions="suggestions"
+          :chargement="chargementSuggestions"
+          :texte="rechercheTexte"
+          @update:selection="surSelection"
+          @filtre="rechercherSuggestions"
+        />
       </div>
       <div class="col-12 col-sm-6">
         <q-banner v-if="dernierRecap" dense class="bg-positive text-white q-pa-sm">
@@ -81,45 +48,7 @@
       </div>
     </div>
 
-    <barre-filtres v-model="filtres" :chips="chips" :recherche="false" @reinitialiser="reinitialiser">
-      <template #avances>
-        <q-select
-          v-model="filtres.type"
-          :options="typesDocument"
-          dense
-          outlined
-          clearable
-          emit-value
-          map-options
-          :label="$t('common.fields.type')"
-        />
-        <champ-recherche
-          v-model="filtres.departementId"
-          endpoint="/departements"
-          :label-fn="(d) => `${d.code ? d.code + ' — ' : ''}${d.nom}`"
-          :label="$t('common.fields.department')"
-          :placeholder="$t('bibliotheque.filters.departmentPlaceholder')"
-        />
-        <q-input
-          v-model.number="filtres.anneeEdition"
-          type="number"
-          dense
-          outlined
-          clearable
-          :label="$t('bibliotheque.filters.editionYear')"
-        />
-        <q-select
-          v-model="filtres.public"
-          :options="statutsPublics"
-          dense
-          outlined
-          clearable
-          emit-value
-          map-options
-          :label="$t('bibliotheque.filters.publication')"
-        />
-      </template>
-    </barre-filtres>
+    <bibliotheque-filtres v-model:filtres="filtres" :chips="chips" @reinitialiser="reinitialiser" />
 
     <div v-if="chargement && !documents.length" class="row justify-center q-py-xl">
       <q-spinner color="primary" size="40px" />
@@ -143,286 +72,36 @@
       </template>
     </etat-vide>
 
-    <q-table
+    <bibliotheque-tableau
       v-else-if="mode === 'tableau'"
-      flat
-      bordered
-      class="carte"
-      :rows="documents"
-      :columns="colonnes"
-      row-key="id"
-      :loading="chargement"
-      :rows-per-page-options="[0]"
-      hide-bottom
-    >
-      <template #body-cell-type="p">
-        <q-td :props="p">
-          <q-chip dense outline color="primary" :label="LIBELLE_TYPE_DOCUMENT[p.row.type] ?? p.row.type" />
-        </q-td>
-      </template>
-      <template #body-cell-titre="p">
-        <q-td :props="p">
-          <div class="text-weight-medium">{{ p.row.titre }}</div>
-          <div v-if="p.row.auteurs" class="text-caption text-grey-7">{{ p.row.auteurs }}</div>
-          <div v-if="p.row.motsClefs?.length" class="text-caption text-grey-7 q-mt-xs">
-            <q-icon name="sell" size="13px" class="q-mr-xs" />
-            <span v-for="(m, i) in p.row.motsClefs.slice(0, 4)" :key="m + i">
-              {{ m }}<span v-if="i < Math.min(p.row.motsClefs.length, 4) - 1"> · </span>
-            </span>
-            <span v-if="p.row.motsClefs.length > 4"> +{{ p.row.motsClefs.length - 4 }}</span>
-          </div>
-        </q-td>
-      </template>
-      <template #body-cell-departement="p">
-        <q-td :props="p">{{ p.row.departement?.nom ?? '—' }}</q-td>
-      </template>
-      <template #body-cell-taille="p">
-        <q-td :props="p" class="text-right">
-          <span v-if="p.row.tailleKo">{{
-            $t('common.units.megabytes', { n: (p.row.tailleKo / 1024).toFixed(1) })
-          }}</span>
-          <span v-else>{{ $t('common.format.emptyValue') }}</span>
-        </q-td>
-      </template>
-      <template #body-cell-publie="p">
-        <q-td :props="p">
-          <q-icon
-            :name="p.row.public ? 'visibility' : 'visibility_off'"
-            :color="p.row.public ? 'positive' : 'orange'"
-            size="20px"
-          >
-            <q-tooltip>{{
-              p.row.public ? $t('bibliotheque.status.published') : $t('bibliotheque.status.unpublished')
-            }}</q-tooltip>
-          </q-icon>
-        </q-td>
-      </template>
-      <template #body-cell-plagiat="p">
-        <q-td :props="p">
-          <q-badge
-            v-if="p.row.indicePlagiat !== null && p.row.indicePlagiat !== undefined"
-            :color="couleurPlagiat(p.row.indicePlagiat)"
-            text-color="white"
-            dense
-          >
-            <q-icon :name="iconePlagiat(p.row.indicePlagiat)" size="14px" class="q-mr-xs" />
-            {{ p.row.indicePlagiat }}
-            <q-tooltip v-if="p.row.indicePlagiat > 50" class="bg-negative text-white">
-              {{ $t('bibliotheque.riskHighTooltip') }}
-            </q-tooltip>
-          </q-badge>
-          <span v-else class="text-grey-6 text-caption">{{ $t('common.format.emptyValue') }}</span>
-        </q-td>
-      </template>
-      <template #body-cell-actions="p">
-        <q-td :props="p" class="text-right">
-          <q-btn
-            v-if="p.row.fichier"
-            flat
-            dense
-            round
-            icon="download"
-            :aria-label="$t('bibliotheque.actionsColumn.downloadAria')"
-            @click="telecharger(p.row)"
-          >
-            <q-tooltip>{{ $t('common.actions.download') }}</q-tooltip>
-          </q-btn>
-          <q-btn
-            flat
-            dense
-            round
-            icon="visibility"
-            :aria-label="$t('bibliotheque.actionsColumn.previewAria')"
-            @click="ouvrirApercu(p.row)"
-          >
-            <q-tooltip>{{ $t('bibliotheque.actionsColumn.previewTooltip') }}</q-tooltip>
-          </q-btn>
-          <q-btn
-            v-if="peutGerer"
-            flat
-            dense
-            round
-            icon="edit"
-            :aria-label="$t('bibliotheque.actionsColumn.editAria')"
-            @click="ouvrir(p.row)"
-          >
-            <q-tooltip>{{ $t('common.actions.edit') }}</q-tooltip>
-          </q-btn>
-          <q-btn
-            v-if="peutGerer"
-            flat
-            dense
-            round
-            :icon="p.row.public ? 'visibility_off' : 'visibility'"
-            :color="p.row.public ? 'orange' : 'primary'"
-            :aria-label="
-              p.row.public
-                ? $t('bibliotheque.actionsColumn.unpublishAria')
-                : $t('bibliotheque.actionsColumn.publishAria')
-            "
-            @click="basculerPublic(p.row)"
-          >
-            <q-tooltip>{{ p.row.public ? $t('common.actions.unpublish') : $t('common.actions.publish') }}</q-tooltip>
-          </q-btn>
-          <q-btn
-            v-if="peutVoirPlagiat && (p.row.indicePlagiat ?? 0) > 0"
-            flat
-            dense
-            round
-            icon="policy"
-            :color="couleurPlagiat(p.row.indicePlagiat ?? 0)"
-            :aria-label="$t('bibliotheque.actionsColumn.viewScoreAria')"
-            @click="voirScore(p.row)"
-          >
-            <q-tooltip>{{ $t('bibliotheque.actionsColumn.viewScoreTooltip') }}</q-tooltip>
-          </q-btn>
-          <q-btn
-            v-if="auth.estAdmin"
-            flat
-            dense
-            round
-            color="negative"
-            icon="delete"
-            :aria-label="$t('bibliotheque.actionsColumn.deleteAria')"
-            @click="supprimer(p.row)"
-          >
-            <q-tooltip>{{ $t('common.actions.delete') }}</q-tooltip>
-          </q-btn>
-        </q-td>
-      </template>
-    </q-table>
+      :documents="documents"
+      :colonnes="colonnes"
+      :chargement="chargement"
+      :peut-gerer="peutGerer"
+      :peut-voir-plagiat="peutVoirPlagiat"
+      :est-admin="auth.estAdmin"
+      @telecharger="telecharger"
+      @apercu="ouvrirApercu"
+      @modifier="ouvrir"
+      @basculer="basculerPublic"
+      @score="voirScore"
+      @supprimer="supprimer"
+    />
 
-    <div v-else class="row q-col-gutter-md">
-      <div v-for="doc in documents" :key="doc.id" class="col-12 col-sm-6 col-lg-4">
-        <q-card class="carte carte-document q-pa-md full-height">
-          <div class="row items-start no-wrap">
-            <q-chip
-              dense
-              outline
-              color="primary"
-              class="q-ma-none"
-              :label="LIBELLE_TYPE_DOCUMENT[doc.type] ?? doc.type"
-            />
-            <q-space />
-            <q-icon v-if="!doc.public" name="visibility_off" color="orange" size="20px">
-              <q-tooltip>{{ $t('bibliotheque.card.unpublished') }}</q-tooltip>
-            </q-icon>
-            <q-icon v-if="!doc.fichier" name="description" color="grey" size="20px">
-              <q-tooltip>{{ $t('bibliotheque.card.depositedWithoutFile') }}</q-tooltip>
-            </q-icon>
-          </div>
-
-          <div class="doc-titre q-mt-sm">{{ doc.titre }}</div>
-          <div class="doc-auteurs">{{ doc.auteurs ?? $t('bibliotheque.card.noAuthor') }}</div>
-
-          <div v-if="doc.motsClefs?.length" class="text-caption text-grey-7 q-mt-xs">
-            <q-icon name="sell" size="13px" class="q-mr-xs" />
-            <span v-for="(m, i) in doc.motsClefs.slice(0, 3)" :key="m + i">
-              {{ m }}<span v-if="i < Math.min(doc.motsClefs.length, 3) - 1"> · </span>
-            </span>
-          </div>
-
-          <div v-if="doc.extraitContexte" class="doc-extrait q-mt-sm" v-html="surligner(doc.extraitContexte)" />
-
-          <q-banner v-if="(doc.indicePlagiat ?? 0) > 50" dense class="bg-red-1 text-red-10 q-mt-sm q-pa-sm">
-            <template #avatar><q-icon name="policy" color="negative" /></template>
-            <div class="text-caption text-weight-medium">
-              {{ $t('bibliotheque.card.plagiarismRisk', { score: doc.indicePlagiat }) }}
-            </div>
-          </q-banner>
-
-          <q-separator class="q-mt-sm q-mb-sm" />
-          <div class="row items-center text-caption text-grey-7">
-            <div class="col">
-              <div>{{ doc.departement?.nom ?? '—' }}</div>
-              <div>
-                {{ $t('bibliotheque.card.year', { year: anneeDocument(doc) }) }}
-                <template v-if="doc.tailleKo"
-                  >· {{ $t('common.units.megabytes', { n: (doc.tailleKo / 1024).toFixed(1) }) }}</template
-                >
-              </div>
-            </div>
-            <div class="col-auto" :title="$t('bibliotheque.card.downloads', { count: doc.telechargements })">
-              <q-icon name="download" size="16px" class="q-mr-xs" />{{ doc.telechargements }}
-            </div>
-          </div>
-
-          <div class="row q-mt-sm q-col-gutter-xs justify-end">
-            <q-btn
-              v-if="doc.fichier"
-              flat
-              dense
-              outline
-              color="primary"
-              icon="download"
-              :label="$t('common.actions.download')"
-              no-caps
-              @click="telecharger(doc)"
-            />
-            <q-btn
-              flat
-              dense
-              outline
-              icon="visibility"
-              :label="$t('bibliotheque.actionsColumn.preview')"
-              no-caps
-              @click="ouvrirApercu(doc)"
-            />
-            <q-btn
-              v-if="peutGerer"
-              flat
-              dense
-              round
-              icon="edit"
-              :aria-label="$t('bibliotheque.actionsColumn.editAria')"
-              @click="ouvrir(doc)"
-            >
-              <q-tooltip>{{ $t('common.actions.edit') }}</q-tooltip>
-            </q-btn>
-            <q-btn
-              v-if="peutGerer"
-              flat
-              dense
-              round
-              :icon="doc.public ? 'visibility_off' : 'visibility'"
-              :color="doc.public ? 'orange' : 'primary'"
-              :aria-label="
-                doc.public
-                  ? $t('bibliotheque.actionsColumn.unpublishAria')
-                  : $t('bibliotheque.actionsColumn.publishAria')
-              "
-              @click="basculerPublic(doc)"
-            >
-              <q-tooltip>{{ doc.public ? $t('common.actions.unpublish') : $t('common.actions.publish') }}</q-tooltip>
-            </q-btn>
-            <q-btn
-              v-if="peutVoirPlagiat && (doc.indicePlagiat ?? 0) > 0"
-              flat
-              dense
-              round
-              icon="policy"
-              :color="couleurPlagiat(doc.indicePlagiat ?? 0)"
-              :aria-label="$t('bibliotheque.actionsColumn.viewScoreAria')"
-              @click="voirScore(doc)"
-            >
-              <q-tooltip>{{ $t('bibliotheque.actionsColumn.viewScoreTooltip') }}</q-tooltip>
-            </q-btn>
-            <q-btn
-              v-if="auth.estAdmin"
-              flat
-              dense
-              round
-              color="negative"
-              icon="delete"
-              :aria-label="$t('bibliotheque.actionsColumn.deleteAria')"
-              @click="supprimer(doc)"
-            >
-              <q-tooltip>{{ $t('common.actions.delete') }}</q-tooltip>
-            </q-btn>
-          </div>
-        </q-card>
-      </div>
-    </div>
+    <bibliotheque-cartes
+      v-else
+      :documents="documents"
+      :terme="rechercheTexte"
+      :peut-gerer="peutGerer"
+      :peut-voir-plagiat="peutVoirPlagiat"
+      :est-admin="auth.estAdmin"
+      @telecharger="telecharger"
+      @apercu="ouvrirApercu"
+      @modifier="ouvrir"
+      @basculer="basculerPublic"
+      @score="voirScore"
+      @supprimer="supprimer"
+    />
 
     <barre-pagination
       v-if="documents.length"
@@ -435,28 +114,13 @@
     <dialogue-document v-model="dialogOuvert" :document="documentEdite" @enregistre="premierePage" />
 
     <!-- Dialog : aperçu du contenu extrait -->
-    <q-dialog v-model="apercuOuvert" maximized>
-      <q-card>
-        <q-card-section class="row items-center q-pb-none">
-          <div class="col">
-            <div class="text-h6">{{ $t('bibliotheque.preview.title') }}</div>
-            <div class="text-caption text-grey-7">{{ apercuDoc?.titre }}</div>
-          </div>
-          <q-btn flat round dense icon="close" :aria-label="$t('common.actions.close')" v-close-popup />
-        </q-card-section>
-        <q-separator class="q-my-sm" />
-        <q-card-section class="apercu-contenu">
-          <div v-if="apercuChargement" class="row justify-center q-py-xl">
-            <q-spinner color="primary" size="36px" />
-          </div>
-          <div v-else-if="!apercuTexte" class="text-center text-grey-7 q-py-xl">
-            <q-icon name="description" size="38px" color="grey-5" />
-            <div class="q-mt-sm">{{ $t('bibliotheque.preview.empty') }}</div>
-          </div>
-          <pre v-else class="apercu-texte" v-html="surligner(apercuTexte)" />
-        </q-card-section>
-      </q-card>
-    </q-dialog>
+    <bibliotheque-apercu
+      v-model="apercuOuvert"
+      :apercu="apercuDoc"
+      :texte="apercuTexte"
+      :chargement="apercuChargement"
+      :terme="rechercheTexte"
+    />
   </q-page>
 </template>
 
@@ -471,13 +135,16 @@ import { useI18n } from 'vue-i18n';
 import { bibliothequeService, normaliserDocuments } from '@/shared/services/bibliotheque';
 import EnTetePage from '@/shared/components/EnTetePage.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
-import DialogueDocument from '../components/DialogueDocument.vue';
-import BarreFiltres from '@/shared/components/BarreFiltres.vue';
 import BarrePagination from '@/shared/components/BarrePagination.vue';
-import ChampRecherche from '@/shared/components/ChampRecherche.vue';
+import DialogueDocument from '../components/DialogueDocument.vue';
+import BibliothequeRecherche from '../components/BibliothequeRecherche.vue';
+import BibliothequeFiltres from '../components/BibliothequeFiltres.vue';
+import BibliothequeTableau from '../components/BibliothequeTableau.vue';
+import BibliothequeCartes from '../components/BibliothequeCartes.vue';
+import BibliothequeApercu from '../components/BibliothequeApercu.vue';
 import { useAuthStore } from '@/stores/auth';
 import { LIBELLE_TYPE_DOCUMENT } from '@/shared/utils/libelles';
-import type { DocumentDepot, ChipFiltre } from '@/types';
+import type { DocumentDepot, ChipFiltre, FiltresPage } from '@/types';
 
 const $q = useQuasar();
 const auth = useAuthStore();
@@ -489,9 +156,9 @@ const rechercheSelectionnee = ref<string | null>(null);
 const rechercheTexte = ref('');
 const suggestions = ref<DocumentDepot[]>([]);
 const chargementSuggestions = ref(false);
-let timerSuggestions: any = null;
+let timerSuggestions: ReturnType<typeof setTimeout> | null = null;
 
-const filtres = ref<Record<string, any>>({
+const filtres = ref<FiltresPage>({
   type: '',
   departementId: '',
   anneeEdition: null,
@@ -552,12 +219,6 @@ const peutGerer = computed(() => peutDeposer.value);
 /** Le tableau de bord anti-plagiat est réservé à l'admin et à la direction. */
 const peutVoirPlagiat = computed(() => auth.peut('plagiat.decider'));
 
-const typesDocument = Object.entries(LIBELLE_TYPE_DOCUMENT).map(([value, label]) => ({ value, label }));
-const statutsPublics = computed(() => [
-  { value: '1', label: t('bibliotheque.filters.published') },
-  { value: '0', label: t('bibliotheque.filters.unpublished') },
-]);
-
 /** Chips des filtres actifs : sans elles, BarreFiltres masque « Réinitialiser ». */
 const chips = computed(() => {
   const f = filtres.value;
@@ -607,31 +268,6 @@ const colonnes = computed<QTableColumn[]>(() => [
   { name: 'actions', label: '', field: 'id', align: 'right' },
 ]);
 
-function anneeDocument(doc: DocumentDepot): number {
-  return doc.anneeEdition ?? new Date(doc.createdAt).getFullYear();
-}
-
-function couleurPlagiat(score: number): string {
-  if (score >= 80) return 'negative';
-  if (score >= 50) return 'warning';
-  return 'positive';
-}
-
-function iconePlagiat(score: number): string {
-  if (score >= 80) return 'report';
-  if (score >= 50) return 'warning';
-  return 'verified';
-}
-
-function surligner(texte: string): string {
-  const echappe = texte.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  // `rechercheSelectionnee` est un identifiant de document, pas un terme.
-  const terme = rechercheTexte.value.trim();
-  if (!terme) return echappe;
-  const motif = terme.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  return echappe.replace(new RegExp(`(${motif})`, 'gi'), '<mark>$1</mark>');
-}
-
 function chargerTout() {
   pageSize.value = Math.max(total.value, 200) || 200;
 }
@@ -662,6 +298,11 @@ async function rechercherSuggestions(terme: string, miseAJour: (cb: () => void) 
       chargementSuggestions.value = false;
     }
   }, 350);
+}
+
+function surSelection(id: string | null) {
+  rechercheSelectionnee.value = id;
+  surSelectionSuggestion(id);
 }
 
 function surSelectionSuggestion(id: string | null) {
@@ -780,58 +421,3 @@ async function lancerRecalcul() {
   }
 }
 </script>
-
-<style scoped>
-.carte-document {
-  display: flex;
-  flex-direction: column;
-}
-.doc-titre {
-  font-weight: 800;
-  font-size: 1.05rem;
-  line-height: 1.3;
-  color: var(--up-encre);
-}
-.doc-auteurs {
-  font-size: 0.85rem;
-  color: var(--up-encre-douce);
-}
-/* Un extrait cité est une plaque cernée, pas une carte à bandeau latéral :
-   le monde « panneau peint » trace des filets entiers. */
-.doc-extrait {
-  font-size: 0.83rem;
-  line-height: 1.4;
-  color: var(--up-encre-douce);
-  background: var(--up-craie);
-  padding: var(--up-2);
-  border: var(--up-filet-fin);
-  white-space: pre-wrap;
-}
-/* Le surlignage se pose en jaune très dilué. Ce bloc est du CSS simple : la
-   variable Sass `$jaune` qui s'y trouvait n'y était jamais résolue, et le
-   surlignage n'avait donc aucun fond. */
-.doc-extrait :deep(mark) {
-  background: #fff6c2;
-  padding: 0 2px;
-  border-radius: 2px;
-  color: var(--up-encre);
-  font-weight: 600;
-}
-.apercu-contenu {
-  max-height: calc(100vh - 80px);
-  overflow: auto;
-}
-.apercu-texte {
-  font-family: monospace;
-  white-space: pre-wrap;
-  word-break: break-word;
-  margin: 0;
-}
-.apercu-texte :deep(mark) {
-  background: #fff6c2;
-  padding: 0 2px;
-  border-radius: 2px;
-  color: var(--up-encre);
-  font-weight: 600;
-}
-</style>

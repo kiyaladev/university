@@ -1,0 +1,24 @@
+{
+  "date": "2026-10-23T12:54:55.726Z",
+  "passed": true,
+  "courseDepartmentScopeDespiteTeachersHomeDepartment": true,
+  "headAndTeacherPiecesOmittedIncludingDeposit": true,
+  "administrativeDetailKeepsPiece": true,
+  "otherDepartmentsAndUnassignedHeadRejected": true,
+  "depositAndDecisionRolesChecked": true,
+  "finalDecisionAndEvidenceRetained": true,
+  "validatedAbsenceExcusedRejectedAbsenceUnchanged": true,
+  "concurrentDecisionStatuses": [
+    409,
+    409,
+    200,
+    409
+  ],
+  "singleDecisionAuditAndConsistentControl": true,
+  "pendingDeletion": true,
+  "closedYearMutationsRejected": true,
+  "auditWithoutMedicalText": true,
+  "fixtureSessionsSource": "AuthService.login avec mots de passe QA vérifiés et /auth/me",
+  "httpLoginRouteQualified": false,
+  "productionUntouched": true
+}

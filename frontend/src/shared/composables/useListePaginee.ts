@@ -1,5 +1,6 @@
 import { computed, getCurrentInstance, onMounted, onScopeDispose, ref, watch, type Ref } from 'vue';
 import { useRoute, useRouter, type LocationQuery } from 'vue-router';
+import type { FiltresPage } from '@/types';
 
 /**
  * Liste filtrée et paginée : un seul endroit pour l'état (lignes, total, page,
@@ -98,7 +99,7 @@ function normaliser(f: object): Record<string, string> {
   return n;
 }
 
-export function useListePaginee<T, F extends object = Record<string, any>>(options: OptionsListe<T, F>) {
+export function useListePaginee<T, F extends object = FiltresPage>(options: OptionsListe<T, F>) {
   const route = useRoute();
   const router = useRouter();
   const prefixe = options.prefixeUrl ?? '';

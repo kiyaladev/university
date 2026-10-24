@@ -17,8 +17,9 @@ assert.equal(session.api, 'http://127.0.0.1:15041/api');
 assert.equal(session.database, url.pathname);
 const db = new PrismaClient({ datasources: { db: { url: env.DATABASE_URL } } });
 Object.assign(process.env, env);
-const { AuthService } = require('../dist/modules/auth/auth.service');
+const { AuthService } = require('../dist/modules/socle/auth/auth.service');
 const { optionsJwt } = require('../dist/common/jwt-config.module');
+const { ecrirePreuve } = require('./preuves.cjs');
 const auth = new AuthService(db, new JwtService(optionsJwt({ get: (k) => env[k] })));
 const tag = 'QA-RATTRAPAGE-' + randomUUID();
 const ids = { etudiant: [], inscription: [], evaluation: [], deliberation: [] };
@@ -81,7 +82,7 @@ async function main() {
     });
     ids.etudiant.push(e.id);
     const inscription = await db.inscription.create({
-      data: { numero: tag + '-' + i, etudiantId: e.id, promotionId: promotion.id, anneeId: year.id, statut: 'VALIDEE' },
+      data: { numero: tag + '-' + i, etudiantId: e.id, promotionId: promotion.id, anneeId: year.id, statut: 'VALIDE' },
     });
     ids.inscription.push(inscription.id);
   }
@@ -228,7 +229,7 @@ async function main() {
     httpLoginRouteQualified: false,
     productionUntouched: true,
   };
-  fs.writeFileSync('../audit/recommandations-2026-10-06/rattrapage.json', JSON.stringify(proof, null, 2));
+  ecrirePreuve('rattrapage.json', proof);
   console.log(JSON.stringify(proof));
 }
 main()
@@ -238,6 +239,9 @@ main()
   })
   .finally(async () => {
     if (promotion) {
+      // Les notes référencent leur évaluation ET leur inscription
+      // (Restrict) : elles doivent partir avant les deux.
+      await db.note.deleteMany({ where: { inscriptionId: { in: ids.inscription } } });
       await db.deliberation.deleteMany({ where: { promotionId: promotion.id } });
       await db.evaluation.deleteMany({ where: { promotionId: promotion.id } });
     }

@@ -1,13 +1,13 @@
 <template>
   <span class="champ champ-statut" :class="[`champ--${classe}`, dense && 'champ-statut--dense']">
     <q-icon v-if="!dense" :name="ICONE_STATUT_PRESENCE[statut] ?? 'help_outline'" size="16px" />
-    <span class="pochoir">{{ LIBELLE_STATUT_PRESENCE[statut] ?? statut }}</span>
+    <span class="pochoir">{{ libelleDepuis(LIBELLE_STATUT_PRESENCE, statut) }}</span>
   </span>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import { ICONE_STATUT_PRESENCE, LIBELLE_STATUT_PRESENCE } from '@/shared/utils/libelles';
+import { ICONE_STATUT_PRESENCE, LIBELLE_STATUT_PRESENCE, libelleDepuis } from '@/shared/utils/libelles';
 import { CLASSE_CHAMP_PRESENCE } from '@/shared/utils/statuts';
 import type { StatutPresence } from '@/types';
 

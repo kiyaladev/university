@@ -9,7 +9,11 @@ const database = new URL(env.DATABASE_URL);
 assert.equal(database.pathname, '/university_recommandations_20261006');
 assert.ok(['localhost', '127.0.0.1'].includes(database.hostname));
 const prisma = new PrismaClient({ datasources: { db: { url: env.DATABASE_URL } } });
-const root = path.resolve(__dirname, '../../audit/recommandations-2026-10-06');
+// Les preuves vérifiées sont celles du 6 octobre : elles sont versionnées et
+// citées par les documents figés, elles se lisent donc à leur date. Le rapport
+// de ce passage, lui, est une preuve nouvelle : il s'écrit à la date du jour.
+const root = path.resolve(__dirname, '../../docs/audits/preuves/2026-10-06');
+const { ecrirePreuve } = require('./preuves.cjs');
 const report = {
   date: new Date().toISOString(),
   scope: 'Fixtures et preuves des recettes récentes du journal uniquement',
@@ -26,7 +30,7 @@ const report = {
       ['coursVOD', { titre: prefix }],
       ['courrier', { objet: prefix }],
       ['ticketSupport', { description: prefix }],
-      ['equipementCampus', { libelle: prefix }],
+      ['equipementHelpdesk', { libelle: prefix }],
       ['election', { titre: prefix }],
       ['reservationSalle', { motif: prefix }],
       ['reparationMateriel', { description: prefix }],
@@ -59,7 +63,7 @@ const report = {
     report.erreur = error.message;
     process.exitCode = 1;
   } finally {
-    fs.writeFileSync(path.join(root, 'journal-nettoyage-qa.json'), JSON.stringify(report, null, 2) + '\n');
+    ecrirePreuve('journal-nettoyage-qa.json', report);
     await prisma.$disconnect();
     console.log(
       JSON.stringify({

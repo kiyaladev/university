@@ -11,7 +11,7 @@ const browser = await chromium.launch();
 try {
   const page = await browser.newPage({ locale: 'fr-FR' });
   const errors = [];
-  page.on('pageerror', error => errors.push(error.message));
+  page.on('pageerror', (error) => errors.push(error.message));
   await page.goto(base + '/#/connexion', { waitUntil: 'networkidle' });
   const body = await page.locator('body').innerText();
   assert.match(body, /Connexion/);

@@ -1,6 +1,5 @@
 {
   "compte_non_rattache_a_une_fiche_etudiante": "Account is not linked to a student record",
-  "etudiant_introuvable": "Student not found",
   "portefeuille_introuvable": "Wallet not found",
   "recharge_introuvable": "Top-up not found",
   "cette_recharge_est_deja_encaissee_impossible_de_la_faire_ech": "This top-up is already collected and cannot be marked as failed",

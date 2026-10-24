@@ -70,242 +70,40 @@
       </template>
     </barre-filtres>
 
-    <q-table
+    <evaluations-tableau
       v-if="modeVue === 'tableau'"
-      flat
-      bordered
-      class="carte"
-      :rows="ev.lignes"
-      :columns="colonnes"
-      row-key="id"
-      :loading="ev.chargement"
-      :pagination="{ rowsPerPage: 0 }"
-    >
-      <template #no-data>
-        <etat-vide icone="fact_check" :titre="messageVide">
-          <template #action>
-            <q-btn
-              v-if="filtresActifs"
-              outline
-              no-caps
-              icon="refresh"
-              :label="$t('common.actions.reset_filters')"
-              @click="reinitialiser"
-            />
-            <q-btn
-              v-if="peutGererEvaluation() && !filtresActifs"
-              unelevated
-              color="primary"
-              no-caps
-              icon="add"
-              :label="$t('evaluations.actions.new')"
-              @click="ouvrir(null)"
-            />
-          </template>
-        </etat-vide>
-      </template>
-
-      <template #body-cell-type="p">
-        <q-td :props="p">{{ LIBELLE_TYPE_EVALUATION[p.row.type] }}</q-td>
-      </template>
-
-      <template #body-cell-statut="p">
-        <q-td :props="p">
-          <PastilleStatut domaine="evaluation" :statut="p.row.statut" />
-        </q-td>
-      </template>
-
-      <template #body-cell-notes="p">
-        <q-td :props="p">
-          <q-badge outline color="primary" :label="libelleNotes(p.row)" />
-        </q-td>
-      </template>
-
-      <template #body-cell-date="p">
-        <q-td :props="p">{{ dateLisible(p.row.date) }}</q-td>
-      </template>
-
-      <template #body-cell-actions="p">
-        <q-td :props="p" class="text-right">
-          <q-btn
-            v-if="p.row.statut !== 'OUVERTE' || !peutSaisirNotes()"
-            flat
-            dense
-            no-caps
-            icon="visibility"
-            :aria-label="$t('evaluations.table.view_notes_aria')"
-            :label="$t('evaluations.table.view_notes_aria')"
-            @click="voirNotes(p.row)"
-          >
-            <q-tooltip>{{ $t('evaluations.table.view_notes') }}</q-tooltip>
-          </q-btn>
-          <q-btn
-            v-if="p.row.statut === 'OUVERTE' && peutSaisirNotes()"
-            flat
-            dense
-            no-caps
-            icon="edit_note"
-            color="primary"
-            :aria-label="$t('evaluations.table.enter_notes_aria')"
-            :label="$t('evaluations.table.enter_notes_aria')"
-            @click="saisirNotes(p.row)"
-          >
-            <q-tooltip>{{ $t('evaluations.table.enter_notes') }}</q-tooltip>
-          </q-btn>
-          <actions-secondaires>
-            <q-btn
-              v-close-popup
-              v-if="p.row.statut === 'OUVERTE' && peutGererEvaluation()"
-              flat
-              dense
-              no-caps
-              icon="lock"
-              :aria-label="$t('evaluations.table.close_evaluation_aria')"
-              :label="$t('evaluations.table.close_evaluation_aria')"
-              @click="cloturer(p.row)"
-            >
-              <q-tooltip>{{ $t('evaluations.table.close_evaluation') }}</q-tooltip>
-            </q-btn>
-            <q-btn
-              v-close-popup
-              v-if="p.row.statut === 'OUVERTE' && peutGererEvaluation()"
-              flat
-              dense
-              no-caps
-              icon="edit"
-              :aria-label="$t('evaluations.table.edit_evaluation_aria')"
-              :label="$t('evaluations.table.edit_evaluation_aria')"
-              @click="ouvrir(p.row)"
-            >
-              <q-tooltip>{{ $t('evaluations.table.edit_evaluation') }}</q-tooltip>
-            </q-btn>
-            <q-btn
-              v-close-popup
-              v-if="peutGererEvaluation()"
-              flat
-              dense
-              no-caps
-              color="negative"
-              icon="delete"
-              :aria-label="$t('evaluations.table.delete_aria')"
-              :label="$t('evaluations.table.delete_aria')"
-              :disable="nombreNotes(p.row) > 0"
-              @click="supprimer(p.row)"
-            >
-              <q-tooltip>
-                {{ nombreNotes(p.row) > 0 ? $t('evaluations.table.delete_locked') : $t('common.actions.delete') }}
-              </q-tooltip>
-            </q-btn>
-          </actions-secondaires>
-        </q-td>
-      </template>
-    </q-table>
+      :lignes="ev.lignes"
+      :chargement="ev.chargement"
+      :message-vide="messageVide"
+      :filtres-actifs="filtresActifs"
+      :peut-gerer="peutGererEvaluation()"
+      :peut-saisir="peutSaisirNotes()"
+      @voir-notes="voirNotes"
+      @saisir-notes="saisirNotes"
+      @cloturer="cloturer"
+      @modifier="ouvrir"
+      @supprimer="supprimer"
+      @creer="ouvrir(null)"
+      @reinitialiser="reinitialiser"
+    />
 
     <q-linear-progress v-if="modeVue === 'cartes' && ev.chargement" indeterminate color="primary" class="q-mb-sm" />
 
-    <div v-else-if="modeVue === 'cartes'" class="evaluations-cartes">
-      <q-card v-for="e in ev.lignes" :key="e.id" flat bordered class="carte evaluations-cartes__carte">
-        <q-card-section>
-          <div class="row items-center q-mb-xs">
-            <PastilleStatut domaine="evaluation" :statut="e.statut" />
-            <q-badge outline color="primary" class="q-ml-sm">
-              {{ LIBELLE_TYPE_EVALUATION[e.type] }}
-            </q-badge>
-            <q-badge outline color="grey-7" class="q-ml-sm">
-              {{ $t('evaluations.cards.coefficient', { n: e.coefficient }) }}
-            </q-badge>
-            <q-space />
-            <div class="text-caption text-grey-7">
-              {{ dateLisible(e.date) }} · {{ $t('evaluations.cards.semester', { n: e.semestre }) }}
-            </div>
-          </div>
-          <div class="text-subtitle1 text-weight-medium">{{ e.intitule }}</div>
-          <div class="text-caption text-grey-7">
-            {{ e.matiere?.intitule }} {{ $t('common.format.emptyValue') }} {{ e.promotion?.nom }}
-          </div>
-          <div class="q-mt-sm">
-            <q-badge outline color="primary" :label="libelleNotes(e)" />
-          </div>
-        </q-card-section>
-        <q-separator />
-        <q-card-actions align="right" class="q-gutter-xs">
-          <q-btn
-            v-if="e.statut !== 'OUVERTE' || !peutSaisirNotes()"
-            flat
-            dense
-            icon="visibility"
-            no-caps
-            :label="$t('evaluations.cards.notes_view')"
-            @click="voirNotes(e)"
-          />
-          <q-btn
-            v-if="e.statut === 'OUVERTE' && peutSaisirNotes()"
-            flat
-            dense
-            color="primary"
-            icon="edit_note"
-            no-caps
-            :label="$t('evaluations.cards.notes_enter')"
-            @click="saisirNotes(e)"
-          />
-          <actions-secondaires>
-            <q-btn
-              v-close-popup
-              v-if="e.statut === 'OUVERTE' && peutGererEvaluation()"
-              flat
-              dense
-              icon="edit"
-              no-caps
-              :label="$t('common.actions.edit')"
-              @click="ouvrir(e)"
-            />
-            <q-btn
-              v-close-popup
-              v-if="e.statut === 'OUVERTE' && peutGererEvaluation()"
-              flat
-              dense
-              icon="lock"
-              no-caps
-              :label="$t('common.actions.closeOut')"
-              @click="cloturer(e)"
-            />
-            <q-btn
-              v-close-popup
-              v-if="peutGererEvaluation()"
-              flat
-              dense
-              color="negative"
-              icon="delete"
-              no-caps
-              :label="$t('common.actions.delete')"
-              :disable="nombreNotes(e) > 0"
-              @click="supprimer(e)"
-            />
-          </actions-secondaires>
-        </q-card-actions>
-      </q-card>
-      <etat-vide v-if="!ev.lignes.length" icone="fact_check" :titre="messageVide">
-        <template #action>
-          <q-btn
-            v-if="filtresActifs"
-            outline
-            no-caps
-            icon="refresh"
-            :label="$t('common.actions.reset_filters')"
-            @click="reinitialiser"
-          />
-          <q-btn
-            v-if="peutGererEvaluation() && !filtresActifs"
-            unelevated
-            color="primary"
-            no-caps
-            icon="add"
-            :label="$t('evaluations.actions.new')"
-            @click="ouvrir(null)"
-          />
-        </template>
-      </etat-vide>
-    </div>
+    <evaluations-cartes-panel
+      v-else-if="modeVue === 'cartes'"
+      :lignes="ev.lignes"
+      :message-vide="messageVide"
+      :filtres-actifs="filtresActifs"
+      :peut-gerer="peutGererEvaluation()"
+      :peut-saisir="peutSaisirNotes()"
+      @voir-notes="voirNotes"
+      @saisir-notes="saisirNotes"
+      @cloturer="cloturer"
+      @modifier="ouvrir"
+      @supprimer="supprimer"
+      @creer="ouvrir(null)"
+      @reinitialiser="reinitialiser"
+    />
 
     <barre-pagination
       v-if="ev.lignes.length"
@@ -324,104 +122,38 @@
       @enregistre="ev.recharger()"
     />
 
-    <!-- Modale « Voir les notes » -->
-    <q-dialog v-model="dialogNotes" :maximized="$q.screen.lt.md">
-      <q-card style="width: 900px; max-width: 95vw">
-        <q-card-section class="row items-center">
-          <div class="col">
-            <div class="text-h6">
-              {{ $t('evaluations.notes_modal.title', { name: evaluationSelectionnee?.intitule }) }}
-            </div>
-            <div class="text-caption text-grey-7">
-              {{
-                $t('evaluations.notes_modal.subject_line', {
-                  subject: evaluationSelectionnee?.matiere?.intitule,
-                  promotion: evaluationSelectionnee?.promotion?.nom,
-                  status:
-                    evaluationSelectionnee?.statut === 'OUVERTE'
-                      ? $t('evaluations.notes_modal.status_open')
-                      : $t('evaluations.notes_modal.status_closed'),
-                })
-              }}
-            </div>
-          </div>
-          <q-btn
-            v-if="evaluationSelectionnee?.statut === 'OUVERTE' && peutSaisirNotes()"
-            unelevated
-            color="primary"
-            no-caps
-            icon="edit_note"
-            :label="$t('evaluations.notes_modal.enter_notes')"
-            @click="saisirDepuisConsultation"
-          />
-        </q-card-section>
-
-        <q-card-section class="q-pt-none">
-          <q-linear-progress v-if="chargementNotes" indeterminate color="primary" class="q-mb-sm" />
-          <q-table
-            v-else
-            flat
-            bordered
-            :rows="notesConsultation"
-            :columns="colonnesNotesConsultation"
-            row-key="inscriptionId"
-            :pagination="{ rowsPerPage: 0 }"
-            dense
-          >
-            <template #no-data>
-              <etat-vide icone="people_outline" :titre="$t('evaluations.notes_modal.empty')" />
-            </template>
-            <template #body-cell-note="p">
-              <q-td :props="p" class="text-center chiffres">
-                <span
-                  :class="{
-                    'text-negative': p.row.note !== null && p.row.note < 5,
-                    'text-warning': p.row.note !== null && p.row.note >= 5 && p.row.note < 10,
-                  }"
-                >
-                  {{ p.row.note !== null ? p.row.note.toFixed(2) : '—' }}
-                </span>
-              </q-td>
-            </template>
-            <template #body-cell-present="p">
-              <q-td :props="p" class="text-center">
-                <q-icon
-                  :name="p.row.present ? 'check_circle' : 'cancel'"
-                  :color="p.row.present ? 'positive' : 'grey-6'"
-                />
-              </q-td>
-            </template>
-          </q-table>
-        </q-card-section>
-
-        <q-card-actions align="right">
-          <q-btn flat :label="$t('common.actions.close')" v-close-popup />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
+    <evaluations-notes-dialog
+      v-model="dialogNotes"
+      :evaluation="evaluationSelectionnee"
+      :lignes="notesConsultation"
+      :chargement="chargementNotes"
+      :peut-saisir="peutSaisirNotes()"
+      @saisir="saisirDepuisConsultation"
+    />
   </q-page>
 </template>
 
 <script setup lang="ts">
-import PastilleStatut from '@/shared/components/PastilleStatut.vue';
-import ActionsSecondaires from '@/shared/components/ActionsSecondaires.vue';
-import { usePresentationListe } from '@/shared/composables/usePresentationListe';
-import EnTetePage from '@/shared/components/EnTetePage.vue';
 import { computed, onMounted, reactive, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { useQuasar, type QTableColumn } from 'quasar';
+import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
-import { api } from '@/boot/axios';
 import { useAuthStore } from '@/stores/auth';
 import { useReferentielsStore } from '@/stores/referentiels';
 import { pageApi, texteApi, useListePaginee } from '@/shared/composables/useListePaginee';
 import { useConfirmation } from '@/shared/composables/useConfirmation';
-import DialogueEvaluation from '../components/DialogueEvaluation.vue';
-import EtatVide from '@/shared/components/EtatVide.vue';
+import { usePresentationListe } from '@/shared/composables/usePresentationListe';
+import EnTetePage from '@/shared/components/EnTetePage.vue';
 import BarreFiltres from '@/shared/components/BarreFiltres.vue';
 import BarrePagination from '@/shared/components/BarrePagination.vue';
 import ChampRecherche from '@/shared/components/ChampRecherche.vue';
-import { LIBELLE_STATUT_EVALUATION, LIBELLE_TYPE_EVALUATION, dateLisible } from '@/shared/utils/libelles';
+import DialogueEvaluation from '../components/DialogueEvaluation.vue';
+import EvaluationsTableau from '../components/EvaluationsTableau.vue';
+import EvaluationsCartesPanel from '../components/EvaluationsCartesPanel.vue';
+import EvaluationsNotesDialog from '../components/EvaluationsNotesDialog.vue';
+import { evaluationsService } from '../services/evaluations';
+import type { LigneEvaluation } from '../services/evaluations';
+import { LIBELLE_STATUT_EVALUATION, LIBELLE_TYPE_EVALUATION } from '@/shared/utils/libelles';
 import type {
   AnneeAcademique,
   Evaluation,
@@ -430,6 +162,7 @@ import type {
   StatutEvaluation,
   TypeEvaluation,
   ChipFiltre,
+  FiltresPage,
 } from '@/types';
 
 const $q = useQuasar();
@@ -456,7 +189,7 @@ const evaluationEditee = ref<Evaluation | null>(null);
 const modeVue = usePresentationListe();
 
 const FILTRES_VIDES = { recherche: '', anneeId: null, promotionId: null, matiereId: null, type: null, statut: null };
-const filtres = ref<Record<string, any>>({ ...FILTRES_VIDES });
+const filtres = ref<FiltresPage>({ ...FILTRES_VIDES });
 // `/evaluations?promotion=…` : arrivée depuis la fiche d'un étudiant.
 if (typeof route.query.promotion === 'string' && route.query.promotion) {
   filtres.value.promotionId = route.query.promotion;
@@ -467,19 +200,15 @@ const ev = reactive(
     filtres,
     syncUrl: true,
     charger: ({ filtres: f, ...p }) =>
-      api
-        .get('/evaluations', {
-          params: {
-            ...pageApi(p),
-            anneeId: f.anneeId || undefined,
-            promotionId: f.promotionId || undefined,
-            matiereId: f.matiereId || undefined,
-            type: f.type || undefined,
-            statut: f.statut || undefined,
-            search: texteApi(f.recherche),
-          },
-        })
-        .then((r) => r.data),
+      evaluationsService.liste({
+        ...pageApi(p),
+        anneeId: f.anneeId || undefined,
+        promotionId: f.promotionId || undefined,
+        matiereId: f.matiereId || undefined,
+        type: f.type || undefined,
+        statut: f.statut || undefined,
+        search: texteApi(f.recherche),
+      }),
   }),
 );
 
@@ -566,32 +295,6 @@ const optionsStatuts = computed(() =>
   })),
 );
 
-const colonnes = computed<QTableColumn[]>(() => [
-  { name: 'intitule', label: t('common.fields.intitule'), field: 'intitule', align: 'left', sortable: true },
-  { name: 'type', label: t('common.fields.type'), field: 'type', align: 'left' },
-  { name: 'coefficient', label: t('evaluations.table.columns.coefficient'), field: 'coefficient', align: 'center' },
-  { name: 'matiere', label: t('common.fields.subject'), field: (r) => r.matiere?.intitule ?? '—', align: 'left' },
-  {
-    name: 'promotion',
-    label: t('evaluations.table.columns.promotion'),
-    field: (r) => r.promotion?.nom ?? '—',
-    align: 'left',
-  },
-  { name: 'semestre', label: t('evaluations.table.columns.semester'), field: 'semestre', align: 'center' },
-  { name: 'date', label: t('common.fields.date'), field: 'date', align: 'left' },
-  { name: 'statut', label: t('evaluations.table.columns.status'), field: 'statut', align: 'left' },
-  { name: 'notes', label: t('evaluations.table.columns.notes'), field: 'id', align: 'center' },
-  { name: 'actions', label: '', field: 'id', align: 'right' },
-]);
-
-/** Nombre de notes déjà saisies sur l'évaluation. */
-const nombreNotes = (e: Evaluation) => e._count?.notes ?? 0;
-
-const libelleNotes = (e: Evaluation) => {
-  const n = nombreNotes(e);
-  return t('evaluations.notes_count', { n, plural: n > 1 ? 's' : '' });
-};
-
 function ouvrir(e: Evaluation | null) {
   evaluationEditee.value = e;
   dialogOuvert.value = true;
@@ -610,7 +313,7 @@ async function cloturer(e: Evaluation) {
   });
   if (!ok) return;
   try {
-    await api.post(`/evaluations/${e.id}/cloturer`);
+    await evaluationsService.cloturer(e.id);
   } catch {
     return;
   }
@@ -631,46 +334,21 @@ function supprimer(e: Evaluation) {
 
 const dialogNotes = ref(false);
 const evaluationSelectionnee = ref<Evaluation | null>(null);
-const notesConsultation = ref<
-  Array<{
-    inscriptionId: string;
-    matricule: string;
-    nom: string;
-    prenom: string;
-    numero: string;
-    note: number | null;
-    present: boolean;
-  }>
->([]);
+const notesConsultation = ref<LigneEvaluation[]>([]);
 const chargementNotes = ref(false);
 
-const colonnesNotesConsultation = computed<QTableColumn[]>(() => [
-  { name: 'matricule', label: t('common.fields.studentId'), field: 'matricule', align: 'left' },
-  { name: 'numero', label: t('common.fields.numberShort'), field: 'numero', align: 'left' },
-  {
-    name: 'etudiant',
-    label: t('common.fields.student'),
-    field: (r) => `${r.nom} ${r.prenom}`,
-    align: 'left',
-  },
-  { name: 'present', label: t('evaluations.notes_modal.columns.present'), field: 'present', align: 'center' },
-  { name: 'note', label: t('evaluations.notes_modal.columns.note'), field: 'note', align: 'center' },
-]);
-
 /**
- * Feuille de l'évaluation. `GET /evaluations/:id/etudiants` renvoie
- * `{ evaluation, lignes }` — les inscrits sont dans `lignes`, jamais à la
- * racine ni dans `data`.
+ * Feuille de l'évaluation : le service rend déjà le tableau des inscrits
+ * (lignes), jamais une enveloppe.
  */
 async function voirNotes(e: Evaluation) {
   evaluationSelectionnee.value = e;
   dialogNotes.value = true;
   chargementNotes.value = true;
   try {
-    const { data } = await api.get(`/evaluations/${e.id}/etudiants`);
-    const liste = Array.isArray(data) ? data : (data?.lignes ?? []);
-    notesConsultation.value = liste.map((l: any) => ({
-      inscriptionId: l.inscriptionId ?? l.id,
+    const liste = await evaluationsService.etudiants(e.id);
+    notesConsultation.value = (Array.isArray(liste) ? liste : []).map((l) => ({
+      inscriptionId: l.inscriptionId ?? l.id ?? '',
       matricule: l.matricule ?? '—',
       nom: l.nom ?? '',
       prenom: l.prenom ?? '',
@@ -712,14 +390,3 @@ onMounted(async () => {
   }
 });
 </script>
-
-<style scoped lang="scss">
-.evaluations-cartes {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: var(--up-3);
-}
-.evaluations-cartes__carte {
-  background: var(--up-plaque);
-}
-</style>

@@ -1,0 +1,483 @@
+// Domaine « campus » : cités, réservations, helpdesk, patrimoine, élections et réclamations.
+
+enum CategorieChambre {
+  CHAMBRE_SIMPLE
+  CHAMBRE_PARTAGEE
+  STUDIO
+  APPARTEMENT
+}
+
+enum StatutChambre {
+  LIBRE
+  RESERVE
+  OCCUPE
+  MAINTENANCE
+}
+
+enum StatutAttributionLogement {
+  EN_ATTENTE
+  ACCORDE
+  REFUSE
+  RETIRE
+}
+
+enum StatutReservationSalle {
+  EN_ATTENTE
+  CONFIRME
+  REFUSE
+  ANNULE
+}
+
+enum CategorieIncident {
+  VIDEO
+  SON
+  RESEAU
+  ELECTRICITE
+  MOBILIER
+  INFORMATIQUE
+  CLIMATISATION
+  AUTRE
+}
+
+enum PrioriteTicket {
+  BASSE
+  NORMALE
+  HAUTE
+}
+
+enum StatutTicket {
+  OUVERT
+  EN_COURS
+  RESOLU
+  CLOTURE
+}
+
+// ---------------------------------------------------------------------------
+// 1. Cités universitaires & logements (attribution transparente, loyer MoMo)
+// ---------------------------------------------------------------------------
+
+model Residence {
+  id          String   @id @default(uuid())
+  code        String   @unique // "C1", "C2"
+  nom         String
+  ville       String?
+  adresse     String?
+  capacite    Int      @default(0)
+  responsable String?
+  actif       Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  chambres Chambre[]
+}
+
+model Chambre {
+  id          String           @id @default(uuid())
+  code        String           @unique // "R1-101"
+  residenceId String
+  // RESTRICT : supprimer une résidence ne doit pas effacer les chambres et,
+  // par cascade, l'historique d'attribution de logement. Le service cités
+  // refuse déjà la suppression d'une résidence non vide (400).
+  residence   Residence        @relation(fields: [residenceId], references: [id], onDelete: Restrict)
+  categorie   CategorieChambre @default(CHAMBRE_PARTAGEE)
+  lits        Int              @default(2)
+  loyer       Decimal          @default(0) @db.Decimal(14, 2)
+  devise      String           @default("GNF")
+  statut      StatutChambre    @default(LIBRE)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  attributions AttributionLogement[]
+
+  @@index([statut])
+  @@index([residenceId])
+}
+
+/// Attribution d'une chambre à un étudiant (critères sociaux/mérite, jury).
+model AttributionLogement {
+  id         String           @id @default(uuid())
+  chambreId  String
+  // RESTRICT : une attribution est l'historique de l'occupation d'une chambre
+  // (critères sociaux, date d'attribution, retrait). En CASCADE, supprimer
+  // une chambre effaçait ce justificatif.
+  chambre    Chambre          @relation(fields: [chambreId], references: [id], onDelete: Restrict)
+  etudiantId String
+  // RESTRICT : cohérent avec les autres relations vers Etudiant (inscription,
+  // paiement, demande de document…), toutes en RESTRICT.
+  etudiant   Etudiant         @relation(fields: [etudiantId], references: [id], onDelete: Restrict)
+  anneeId    String?
+  annee      AnneeAcademique? @relation(fields: [anneeId], references: [id], onDelete: Restrict)
+
+  statut        StatutAttributionLogement @default(EN_ATTENTE)
+  critereScore  Int? // somme des critères sociaux/mérite
+  justificatif  String?
+  accorderParId String?
+  accorderPar   User?                     @relation("AttributionAccordeePar", fields: [accorderParId], references: [id], onDelete: SetNull)
+  accordeeLe    DateTime?                 @db.Date
+  retireeLe     DateTime?
+  retireeMotif  String?
+  createdAt     DateTime                  @default(now())
+  updatedAt     DateTime                  @updatedAt
+
+  @@index([statut])
+  @@index([chambreId])
+  @@index([etudiantId])
+  @@index([anneeId])
+}
+
+// ---------------------------------------------------------------------------
+// 4. Planification des amphis & salles — réservations événementielles
+// ---------------------------------------------------------------------------
+
+model ReservationSalle {
+  id          String                 @id @default(uuid())
+  salleId     String
+  salle       Salle                  @relation(fields: [salleId], references: [id], onDelete: Cascade)
+  motif       String
+  organisme   String?
+  dateJour    DateTime               @db.Date
+  heureDebut  String // "14:00"
+  heureFin    String
+  responsable String?
+  statut      StatutReservationSalle @default(EN_ATTENTE)
+  demandeurId String?
+  demandeur   User?                  @relation("ReservationDemandeePar", fields: [demandeurId], references: [id], onDelete: SetNull)
+  refuseParId String?
+  refusePar   User?                  @relation("ReservationRefuseePar", fields: [refuseParId], references: [id], onDelete: SetNull)
+  refuseMotif String?
+  // Colonne conservée « creeLe » en base : le champ Prisma suit la
+  // convention `createdAt` du reste du modèle.
+  createdAt   DateTime               @default(now()) @map("creeLe")
+  updatedAt   DateTime               @updatedAt
+
+  @@index([salleId, dateJour])
+}
+
+// ---------------------------------------------------------------------------
+// 6. Support IT & helpdesk campus (QR sur les équipements)
+// ---------------------------------------------------------------------------
+
+/// Fiche d'équipement suivie par le helpdesk : la cible des signalements QR.
+///
+/// Ce modèle n'est **pas** l'inventaire patrimonial : il ne porte ni catégorie,
+/// ni valeur, ni date d'acquisition. Il sert à coller un QR sur un appareil
+/// pour qu'un usager signale une panne sans passer par le guichet. L'autre
+/// inventaire est `EquipementPatrimoine` (voir § « Gestion du Patrimoine »).
+///
+/// Le nom de la table reste « EquipementCampus » : le renommage du modèle est
+/// documentaire, la colonne et les identifiants en base ne bougent pas.
+model EquipementHelpdesk {
+  id          String   @id @default(uuid())
+  libelle     String // "Vidéoprojecteur salle S204"
+  emplacement String?
+  codeQr      String   @unique // "UP-IT-<base64url>"
+  actif       Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tickets TicketSupport[]
+
+  @@map("EquipementCampus")
+}
+
+model TicketSupport {
+  id                     String                @id @default(uuid())
+  numero                 String                @unique // "TKT-2026-0001"
+  categorie              CategorieIncident     @default(AUTRE)
+  description            String
+  priorite               PrioriteTicket        @default(NORMALE)
+  statut                 StatutTicket          @default(OUVERT)
+  declarantNom           String?
+  declarantEmail         String?
+  declarantTelephone     String?
+  // Équipement du helpdesk (salle, signalement QR rapide)
+  equipementId           String?
+  equipement             EquipementHelpdesk?   @relation(fields: [equipementId], references: [id], onDelete: SetNull)
+  // Liaison optionnelle au patrimoine (lorsque le ticket provient d'un
+  // équipement inventorié). Au plus UN des deux inventaires est renseigné :
+  // CHECK "TicketSupport_un_seul_inventaire", posé en SQL par la migration
+  // 20261023100000 (Prisma ne représente pas les contraintes CHECK).
+  equipementPatrimoineId String?
+  equipementPatrimoine   EquipementPatrimoine? @relation("TicketEquipementPatrimoine", fields: [equipementPatrimoineId], references: [id], onDelete: SetNull)
+  utilisateurId          String?
+  utilisateur            User?                 @relation("TicketDeclarePar", fields: [utilisateurId], references: [id], onDelete: SetNull)
+  traiteParId            String?
+  traitePar              User?                 @relation("TicketTraitePar", fields: [traiteParId], references: [id], onDelete: SetNull)
+  traiteLe               DateTime?
+  clicheLe               DateTime?
+  createdAt              DateTime              @default(now())
+  updatedAt              DateTime              @updatedAt
+
+  @@index([statut])
+  @@index([utilisateurId])
+  @@index([equipementId])
+  @@index([equipementPatrimoineId])
+}
+
+// ------------------ Gestion du Patrimoine & Matériel Pédagogique ---------
+
+/// Catégorie d'équipement (Vidéoprojecteur, Micro, Ordinateur...).
+model CategoriePatrimoine {
+  id                 String                 @id @default(uuid())
+  code               String                 @unique
+  libelle            String
+  dureeAmortissement Int? // mois
+  actif              Boolean                @default(true)
+  updatedAt          DateTime               @updatedAt
+  equipements        EquipementPatrimoine[]
+}
+
+/// Équipement physique inventorié (l'inventaire MESRS : catégorie, valeur,
+/// date d'acquisition, réparations). Le helpdesk utilise déjà
+/// `EquipementHelpdesk` pour les QR de signalement : les deux inventaires sont
+/// volontairement distincts (voir § « Support IT & helpdesk campus »).
+model EquipementPatrimoine {
+  id                String              @id @default(uuid())
+  numeroSerie       String              @unique
+  libelle           String
+  categorieId       String
+  categorie         CategoriePatrimoine @relation(fields: [categorieId], references: [id], onDelete: Restrict)
+  departementId     String?
+  departement       Departement?        @relation(fields: [departementId], references: [id], onDelete: SetNull)
+  salleId           String?
+  salle             Salle?              @relation(fields: [salleId], references: [id], onDelete: SetNull)
+  dateAcquisition   DateTime?           @db.Date
+  valeurAcquisition Decimal?            @db.Decimal(14, 2)
+  numeroInventaire  String              @unique
+  qrCode            String              @unique // "UP-PAT-<base64url>" — QR d'inventaire
+  actif             Boolean             @default(true)
+  enReparation      Boolean             @default(false)
+  obsolescenceMois  Int?                @default(60)
+  notes             String?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  reparations ReparationMateriel[]
+  tickets     TicketSupport[]      @relation("TicketEquipementPatrimoine")
+
+  @@index([categorieId])
+  @@index([actif])
+  @@index([departementId])
+}
+
+enum StatutReparation {
+  DECLARE
+  EN_COURS
+  TERMINE
+  ANNULE
+}
+
+model ReparationMateriel {
+  id              String               @id @default(uuid())
+  equipementId    String
+  equipement      EquipementPatrimoine @relation(fields: [equipementId], references: [id], onDelete: Cascade)
+  dateDeclaration DateTime             @default(now())
+  description     String
+  prestataire     String?
+  // Coût en GNF
+  cout            Decimal              @default(0) @db.Decimal(14, 2)
+  statut          StatutReparation     @default(DECLARE)
+  dateResolution  DateTime?
+  declareParId    String?
+  declarePar      User?                @relation("ReparationDeclareePar", fields: [declareParId], references: [id], onDelete: SetNull)
+  resoluParId     String?
+  resoluPar       User?                @relation("ReparationResoluePar", fields: [resoluParId], references: [id], onDelete: SetNull)
+  notes           String?
+  updatedAt       DateTime             @updatedAt
+
+  @@index([statut])
+  @@index([equipementId])
+}
+
+// ------------------ Plateforme de Réclamations & Requêtes -----------
+
+enum TypeReclamation {
+  NOTE_MANQUANTE
+  ERREUR_SAISIE
+  INSCRIPTION
+  ENSEIGNEMENT
+  SCOLARITE
+  TECHNIQUE
+  AUTRE
+}
+
+enum PrioriteReclamation {
+  BASSE
+  NORMALE
+  HAUTE
+  URGENTE
+}
+
+enum StatutReclamation {
+  OUVERT
+  EN_COURS
+  EN_ATTENTE_REPONSE
+  RESOLU
+  FERME
+  REJETE
+}
+
+model Reclamation {
+  id                  String              @id @default(uuid())
+  numero              String              @unique // "REC-2026-00001"
+  type                TypeReclamation
+  sujet               String
+  description         String
+  // Bascule de l'anonymat : l'étudiant peut choisir de s'identifier ou pas
+  anonyme             Boolean             @default(false)
+  etudiantId          String?
+  etudiant            Etudiant?           @relation(fields: [etudiantId], references: [id], onDelete: SetNull)
+  createurId          String?
+  createur            User?               @relation("ReclamationCreateur", fields: [createurId], references: [id], onDelete: SetNull)
+  nomAuteur           String? // stocké si anonyme
+  emailAuteur         String?
+  priorite            PrioriteReclamation @default(NORMALE)
+  statut              StatutReclamation   @default(OUVERT)
+  departementId       String?
+  departement         Departement?        @relation(fields: [departementId], references: [id], onDelete: SetNull)
+  assigneAId          String?
+  assigneA            User?               @relation("ReclamationAssignee", fields: [assigneAId], references: [id], onDelete: SetNull)
+  // Délai d'escalade (en heures) — au bout de ce délai sans réponse, escalade
+  delaiEscaladeHeures Int?                @default(48)
+  escaladeLe          DateTime?
+  // Colonne conservée « creeLe » en base : le champ Prisma suit la
+  // convention `createdAt` du reste du modèle.
+  createdAt           DateTime            @default(now()) @map("creeLe")
+  // Dernière évolution de la réclamation (statut, affectation, escalade).
+  updatedAt           DateTime            @updatedAt
+  fermeLe             DateTime?
+  notes               String?
+
+  messages MessageReclamation[]
+
+  @@index([statut, priorite])
+  @@index([etudiantId])
+  @@index([createurId])
+  @@index([departementId])
+  @@index([assigneAId])
+}
+
+model MessageReclamation {
+  id            String      @id @default(uuid())
+  reclamationId String
+  reclamation   Reclamation @relation(fields: [reclamationId], references: [id], onDelete: Cascade)
+  auteurId      String?
+  auteur        User?       @relation("MessageReclamationAuteur", fields: [auteurId], references: [id], onDelete: SetNull)
+  // Si l'auteur est l'étudiant (anonyme ou non), on peut indiquer son nom
+  nomAffichage  String?
+  contenu       String
+  joint         String?
+  // Colonne conservée « creeLe » en base : le champ Prisma suit la
+  // convention `createdAt` du reste du modèle.
+  createdAt     DateTime    @default(now()) @map("creeLe")
+
+  // Le nom de l'index est figé sur celui créé en base (colonne « creeLe »).
+  @@index([reclamationId, createdAt], map: "MessageReclamation_reclamationId_creeLe_idx")
+}
+
+// ------------------ Plateforme Élection des Délégués --------------
+
+enum TypeElection {
+  DELEGUE_PROMOTION
+  DELEGUE_DEPARTEMENT
+  PRESIDENT_UNIVERSITE
+  SYNDICAT
+  CLUB
+}
+
+enum StatutElection {
+  BROUILLON
+  OUVERT
+  CLOS
+  PROCLAME
+  ANNULE
+}
+
+model Election {
+  id            String         @id @default(uuid())
+  titre         String
+  type          TypeElection
+  // Périmètre : promotionId / départementId / null (=toute l'université)
+  promotionId   String?
+  promotion     Promotion?     @relation(fields: [promotionId], references: [id], onDelete: Restrict)
+  departementId String?
+  departement   Departement?   @relation(fields: [departementId], references: [id], onDelete: Restrict)
+  description   String?
+  dateOuverture DateTime
+  dateCloture   DateTime
+  // Configuration du scrutin : scrutin uninominal, plurinominal, liste...
+  nbSieges      Int            @default(1)
+  // Règles de vote : un inscrit par scrutin, vote blanc autorisé, etc.
+  bulletin      String? // design du bulletin (par défaut)
+  statut        StatutElection @default(BROUILLON)
+  creeParId     String?
+  creePar       User?          @relation("ElectionCreePar", fields: [creeParId], references: [id], onDelete: SetNull)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  candidats CandidatElection[]
+  votes     VoteElection[]
+
+  @@index([statut, dateOuverture])
+}
+
+model CandidatElection {
+  id           String      @id @default(uuid())
+  electionId   String
+  election     Election    @relation(fields: [electionId], references: [id], onDelete: Cascade)
+  nom          String
+  prenom       String
+  // Lien optionnel à un étudiant ou enseignant
+  etudiantId   String?
+  etudiant     Etudiant?   @relation(fields: [etudiantId], references: [id], onDelete: SetNull)
+  enseignantId String?
+  enseignant   Enseignant? @relation(fields: [enseignantId], references: [id], onDelete: SetNull)
+  photoUrl     String?
+  programme    String?
+  ordre        Int         @default(0)
+
+  votes VoteElection[]
+
+  @@index([electionId, ordre])
+}
+
+enum ModeVote {
+  WEB
+  KIOSQUE
+  SMS
+}
+
+model VoteElection {
+  id         String           @id @default(uuid())
+  electionId String
+  election   Election         @relation(fields: [electionId], references: [id], onDelete: Cascade)
+  // Au plurinominal : un seul vote avec un tableau de candidats (1..nbSieges)
+  // À l'uninominal : un vote par candidat (un électeur distribue 1 voix)
+  // On modélise ici un vote SUR UN candidat (donc nbSieges = 1 par vote).
+  // Au plurinominal : plusieurs votes du même électeur (un par candidat choisi)
+  // Un électeur peut voter N fois (N ≤ nbSieges).
+  candidatId String
+  candidat   CandidatElection @relation(fields: [candidatId], references: [id], onDelete: Cascade)
+  // Porteur du vote
+  etudiantId String?
+  etudiant   Etudiant?        @relation(fields: [etudiantId], references: [id], onDelete: SetNull)
+  /// Électeur, quel que soit son rôle. `etudiantId` ne couvrait que les
+  /// étudiants : un enseignant, un contrôleur ou un administrateur y était nul,
+  /// et PostgreSQL tenant deux NULL pour distincts, l'unicité ne jouait pas —
+  /// ces électeurs-là pouvaient déposer autant de bulletins qu'ils voulaient.
+  electeurId String?
+  electeur   User?            @relation("VoteElecteur", fields: [electeurId], references: [id], onDelete: SetNull)
+  scrutinId  String? // jeton de vote (anonymisation)
+  mode       ModeVote         @default(WEB)
+  ipAppareil String?
+  horodatage DateTime         @default(now())
+
+  // Un même électeur ne peut pas voter 2 fois pour le même candidat. La
+  // première contrainte protège l'historique déjà en base (votes étudiants),
+  // la seconde couvre tous les rôles.
+  @@unique([electionId, candidatId, etudiantId])
+  @@unique([electionId, candidatId, electeurId])
+  @@index([electionId, candidatId])
+  @@index([electionId, electeurId])
+  @@index([candidatId])
+}

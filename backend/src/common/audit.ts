@@ -6,7 +6,8 @@ import type { AuthUser } from './decorators';
  *
  * Remplace les variantes privées `journaliser` que chaque module recopiait.
  * La ligne produite est strictement celle qu'elles écrivaient :
- * `{ userId, action, entite, entiteId, details }`, sans `ip`.
+ * `{ userId, action, entite, entiteId, details }`, plus `ip` quand l'appelant
+ * l'a fourni.
  *
  * - `client` : la transaction de la mutation (`tx`) de préférence, pour que
  *   l'état et sa trace soient committés ensemble, ou `PrismaService` ;
@@ -14,7 +15,9 @@ import type { AuthUser } from './decorators';
  *   planifiée, moteur de détection, dépôt anonyme) — `userId` vaut alors `null` ;
  * - `details` : un objet est sérialisé en JSON (format lu par l'écran
  *   « Journal ») ; une chaîne est écrite telle quelle ; absent, le champ
- *   n'est pas écrit.
+ *   n'est pas écrit ;
+ * - `ip` : l'adresse de l'appelant, quand elle est connue. Elle est réservée
+ *   à l'exploitation serveur : l'écran « Journal » ne l'affiche pas.
  */
 export type ClientAudit = Pick<Prisma.TransactionClient, 'auditLog'>;
 
@@ -25,6 +28,7 @@ export function journaliser(
   entite: string,
   entiteId: string | null,
   details?: unknown,
+  ip?: string | null,
 ) {
   return client.auditLog.create({
     data: {
@@ -33,6 +37,7 @@ export function journaliser(
       entite,
       entiteId,
       ...(details === undefined ? {} : { details: typeof details === 'string' ? details : JSON.stringify(details) }),
+      ...(ip ? { ip } : {}),
     },
   });
 }

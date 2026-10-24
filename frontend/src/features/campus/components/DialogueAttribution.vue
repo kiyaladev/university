@@ -85,10 +85,10 @@
 import { computed, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
-import { api } from '@/boot/axios';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
+import { citesService } from '../services/cites';
 import { LIBELLE_STATUT_CHAMBRE } from '@/shared/utils/libelles';
-import type { AnneeAcademique, Chambre, Etudiant } from '@/types';
+import type { AnneeAcademique, Chambre } from '@/types';
 
 /**
  * Recherche d'étudiants — contrat du module 1 (registre universitaire) :
@@ -158,8 +158,8 @@ async function filtrerEtudiants(val: string, update: (cb: () => void) => void) {
       return;
     }
     try {
-      const { data } = await api.get('/etudiants', { params: { search: val, all: '1' } });
-      optionsEtudiants.value = (data.data as Etudiant[]).map((e) => ({
+      const reponse = await citesService.rechercherEtudiants(val);
+      optionsEtudiants.value = reponse.data.map((e) => ({
         label: `${e.matricule} — ${e.nom} ${e.prenom}`,
         value: e.id,
       }));
@@ -174,7 +174,7 @@ async function filtrerEtudiants(val: string, update: (cb: () => void) => void) {
 async function enregistrer() {
   enregistrement.value = true;
   try {
-    await api.post('/attributions-logement', {
+    await citesService.creerAttribution({
       chambreId: form.value.chambreId!,
       etudiantId: form.value.etudiantId!,
       anneeId: form.value.anneeId || undefined,

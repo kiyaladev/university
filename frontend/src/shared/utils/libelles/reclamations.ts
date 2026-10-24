@@ -16,12 +16,12 @@ import type {
  * même dossier.
  */
 export const LIBELLE_STATUT_RECLAMATION: Record<StatutReclamation, string> = traduireLibelles('statut_reclamation', {
-  OUVERTE: 'Ouverte',
+  OUVERT: 'Ouvert',
   EN_COURS: 'En cours',
   EN_ATTENTE_REPONSE: 'Attente réponse',
-  RESOLUE: 'Résolue',
-  FERMEE: 'Fermée',
-  REJETEE: 'Rejetée',
+  RESOLU: 'Résolu',
+  FERME: 'Fermé',
+  REJETE: 'Rejeté',
 });
 
 export const LIBELLE_TYPE_RECLAMATION: Record<TypeReclamation, string> = traduireLibelles('type_reclamation', {
@@ -52,11 +52,11 @@ export const LIBELLE_PRIORITE_RECLAMATION: Record<PrioriteReclamation, string> =
  */
 export const LIBELLE_STATUT_DEMANDE: Record<StatutDemande, string> = traduireLibelles('statut_demande', {
   EN_ATTENTE_PAIEMENT: 'Attente paiement',
-  PAYEE: 'Payée',
+  PAYE: 'Payé',
   EN_TRAITEMENT: 'En traitement',
-  PRETE: 'Prête',
+  PRET: 'Prêt',
   REMISE: 'Remise',
-  REJETEE: 'Rejetée',
+  REJETE: 'Rejeté',
 });
 
 export const LIBELLE_TYPE_DEMANDE: Record<TypeDemandeDocument, string> = traduireLibelles('type_demande', {

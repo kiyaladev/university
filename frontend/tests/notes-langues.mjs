@@ -12,27 +12,28 @@ try {
   const page = await browser.newPage({ locale: 'fr-FR' });
   const errors = [];
   const apiFailures = [];
-  page.on('pageerror', error => errors.push(error.message));
-  page.on('response', response => {
-    if (response.url().includes('/api/') && response.status() >= 400) apiFailures.push({ status: response.status(), path: new URL(response.url()).pathname });
+  page.on('pageerror', (error) => errors.push(error.message));
+  page.on('response', (response) => {
+    if (response.url().includes('/api/') && response.status() >= 400)
+      apiFailures.push({ status: response.status(), path: new URL(response.url()).pathname });
   });
   await page.goto(base + '/#/connexion', { waitUntil: 'networkidle' });
   await page.locator('input[type=email]').fill('scolarite@unipresence.gn');
   await page.locator('input[type=password]').fill('Passer@2026');
   await page.locator('button[type=submit]').click();
-  await page.waitForURL(url => !url.hash.startsWith('#/connexion'));
+  await page.waitForURL((url) => !url.hash.startsWith('#/connexion'));
   await page.goto(base + '/#/notes', { waitUntil: 'networkidle' });
   await page.locator('.page-titre').filter({ hasText: 'Saisie des notes' }).waitFor();
 
   const champ = page.getByRole('combobox', { name: 'Évaluation à noter' });
-  const reponsePromise = page.waitForResponse(response => response.url().includes('/api/evaluations?'));
+  const reponsePromise = page.waitForResponse((response) => response.url().includes('/api/evaluations?'));
   await champ.focus();
   const reponse = await reponsePromise;
   assert.equal(reponse.status(), 200);
   const payload = await reponse.json();
   const evaluations = Array.isArray(payload) ? payload : payload.data;
   assert.ok(Array.isArray(evaluations) && evaluations.length > 0, 'La recette QA doit proposer une évaluation');
-  const evaluation = evaluations.find(item => item.statut === 'OUVERTE') ?? evaluations[0];
+  const evaluation = evaluations.find((item) => item.statut === 'OUVERT') ?? evaluations[0];
   assert.ok(evaluation.id, 'Une évaluation QA doit avoir un identifiant');
   await page.goto(`${base}/#/notes?evaluation=${encodeURIComponent(evaluation.id)}`, { waitUntil: 'networkidle' });
   await page.locator('.saisie-masse').waitFor({ timeout: 12000 });

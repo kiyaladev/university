@@ -79,14 +79,16 @@ async function main() {
   assert.deepEqual(confirmationStatuses, [201, 409]);
   const accepted = candidates[confirmations.findIndex((r) => r.status === 201)];
   const rejected = candidates[confirmations.findIndex((r) => r.status === 409)];
-  assert.equal(await prisma.inscriptionFormation.count({ where: { formationId, statut: 'CONFIRMEE' } }), 1);
+  assert.equal(await prisma.inscriptionFormation.count({ where: { formationId, statut: 'CONFIRME' } }), 1);
   await request(admin, 'POST', `/formations/inscriptions/${accepted.inscriptionId}/confirmer`, {}, 201);
   const paid = await prisma.inscriptionFormation.findUniqueOrThrow({
     where: { id: accepted.inscriptionId },
     include: { paiement: true },
   });
   assert.equal(paid.paiement.statut, 'REUSSI');
-  assert.equal(paid.paiement.montant, 5000);
+  // Le montant est stocké en `numeric(14,2)` : Prisma le relit comme un objet
+  // `Decimal` (que l'API sérialise en nombre). On compare donc au nombre.
+  assert.equal(Number(paid.paiement.montant), 5000);
   assert.equal((await request(null, 'GET', '/formations/publiques/' + formationId)).placesRestantes, 0);
   const certificate = await request(admin, 'GET', `/formations/${accepted.inscriptionId}/certificat`);
   assert.ok(certificate.includes(accepted.numero));

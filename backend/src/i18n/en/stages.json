@@ -20,5 +20,10 @@
   "statut_initial_invalide_donnees_statut_creer_en_propose_puis": "Invalid initial status ({donnees.statut}): create as PROPOSED then transition",
   "un_travail_travail_statut_ne_se_supprime_pas_abandonnez_le_o": "A {travail.statut} assignment cannot be deleted: abandon it or let it run its course",
   "seule_l_administration_peut_changer_l_encadrant_d_un_travail_": "Only administration can change a project's supervisor.",
-  "ce_travail_a_change_d_etat_pendant_la_transition_recharge": "This work changed state at the same time: please reload it before trying again."
+  "ce_travail_a_change_d_etat_pendant_la_transition_recharge": "This work changed state at the same time: please reload it before trying again.",
+  "transition_interdite": "Transition {statut} → {cible} is forbidden (allowed: {autorisees})",
+  "aucune_transition_autorisee": "none",
+  "la_soutenance_suppose_le_rapport_rendu": "The defense requires the submitted report: tick “report submitted” first",
+  "aucune_soutenance_enregistree": "No defense recorded: the defense goes through recording a defense",
+  "ce_dossier_ne_se_soutient_pas": "A {statut} file cannot be defended: it must be EN_COURS"
 }

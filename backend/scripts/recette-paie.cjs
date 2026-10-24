@@ -3,6 +3,7 @@ const assert = require('node:assert/strict'),
   fs = require('node:fs');
 const { randomUUID } = require('node:crypto');
 const { PrismaClient } = require('@prisma/client');
+const { ecrirePreuve } = require('./preuves.cjs');
 assert.ok(process.env.QA_ENV_FILE && process.env.QA_SESSION_FILE);
 const env = JSON.parse(fs.readFileSync(process.env.QA_ENV_FILE)),
   session = JSON.parse(fs.readFileSync(process.env.QA_SESSION_FILE));
@@ -68,7 +69,7 @@ async function main() {
         date: new Date(`2088-01-${12 + index}`),
         heureDebut: '09:00',
         heureFin: '11:00',
-        statut: 'CONTROLEE',
+        statut: 'CONTROLE',
         type: 'CM',
       },
     });
@@ -100,7 +101,7 @@ async function main() {
   await call('ADMIN', 'POST', path + '/payer', {}, 201);
   await call('ADMIN', 'POST', path + '/payer', {}, 400);
   await call('ADMIN', 'DELETE', path, null, 400);
-  assert.equal((await db.feuillePaie.findUniqueOrThrow({ where: { id: own.sheet.id } })).statut, 'PAYEE');
+  assert.equal((await db.feuillePaie.findUniqueOrThrow({ where: { id: own.sheet.id } })).statut, 'PAYE');
   const html = await (await call('SCOLARITE', 'GET', path + '/imprimer')).text();
   assert.ok(html.includes(tag));
   await call('ETUDIANT', 'GET', path + '/imprimer', null, 403);
@@ -122,7 +123,7 @@ async function main() {
     ruleObserved:
       'Heures entières par enseignant, Math.floor(total minutes / 60) ; retenue zéro. Validation comptable requise.',
   };
-  report.transitions = 'BROUILLON → VALIDEE → PAYEE';
+  report.transitions = 'BROUILLON → VALIDE → PAYE';
   report.idempotentRecalculation = true;
   report.protectedPrint = true;
   report.auditEvents = 5;
@@ -155,7 +156,7 @@ main()
     ])
       if (own[key]) await db[model].delete({ where: { id: own[key].id } });
     report.fixturesRemoved = true;
-    fs.writeFileSync('../audit/recommandations-2026-10-06/paie-http.json', JSON.stringify(report, null, 2) + '\n');
+    ecrirePreuve('paie-http.json', report);
     await db.$disconnect();
     console.log(JSON.stringify({ statut: report.statut, erreur: report.erreur, calculation: report.calculation }));
   });

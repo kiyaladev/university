@@ -1,0 +1,92 @@
+// Domaine « vie étudiante » : notifications et titre de restauration.
+
+enum StatutNotification {
+  EN_ATTENTE // en file d'envoi SMS
+  ENVOYE
+  ECHOUE
+}
+
+enum TypeRepas {
+  PETIT_DEJEUNER
+  DEJEUNER
+  COLLATION
+  DINER
+  AUTRE
+}
+
+enum StatutConsommation {
+  EN_ATTENTE
+  VALIDE
+  ANNULE
+}
+
+/// SMS sortant : résultats, avis, relances (via la passerelle OTP/SMS).
+model Notification {
+  id              String             @id @default(uuid())
+  telephone       String
+  message         String
+  motif           String? // "RESULTATS", "INSCRIPTION", "AVIS"…
+  destinataireNom String?
+  etudiantId      String?
+  etudiant        Etudiant?          @relation(fields: [etudiantId], references: [id], onDelete: SetNull)
+  statut          StatutNotification @default(EN_ATTENTE)
+  envoyeParId     String?
+  envoyePar       User?              @relation("NotificationEnvoyeur", fields: [envoyeParId], references: [id], onDelete: SetNull)
+  envoyeLe        DateTime?
+  erreur          String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([statut])
+  @@index([telephone])
+}
+
+// ---------------------------------------------------------------------------
+// 3. Titres resto numériques & canteen wallet (QR, sans cash au guichet)
+// ---------------------------------------------------------------------------
+
+model PortefeuilleResto {
+  id         String   @id @default(uuid())
+  etudiantId String   @unique
+  etudiant   Etudiant @relation(fields: [etudiantId], references: [id], onDelete: Restrict)
+  solde      Int      @default(0) // en francs (GNF)
+  updatedAt  DateTime @updatedAt
+
+  recharges     Recharge[]
+  consommations ConsommationResto[]
+}
+
+model Recharge {
+  id             String            @id @default(uuid())
+  portefeuilleId String
+  portefeuille   PortefeuilleResto @relation(fields: [portefeuilleId], references: [id], onDelete: Restrict)
+  etudiantId     String
+  etudiant       Etudiant          @relation(fields: [etudiantId], references: [id], onDelete: Restrict)
+  montant        Int
+  statut         StatutPaiement    @default(EN_ATTENTE)
+  paiementId     String?
+  paiement       Paiement?         @relation("PaiementRecharge", fields: [paiementId], references: [id], onDelete: SetNull)
+  rechargeLe     DateTime          @default(now())
+
+  @@index([portefeuilleId, rechargeLe])
+}
+
+model ConsommationResto {
+  id             String             @id @default(uuid())
+  portefeuilleId String
+  portefeuille   PortefeuilleResto  @relation(fields: [portefeuilleId], references: [id], onDelete: Restrict)
+  etudiant       String // référence affichée (matricule ou nom) au moment du service
+  repas          TypeRepas
+  montant        Int
+  cantine        String?
+  statut         StatutConsommation @default(EN_ATTENTE)
+  valideurId     String?
+  valideur       User?              @relation("RepasValidePar", fields: [valideurId], references: [id], onDelete: SetNull)
+  valideLe       DateTime?
+  consommeLe     DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  @@index([statut])
+  @@index([portefeuilleId, consommeLe])
+}

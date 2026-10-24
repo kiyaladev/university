@@ -39,6 +39,16 @@ const ROUTES: Record<string, string[]> = {
   ],
   'salles.gerer': ['POST /salles', 'PUT /salles/:id'],
   'salles.supprimer': ['DELETE /salles/:id'],
+  'pointages.corriger': ['PUT /controles/:id'],
+  'pointages.supprimer': ['DELETE /controles/:id'],
+  'attestation.moyens': [
+    'PUT /attestation/enseignants/:id/code-pin',
+    'POST /attestation/enseignants/:id/code-pin/reinitialiser',
+    'DELETE /attestation/enseignants/:id/code-pin',
+    'PUT /attestation/enseignants/:id/empreinte',
+    'DELETE /attestation/enseignants/:id/empreinte',
+  ],
+  'attestation.appareils': ['GET /attestation/appareils', 'DELETE /attestation/appareils/:id'],
   'etudiants.gerer': ['POST /etudiants', 'PUT /etudiants/:id'],
   'inscriptions.gerer': ['POST /inscriptions'],
   'inscriptions.valider': ['PUT /inscriptions/:id/valider'],
@@ -69,6 +79,8 @@ const ROUTES: Record<string, string[]> = {
   'paiements.simuler': ['POST /paiements/:id/simuler'],
   'paiements.annuler': ['POST /paiements/:id/annuler'],
   'recettes.gerer': ['POST /recettes', 'POST /recettes/:id/encaisser'],
+  'frais.gerer': ['GET /frais/gestion', 'POST /frais', 'PUT /frais/:id'],
+  'frais.supprimer': ['DELETE /frais/:id'],
   'paie.creer': ['POST /feuilles-paie'],
   'paie.imprimer': ['GET /feuilles-paie/:id/imprimer'],
   'paie.calculer': ['POST /feuilles-paie/:id/calculer'],
@@ -101,18 +113,23 @@ const MASQUES_ASSUMES: Record<string, Role[]> = {
   'stages.modifierRapport': [Role.ENSEIGNANT, Role.ETUDIANT],
 };
 
-const FICHIER_FRONT = join(__dirname, '..', '..', '..', 'frontend', 'src', 'navigation', 'permissions.ts');
+const NAVIGATION_FRONT = join(__dirname, '..', '..', '..', 'frontend', 'src', 'navigation');
+const FICHIER_FRONT = join(NAVIGATION_FRONT, 'permissions.ts');
+// Constantes de rôles partagées (PERSONNEL…), importées par la matrice.
+const FICHIER_ROLES_FRONT = join(NAVIGATION_FRONT, 'roles.ts');
 
 /** Lit la matrice du frontend sans l'exécuter : constantes `X: Role[] = [...]` et entrées `'cle': [...]`. */
 function lireMatriceFront(source: string): Record<string, string[]> {
   const sansCommentaires = source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
-  const liste = (texte: string) => [...texte.matchAll(/'([A-Z_]+)'/g)].map((m) => m[1]);
+  const lister = (texte: string) => [...texte.matchAll(/'([A-Z_]+)'/g)].map((m) => m[1]);
   const constantes: Record<string, string[]> = {};
-  for (const m of sansCommentaires.matchAll(/const (\w+): Role\[\] = \[([^\]]*)\]/g)) constantes[m[1]] = liste(m[2]);
+  const avecRoles =
+    (existsSync(FICHIER_ROLES_FRONT) ? readFileSync(FICHIER_ROLES_FRONT, 'utf8') : '') + sansCommentaires;
+  for (const m of avecRoles.matchAll(/const (\w+): Role\[\] = \[([^\]]*)\]/g)) constantes[m[1]] = lister(m[2]);
   const corps = sansCommentaires.slice(sansCommentaires.indexOf('PERMISSIONS = {'));
   const matrice: Record<string, string[]> = {};
   for (const m of corps.matchAll(/'([\w.]+)':\s*(\[[^\]]*\]|\w+)/g)) {
-    matrice[m[1]] = m[2].startsWith('[') ? liste(m[2]) : constantes[m[2]];
+    matrice[m[1]] = m[2].startsWith('[') ? lister(m[2]) : constantes[m[2]];
   }
   return matrice;
 }

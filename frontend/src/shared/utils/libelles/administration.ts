@@ -4,8 +4,8 @@ import type { StatutElection } from '@/types';
 
 export const LIBELLE_STATUT_NOTIFICATION: Record<string, string> = traduireLibelles('statut_notification', {
   EN_ATTENTE: 'En file',
-  ENVOYEE: 'Envoyée',
-  ECHOUE: 'Échouée',
+  ENVOYE: 'Envoyé',
+  ECHOUE: 'Échoué',
 });
 
 export const LIBELLE_STATUT_COURRIER: Record<string, string> = traduireLibelles('statut_courrier', {
@@ -65,8 +65,8 @@ export const LIBELLE_STATUT_BADGE: Record<string, string> = traduireLibelles('st
 /** Élections : la page de gestion et la page de vote nomment un scrutin pareil. */
 export const LIBELLE_STATUT_ELECTION: Record<StatutElection, string> = traduireLibelles('statut_election', {
   BROUILLON: 'Brouillon',
-  OUVERTE: 'Ouverte',
-  CLOSE: 'Close',
-  PROCLAMEE: 'Proclamée',
-  ANNULEE: 'Annulée',
+  OUVERT: 'Ouvert',
+  CLOS: 'Clos',
+  PROCLAME: 'Proclamé',
+  ANNULE: 'Annulé',
 });

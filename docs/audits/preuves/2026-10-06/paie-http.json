@@ -1,0 +1,19 @@
+{
+  "date": "2026-10-23T12:55:03.983Z",
+  "statut": "valide",
+  "productionUntouched": true,
+  "calculation": {
+    "presentMinutes": 125,
+    "absentMinutesExcluded": 120,
+    "billedHours": 2,
+    "hourlyRate": 15000,
+    "net": 30000,
+    "withholding": 0,
+    "ruleObserved": "Heures entières par enseignant, Math.floor(total minutes / 60) ; retenue zéro. Validation comptable requise."
+  },
+  "transitions": "BROUILLON → VALIDE → PAYE",
+  "idempotentRecalculation": true,
+  "protectedPrint": true,
+  "auditEvents": 5,
+  "fixturesRemoved": true
+}

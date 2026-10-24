@@ -10,16 +10,16 @@ export const LIBELLE_CATEGORIE_CHAMBRE: Record<string, string> = traduireLibelle
 
 export const LIBELLE_STATUT_CHAMBRE: Record<string, string> = traduireLibelles('statut_chambre', {
   LIBRE: 'Libre',
-  RESERVEE: 'Réservée',
-  OCCUPEE: 'Occupée',
+  RESERVE: 'Réservé',
+  OCCUPE: 'Occupé',
   MAINTENANCE: 'Maintenance',
 });
 
 export const LIBELLE_STATUT_ATTRIBUTION: Record<string, string> = traduireLibelles('statut_attribution', {
   EN_ATTENTE: 'En attente',
-  ACCORDEE: 'Accordée',
-  REFUSEE: 'Refusée',
-  RETIREE: 'Retirée',
+  ACCORDE: 'Accordé',
+  REFUSE: 'Refusé',
+  RETIRE: 'Retiré',
 });
 
 export const LIBELLE_TYPE_REPAS: Record<string, string> = traduireLibelles('type_repas', {
@@ -32,15 +32,15 @@ export const LIBELLE_TYPE_REPAS: Record<string, string> = traduireLibelles('type
 
 export const LIBELLE_STATUT_CONSOMMATION: Record<string, string> = traduireLibelles('statut_consommation', {
   EN_ATTENTE: 'En attente',
-  VALIDEE: 'Validée',
-  ANNULEE: 'Annulée',
+  VALIDE: 'Validé',
+  ANNULE: 'Annulé',
 });
 
 export const LIBELLE_STATUT_RESERVATION: Record<string, string> = traduireLibelles('statut_reservation', {
   EN_ATTENTE: 'En attente',
-  CONFIRMEE: 'Confirmée',
-  REFUSEE: 'Refusée',
-  ANNULEE: 'Annulée',
+  CONFIRME: 'Confirmé',
+  REFUSE: 'Refusé',
+  ANNULE: 'Annulé',
 });
 
 export const LIBELLE_CATEGORIE_INCIDENT: Record<string, string> = traduireLibelles('categorie_incident', {
@@ -69,15 +69,15 @@ export const LIBELLE_STATUT_TICKET: Record<string, string> = traduireLibelles('s
 
 export const LIBELLE_STATUT_FORMATION: Record<string, string> = traduireLibelles('statut_formation', {
   BROUILLON: 'Brouillon',
-  PUBLIEE: 'Publiée',
-  COMPLETE: 'Complète',
+  PUBLIE: 'Publié',
+  COMPLET: 'Complet',
 });
 
 export const LIBELLE_STATUT_INSCRIPTION_FORMATION: Record<string, string> = traduireLibelles(
   'statut_inscription_formation',
   {
     EN_ATTENTE: 'En attente',
-    CONFIRMEE: 'Confirmée',
-    ANNULEE: 'Annulée',
+    CONFIRME: 'Confirmé',
+    ANNULE: 'Annulé',
   },
 );

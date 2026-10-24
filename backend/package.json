@@ -9,18 +9,19 @@
     "node": ">=24"
   },
   "scripts": {
-    "build": "nest build && cp -r src/i18n dist/i18n",
+    "build": "nest build",
     "start": "node dist/main.js",
     "start:dev": "nest start --watch",
     "start:prod": "node dist/main.js",
-    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.seed.json",
+    "typecheck:seed": "tsc --noEmit -p tsconfig.seed.json",
     "lint": "eslint .",
     "format:check": "prettier --check \"src/**/*.ts\" \"scripts/**/*.{cjs,ts}\" \"prisma/**/*.ts\"",
     "format": "prettier --write \"src/**/*.ts\" \"scripts/**/*.{cjs,ts}\" \"prisma/**/*.ts\"",
     "prisma:generate": "prisma generate",
     "prisma:deploy": "prisma migrate deploy",
     "audit:routes": "node scripts/inventaire-routes.cjs /tmp/university-inventaire-routes.json",
-    "audit:routes:suivi": "node scripts/inventaire-routes.cjs ../audit/recommandations/inventaire-routes.json",
+    "audit:routes:suivi": "node scripts/inventaire-routes.cjs",
     "test:qa:modules-pilotes": "node scripts/recette-modules-pilotes.cjs",
     "test:qa:restaurant": "node scripts/recette-restaurant.cjs",
     "test:qa:vod": "node scripts/recette-vod.cjs",
@@ -67,7 +68,8 @@
     "testEnvironment": "node"
   },
   "prisma": {
-    "seed": "ts-node prisma/seed.ts"
+    "schema": "prisma/schema",
+    "seed": "ts-node -r tsconfig-paths/register prisma/seed.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.2.7",

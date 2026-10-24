@@ -10,9 +10,17 @@
  * les modules, et les services gardent leurs constructeurs.
  */
 import type { Prisma } from '@prisma/client';
+import { OperateurPaiement } from '@prisma/client';
 
-/** Opérateurs Mobile Money acceptés (inscriptions, cantine). */
-export const OPERATEURS_MOBILE_MONEY = ['ORANGE_MONEY', 'MTN_MOMO', 'TELECEL', 'AUTRE'] as const;
+/**
+ * Opérateurs Mobile Money acceptés (inscriptions, cantine).
+ *
+ * La liste est dérivée de l'énumération Prisma `OperateurPaiement` : la
+ * colonne `Paiement.operateur` est un enum de base, il n'y a donc plus de
+ * chaîne libre à valider. Le tableau garde l'ordre de déclaration de l'enum.
+ */
+export const OPERATEURS_MOBILE_MONEY = Object.values(OperateurPaiement);
+export type OperateurPaiementCode = OperateurPaiement;
 
 /** Portefeuille d'origine d'un paiement, déduit de ses relations. */
 export type SourcePaiement = 'INSCRIPTION' | 'FORMATION' | 'RESTO' | 'RECETTE' | 'DOCUMENT';

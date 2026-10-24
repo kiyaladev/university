@@ -10,5 +10,6 @@
   "courrier_courrier_statut_la_cloture_exige_en_circuit_traite_": "Mail {courrier.statut}: closing requires IN_ROUTING, PROCESSED or ARCHIVED",
   "department_scope_required": "A department head must belong to the recipient department.",
   "department_invalid": "Recipient department not found.",
-  "department_routing_started": "The recipient department cannot change after the first approval."
+  "department_routing_started": "The recipient department cannot change after the first approval.",
+  "seul_un_courrier_en_circuit_peut_etre_paraphe": "Mail {statut}: only an EN_CIRCUIT mail can be countersigned"
 }

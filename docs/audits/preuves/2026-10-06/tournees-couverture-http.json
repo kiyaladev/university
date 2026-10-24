@@ -1,0 +1,10 @@
+{
+  "date": "2026-10-23T12:55:24.722Z",
+  "statut": "echec",
+  "erreur": "seancesPassees\n\n4 !== 3\n",
+  "fixturesRestantes": 0,
+  "productionUntouched": true,
+  "limites": [
+    "Tournées réelles, validation humaine et appareil terrain non qualifiés"
+  ]
+}

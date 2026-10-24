@@ -3,6 +3,7 @@ const assert = require('node:assert/strict'),
   fs = require('node:fs');
 const { randomUUID } = require('node:crypto');
 const { PrismaClient } = require('@prisma/client');
+const { ecrirePreuve } = require('./preuves.cjs');
 assert.ok(process.env.QA_ENV_FILE && process.env.QA_SESSION_FILE);
 const env = JSON.parse(fs.readFileSync(process.env.QA_ENV_FILE));
 const session = JSON.parse(fs.readFileSync(process.env.QA_SESSION_FILE));
@@ -122,7 +123,7 @@ main()
       'Import créneaux non qualifié par cette recette',
       'Fichiers historiques et décodeur XLSX navigateur à qualifier séparément',
     ];
-    fs.writeFileSync('../audit/recommandations-2026-10-06/imports-http.json', JSON.stringify(report, null, 2) + '\n');
+    ecrirePreuve('imports-http.json', report);
     await db.$disconnect();
     console.log(
       JSON.stringify({ statut: report.statut, erreur: report.erreur, fixturesRestantes: report.fixturesRestantes }),

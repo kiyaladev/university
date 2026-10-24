@@ -1,0 +1,81 @@
+{
+  "date": "2026-10-23T15:28:20.394Z",
+  "base": "/university_recommandations_20261006",
+  "statut": "valide",
+  "scenarios": [
+    "Dates modifiées incohérentes refusées",
+    "Ouverture sans candidat refusée",
+    "Rôle étudiant interdit aux modifications",
+    "Transitions concurrentes : une seule écriture et trace",
+    "Bulletin vide et trop de choix refusés",
+    "Un seul bulletin pour quatre dépôts simultanés",
+    "Vote enseignant autorisé selon la règle existante",
+    "Vote après clôture refusé",
+    "Deux voix persistées et résultat proclamé",
+    "Journal des transitions sans identité ni choix électoral"
+  ],
+  "ouvertures": [
+    201,
+    400,
+    400,
+    400
+  ],
+  "depots": [
+    409,
+    201,
+    409,
+    409
+  ],
+  "clotures": [
+    201,
+    400,
+    400,
+    400
+  ],
+  "proclamations": [
+    201,
+    400,
+    400,
+    400
+  ],
+  "resultats": {
+    "election": {
+      "id": "1b276bdb-0c55-46b7-adf0-131e6fbcb646",
+      "titre": "QA Élections concurrence",
+      "type": "CLUB",
+      "nbSieges": 1,
+      "statut": "PROCLAME",
+      "dateOuverture": "2026-10-23T15:27:20.639Z",
+      "dateCloture": "2026-10-23T16:28:20.639Z"
+    },
+    "participation": {
+      "nbBulletins": 2,
+      "voixTotales": 2,
+      "siegesPourvoir": 1
+    },
+    "candidats": [
+      {
+        "id": "567cb282-5441-45b4-868b-891f8e6aa720",
+        "nom": "Recette",
+        "prenom": "Candidat 0",
+        "ordre": 0,
+        "voix": 2,
+        "elu": true
+      },
+      {
+        "id": "64142f50-51a3-4d58-a592-57b346df2c8c",
+        "nom": "Recette",
+        "prenom": "Candidat 1",
+        "ordre": 1,
+        "voix": 0,
+        "elu": false
+      }
+    ]
+  },
+  "fixturesSupprimees": true,
+  "limites": [
+    "Pas de scrutin réel ni validation humaine des règles électorales",
+    "Impression physique non qualifiée",
+    "Route HTTP de connexion non qualifiée par cette fixture"
+  ]
+}

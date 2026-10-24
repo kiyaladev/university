@@ -23,6 +23,11 @@ export default {
     downloadsTitle: '{count} téléchargement(s)',
     sizeMo: '{size} Mo',
   },
+  populaires: {
+    title: 'Les plus téléchargés',
+    subtitle: 'Les documents que le fonds public rend le plus accessibles cette année.',
+    empty: "Aucun document n'a encore été téléchargé cette année.",
+  },
   table: {
     columns: {
       document: 'Document',

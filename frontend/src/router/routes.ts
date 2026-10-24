@@ -129,8 +129,16 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/features/accueil/pages/AccueilUniversitePage.vue'),
         meta: ecran('/documents'),
       },
-      { path: 'bilan', redirect: '/rectorat' },
-      { path: 'mes-demarches', redirect: '/demandes-docs/mes' },
+      {
+        /** Rubrique « Bilan » : elle mène au rectorat (voir le manifeste). */
+        path: 'bilan',
+        redirect: '/rectorat',
+      },
+      {
+        /** Rubrique « Mes démarches » de l'étudiant : elle mène à ses demandes. */
+        path: 'mes-demarches',
+        redirect: '/demandes-docs/mes',
+      },
       {
         path: '',
         name: 'tableau-de-bord',
@@ -149,6 +157,20 @@ const routes: RouteRecordRaw[] = [
         name: 'controle',
         component: () => import('@/features/presence/pages/ControlePage.vue'),
         meta: ecran('/controle'),
+      },
+      {
+        /** Appareils de contrôle et moyens d'attestation des enseignants. */
+        path: 'moyens-attestation',
+        name: 'moyens-attestation',
+        component: () => import('@/features/presence/pages/MoyensAttestationPage.vue'),
+        meta: ecran('/moyens-attestation'),
+      },
+      {
+        /** Correction des pointages enregistrés. */
+        path: 'corrections-pointages',
+        name: 'corrections-pointages',
+        component: () => import('@/features/presence/pages/CorrectionsPointagesPage.vue'),
+        meta: ecran('/corrections-pointages'),
       },
       {
         /** Registre de travail du personnel : on y pointe et on y programme. */
@@ -275,6 +297,13 @@ const routes: RouteRecordRaw[] = [
         meta: ecran('/paiements'),
       },
       {
+        /** Grille des tarifs d'inscription (`/frais`). */
+        path: 'frais',
+        name: 'frais',
+        component: () => import('@/features/finances/pages/FraisPage.vue'),
+        meta: ecran('/frais'),
+      },
+      {
         path: 'evaluations',
         name: 'evaluations',
         component: () => import('@/features/scolarite/pages/EvaluationsPage.vue'),
@@ -308,7 +337,7 @@ const routes: RouteRecordRaw[] = [
         path: 'plagiat/:id',
         name: 'plagiat-detail',
         component: () => import('@/features/administration/pages/PlagiatDetailPage.vue'),
-        meta: { titre: 'nav.plagiat-detail', roles: ['ADMIN', 'DIRECTION'] },
+        meta: ecran('/plagiat/:id'),
       },
       {
         path: 'bulletins',
@@ -488,10 +517,7 @@ const routes: RouteRecordRaw[] = [
         path: 'vod/lecteur/:id',
         name: 'vod-lecteur',
         component: () => import('@/features/campus/pages/VodLecteurPage.vue'),
-        meta: {
-          titre: 'nav.vod-lecteur',
-          roles: ['ENSEIGNANT', 'CONTROLEUR', 'ADMIN', 'SCOLARITE', 'DIRECTION', 'ETUDIANT'],
-        },
+        meta: ecran('/vod/lecteur/:id'),
       },
       {
         path: 'elections',

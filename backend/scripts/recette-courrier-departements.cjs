@@ -16,8 +16,9 @@ assert.equal(env.NODE_ENV, 'development');
 assert.equal(session.api, 'http://127.0.0.1:15041/api');
 assert.equal(session.database, url.pathname);
 Object.assign(process.env, env);
-const { AuthService } = require('../dist/modules/auth/auth.service');
+const { AuthService } = require('../dist/modules/socle/auth/auth.service');
 const { optionsJwt } = require('../dist/common/jwt-config.module');
+const { ecrirePreuve } = require('./preuves.cjs');
 const db = new PrismaClient({ datasources: { db: { url: env.DATABASE_URL } } });
 const auth = new AuthService(db, new JwtService(optionsJwt({ get: (k) => env[k] })));
 const tag = 'QA-COURRIER-DEPARTEMENTS-' + randomUUID();
@@ -86,10 +87,7 @@ async function main() {
       confidentialityViolationReproduced: true,
       productionUntouched: true,
     };
-    fs.writeFileSync(
-      '../audit/recommandations-2026-10-06/courrier-departements-regression.json',
-      JSON.stringify(proof, null, 2),
-    );
+    ecrirePreuve('courrier-departements-regression.json', proof);
     console.log(JSON.stringify(proof));
     return;
   }
@@ -186,7 +184,7 @@ async function main() {
     httpLoginRouteQualified: false,
     productionUntouched: true,
   };
-  fs.writeFileSync('../audit/recommandations-2026-10-06/courrier-departements.json', JSON.stringify(proof, null, 2));
+  ecrirePreuve('courrier-departements.json', proof);
   console.log(JSON.stringify(proof));
 }
 main()

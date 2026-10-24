@@ -6,5 +6,7 @@
   "compteSignatureNonChef": "Le compte de signature ne dirige pas ce département ou n’est plus actif.",
   "departementIntrouvable": "Département introuvable.",
   "releveSemaineComplete": "Le relevé doit couvrir une semaine complète, du lundi au dimanche.",
-  "signatureNonIntegrable": "L’image de la signature ne peut pas être intégrée au PDF."
+  "signatureNonIntegrable": "L’image de la signature ne peut pas être intégrée au PDF.",
+  "la_date_de_debut_doit_preceder_ou_egaler_la_date_de_fin": "La date de début doit précéder ou égaler la date de fin.",
+  "la_periode_ne_peut_depasser_n_jours": "La période d’un rapport ne peut dépasser {jours} jours."
 }

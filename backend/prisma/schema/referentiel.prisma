@@ -1,0 +1,230 @@
+// Domaine « référentiel » : structure académique, enseignants, matières et salles.
+
+enum StatutEnseignant {
+  PERMANENT
+  VACATAIRE
+  CONTRACTUEL
+}
+
+enum Niveau {
+  L1
+  L2
+  L3
+  M1
+  M2
+  DOCTORAT
+}
+
+model AnneeAcademique {
+  id        String   @id @default(uuid())
+  libelle   String   @unique // "2025-2026"
+  dateDebut DateTime @db.Date
+  dateFin   DateTime @db.Date
+  // Objet SQL hors schéma : index UNIQUE partiel "AnneeAcademique_active_key"
+  // (WHERE "active" = true), posé par la migration
+  // 20261002233000_unique_active_annee. Prisma ne sait pas exprimer un
+  // index partiel : il n'apparaît pas dans ce schéma et `migrate diff` ne le
+  // voit pas. Il garantit qu'une seule année académique est active.
+  active    Boolean  @default(false)
+  cloturee  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  promotions           Promotion[]
+  affectations         Affectation[]
+  seances              Seance[]
+  inscriptions         Inscription[]
+  paiements            Paiement[]
+  evaluations          Evaluation[]
+  deliberations        Deliberation[]
+  attestations         Attestation[]
+  feuillesPaie         FeuillePaie[]
+  frais                Frais[]
+  attributionsLogement AttributionLogement[]
+
+  statistiquesMesrs StatistiqueMesrs[]
+  examens           Examen[]
+}
+
+model Departement {
+  id        String   @id @default(uuid())
+  code      String   @unique
+  nom       String
+  faculte   String? // faculté / UFR de rattachement
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  membres               User[]                 @relation("MembresDepartement")
+  courriers             Courrier[]
+  enseignants           Enseignant[]
+  filieres              Filiere[]
+  matieres              Matiere[]
+  documents             DocumentDepot[]
+  equipementsPatrimoine EquipementPatrimoine[]
+  reclamations          Reclamation[]
+  elections             Election[]
+}
+
+model Filiere {
+  id            String      @id @default(uuid())
+  code          String      @unique
+  nom           String
+  departementId String
+  departement   Departement @relation(fields: [departementId], references: [id], onDelete: Restrict)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  promotions Promotion[]
+}
+
+model Promotion {
+  id        String  @id @default(uuid())
+  nom       String // "L1 Informatique groupe A"
+  niveau    Niveau
+  effectif  Int     @default(0)
+  filiereId String
+  filiere   Filiere @relation(fields: [filiereId], references: [id], onDelete: Restrict)
+
+  anneeId String
+  annee   AnneeAcademique @relation(fields: [anneeId], references: [id], onDelete: Restrict)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  affectations Affectation[]
+
+  inscriptions  Inscription[]
+  frais         Frais[]
+  evaluations   Evaluation[]
+  deliberations Deliberation[]
+  attestations  Attestation[]
+  examens       Examen[]
+  elections     Election[]
+
+  @@unique([nom, anneeId])
+  @@index([anneeId])
+  // Les promotions sont listées par filière (structure LMD).
+  @@index([filiereId])
+}
+
+model Salle {
+  id       String  @id @default(uuid())
+  code     String  @unique // "AMPHI-A", "S204"
+  nom      String
+  batiment String?
+  capacite Int     @default(0)
+
+  // Contrôle de présence sur site
+  qrToken     String  @unique // encodé dans le QR affiché dans la salle
+  latitude    Float?
+  longitude   Float?
+  rayonMetres Int     @default(80) // tolérance de géolocalisation
+  actif       Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  creneaux              Creneau[]
+  seances               Seance[]
+  reservationSalles     ReservationSalle[]
+  soutenances           Soutenance[]
+  equipementsPatrimoine EquipementPatrimoine[]
+  examens               Examen[]
+}
+
+model Enseignant {
+  id          String           @id @default(uuid())
+  matricule   String           @unique
+  nom         String
+  prenom      String
+  email       String?          @unique
+  telephone   String?
+  grade       String? // Assistant, Maître-assistant, Maître de conférences, Professeur
+  statut      StatutEnseignant @default(PERMANENT)
+  // Rémunération horaire (vacataires) — sert à l'état de paiement
+  tauxHoraire Decimal          @default(0) @db.Decimal(14, 2)
+  actif       Boolean          @default(true)
+
+  departementId String?
+  departement   Departement? @relation(fields: [departementId], references: [id], onDelete: SetNull)
+
+  userId String? @unique
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  // --- Moyens d'attestation de présence (voir AttestationMode)
+  /// Code personnel à 4-6 chiffres, stocké haché.
+  codePin         String?
+  codePinDefiniLe DateTime?
+
+  /// Gabarit d'empreinte produit par le lecteur (jamais l'image du doigt),
+  /// chiffré au repos — voir common/coffre.ts.
+  empreinteTemplate  String?
+  empreinteDoigt     String? // index droit, pouce gauche…
+  empreinteEnroleeLe DateTime?
+
+  /// Consentement recueilli avant l'enrôlement biométrique : sans lui,
+  /// l'empreinte ne doit pas être conservée. `Par` retient qui l'a recueilli.
+  empreinteConsentementLe  DateTime?
+  empreinteConsentementPar String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  affectations      Affectation[]
+  remplacements     Controle[]         @relation("EnseignantRemplacant")
+  justificatifs     Justificatif[]
+  lignePaies        LignePaie[]
+  documentDepots    DocumentDepot[]
+  travailEncadres   TravailEncadre[]
+  soutenances       Soutenance[]
+  candidatsElection CandidatElection[]
+  coursVOD          CoursVOD[]
+
+  @@index([nom, prenom])
+  @@index([departementId])
+}
+
+model Matiere {
+  id       String @id @default(uuid())
+  code     String @unique
+  intitule String
+
+  volumeHoraireTotal Int @default(0) // heures prévues au programme
+  credits            Int @default(0)
+
+  departementId String?
+  departement   Departement? @relation(fields: [departementId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  affectations Affectation[]
+  evaluations  Evaluation[]
+  examens      Examen[]
+  coursVOD     CoursVOD[]
+}
+
+/// Charge d'enseignement : un enseignant assure une matière pour une promotion
+/// sur une année académique donnée.
+model Affectation {
+  id           String          @id @default(uuid())
+  enseignantId String
+  enseignant   Enseignant      @relation(fields: [enseignantId], references: [id], onDelete: Cascade)
+  matiereId    String
+  matiere      Matiere         @relation(fields: [matiereId], references: [id], onDelete: Cascade)
+  promotionId  String
+  promotion    Promotion       @relation(fields: [promotionId], references: [id], onDelete: Restrict)
+  anneeId      String
+  annee        AnneeAcademique @relation(fields: [anneeId], references: [id], onDelete: Restrict)
+
+  volumeHorairePrevu Int      @default(0) // heures contractuelles à réaliser
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  creneaux Creneau[]
+  seances  Seance[]
+
+  @@unique([enseignantId, matiereId, promotionId, anneeId])
+  @@index([anneeId, promotionId])
+  @@index([promotionId])
+}

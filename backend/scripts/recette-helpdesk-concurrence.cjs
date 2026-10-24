@@ -3,6 +3,7 @@ const assert = require('node:assert/strict'),
   fs = require('node:fs');
 const { randomUUID } = require('node:crypto');
 const { PrismaClient } = require('@prisma/client');
+const { ecrirePreuve } = require('./preuves.cjs');
 assert.ok(process.env.QA_ENV_FILE && process.env.QA_SESSION_FILE);
 const env = JSON.parse(fs.readFileSync(process.env.QA_ENV_FILE));
 const session = JSON.parse(fs.readFileSync(process.env.QA_SESSION_FILE));
@@ -96,14 +97,11 @@ main()
   .finally(async () => {
     await db.auditLog.deleteMany({ where: { entiteId: { in: [...tickets, ...(equipmentId ? [equipmentId] : [])] } } });
     await db.ticketSupport.deleteMany({ where: { id: { in: tickets } } });
-    if (equipmentId) await db.equipementCampus.delete({ where: { id: equipmentId } });
+    if (equipmentId) await db.equipementHelpdesk.delete({ where: { id: equipmentId } });
     report.fixturesRestantes = await db.ticketSupport.count({ where: { id: { in: tickets } } });
     assert.equal(report.fixturesRestantes, 0);
     report.productionUntouched = true;
-    fs.writeFileSync(
-      '../audit/recommandations-2026-10-06/helpdesk-concurrence-http.json',
-      JSON.stringify(report, null, 2) + '\n',
-    );
+    ecrirePreuve('helpdesk-concurrence-http.json', report);
     await db.$disconnect();
     console.log(
       JSON.stringify({ statut: report.statut, erreur: report.erreur, fixturesRestantes: report.fixturesRestantes }),

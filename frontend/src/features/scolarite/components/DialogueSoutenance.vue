@@ -87,10 +87,11 @@
 import { ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
-import { api } from '@/boot/axios';
+import { useReferentielsStore } from '@/stores/referentiels';
 import ChampDate from '@/shared/components/ChampDate.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
-import type { Enseignant, Salle, Soutenance, TravailEncadre } from '@/types';
+import { soutenancesService } from '../services/soutenances';
+import type { Enseignant, Soutenance, TravailEncadre } from '@/types';
 
 /**
  * Deux usages :
@@ -106,6 +107,7 @@ const emit = defineEmits<{ enregistre: [] }>();
 
 const $q = useQuasar();
 const { t } = useI18n();
+const referentiels = useReferentielsStore();
 const enregistrement = ref(false);
 
 const form = ref({
@@ -136,17 +138,17 @@ watch(ouvert, (o) => {
     note: s?.note ?? null,
     mention: s?.mention ?? '',
   };
-  void api
-    .get('/salles', { params: { all: '1' } })
-    .then(({ data }) => {
-      optionsSalles.value = data.data.map((x: Salle) => ({ label: `${x.nom} (${x.code})`, value: x.id }));
+  void referentiels
+    .salles()
+    .then((salles) => {
+      optionsSalles.value = salles.map((x) => ({ label: `${x.nom} (${x.code})`, value: x.id }));
     })
     .catch(() => undefined);
   if (!encadrantsTous.value.length) {
-    void api
-      .get('/enseignants', { params: { all: '1' } })
-      .then(({ data }) => {
-        encadrantsTous.value = data.data;
+    void referentiels
+      .enseignants()
+      .then((enseignants) => {
+        encadrantsTous.value = enseignants;
         optionsEncadrants.value = encadrantsTous.value.map(libelleEncadrant);
       })
       .catch(() => undefined);
@@ -177,13 +179,13 @@ async function enregistrer() {
   enregistrement.value = true;
   try {
     if (props.mode === 'jury') {
-      await api.put(`/soutenances/${props.travail.soutenance!.id}/hota`, {
+      await soutenancesService.hota(props.travail.soutenance!.id, {
         note: form.value.note ?? undefined,
         mention: form.value.mention || undefined,
       });
       $q.notify({ type: 'positive', message: t('stages.dialogs.defense.jurySaved') });
     } else {
-      await api.post('/soutenances', {
+      await soutenancesService.creer({
         travailEncadreId: props.travail.id,
         date: `${form.value.date}T${form.value.heure || '09:00'}`,
         salleId: form.value.salleId || undefined,

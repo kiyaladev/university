@@ -152,7 +152,7 @@
           <q-card-section class="q-pt-none q-gutter-y-xs">
             <div class="row items-center">
               <q-icon name="event" size="16px" class="q-mr-sm text-grey-6" />
-              <span class="text-caption">{{ dateHeureLisible(r.creeLe) }}</span>
+              <span class="text-caption">{{ dateHeureLisible(r.createdAt) }}</span>
             </div>
             <div class="row items-center">
               <q-icon name="chat" size="16px" class="q-mr-sm text-grey-6" />
@@ -207,7 +207,6 @@ import { usePresentationListe } from '@/shared/composables/usePresentationListe'
 import { computed, reactive, ref } from 'vue';
 import { type QTableColumn } from 'quasar';
 import { useI18n } from 'vue-i18n';
-import { api } from '@/boot/axios';
 import { useAuthStore } from '@/stores/auth';
 import BarreFiltres from '@/shared/components/BarreFiltres.vue';
 import BarrePagination from '@/shared/components/BarrePagination.vue';
@@ -216,6 +215,7 @@ import DialogueDetailReclamation from '../components/DialogueDetailReclamation.v
 import EnTetePage from '@/shared/components/EnTetePage.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
 import { pageApi, texteApi, useListePaginee } from '@/shared/composables/useListePaginee';
+import { reclamationsService } from '../services/reclamations';
 import {
   LIBELLE_PRIORITE_RECLAMATION,
   LIBELLE_STATUT_RECLAMATION,
@@ -223,7 +223,8 @@ import {
   dateHeureLisible,
   optionsDepuis,
 } from '@/shared/utils/libelles';
-import type { PrioriteReclamation, Reclamation, TypeReclamation } from '@/types';
+import type { PrioriteReclamation, Reclamation, TypeReclamation } from '../types';
+import type { FiltresPage } from '@/types';
 
 const auth = useAuthStore();
 const { t } = useI18n();
@@ -234,23 +235,20 @@ const OPTIONS_STATUTS = optionsDepuis(LIBELLE_STATUT_RECLAMATION);
 const OPTIONS_TYPES = optionsDepuis(LIBELLE_TYPE_RECLAMATION);
 const OPTIONS_PRIORITES = optionsDepuis(LIBELLE_PRIORITE_RECLAMATION);
 
-const filtres = ref<Record<string, any>>({ recherche: '', statut: null, type: null, priorite: null });
+const filtres = ref<FiltresPage>({ recherche: '', statut: null, type: null, priorite: null });
 const liste = reactive(
   useListePaginee<Reclamation>({
     filtres,
     actif: () => auth.utilisateur?.role === 'ETUDIANT',
+    // La vue étudiante est `/reclamations/me`, exposée par le service de domaine.
     charger: ({ filtres: f, ...p }) =>
-      api
-        .get('/reclamations/me', {
-          params: {
-            ...pageApi(p),
-            statut: f.statut || undefined,
-            type: f.type || undefined,
-            priorite: f.priorite || undefined,
-            search: texteApi(f.recherche),
-          },
-        })
-        .then((r) => r.data),
+      reclamationsService.mesReclamations({
+        ...pageApi(p),
+        statut: f.statut || undefined,
+        type: f.type || undefined,
+        priorite: f.priorite || undefined,
+        search: texteApi(f.recherche),
+      }),
   }),
 );
 const modeVue = usePresentationListe();
@@ -258,7 +256,7 @@ const modeVue = usePresentationListe();
 // Compteurs calculés sur les réclamations affichées (l'API étudiante ne
 // fournit pas de tableau de bord dédié).
 const stats = computed(() => {
-  const counts: Record<string, number> = { OUVERTE: 0, EN_COURS: 0, EN_ATTENTE_REPONSE: 0, RESOLUE: 0 };
+  const counts: Record<string, number> = { OUVERT: 0, EN_COURS: 0, EN_ATTENTE_REPONSE: 0, RESOLU: 0 };
   for (const r of liste.lignes) {
     if (counts[r.statut] != null) counts[r.statut]++;
   }
@@ -270,10 +268,10 @@ const reclamationSelectionnee = ref<Reclamation | null>(null);
 
 // Mêmes intitulés de statut que le registre de la scolarité.
 const plaques = computed(() => [
-  { cle: 'OUVERTE', libelle: t('mesReclamations.stats.labels.open') },
+  { cle: 'OUVERT', libelle: t('mesReclamations.stats.labels.open') },
   { cle: 'EN_COURS', libelle: t('mesReclamations.stats.labels.inProgress') },
   { cle: 'EN_ATTENTE_REPONSE', libelle: t('mesReclamations.stats.labels.awaitingReply') },
-  { cle: 'RESOLUE', libelle: t('mesReclamations.stats.labels.resolved') },
+  { cle: 'RESOLU', libelle: t('mesReclamations.stats.labels.resolved') },
 ]);
 
 function libelleType(t: string) {
@@ -290,9 +288,9 @@ const colonnes = computed<QTableColumn[]>(() => [
   { name: 'priorite', label: t('common.fields.priority'), field: 'priorite', align: 'left' },
   { name: 'statut', label: t('common.fields.status'), field: 'statut', align: 'left' },
   {
-    name: 'creeLe',
+    name: 'createdAt',
     label: t('common.fields.createdOn'),
-    field: 'creeLe',
+    field: 'createdAt',
     align: 'left',
     format: (v: string) => dateHeureLisible(v),
   },

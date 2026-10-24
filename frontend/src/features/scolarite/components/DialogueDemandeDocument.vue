@@ -23,7 +23,7 @@
           <q-item-section>
             <q-item-label>{{ scope.opt.label }}</q-item-label>
             <q-item-label v-if="scope.opt.montant != null" caption>
-              {{ montantLisible(scope.opt.montant) }} {{ scope.opt.devise ?? 'GNF' }}
+              {{ montantLisible(scope.opt.montant) }} {{ scope.opt.devise ?? DEVISE }}
               <span v-if="scope.opt.delaiHeures">
                 · {{ t('demandeDocuments.createDialog.delay', { hours: scope.opt.delaiHeures }) }}</span
               >
@@ -83,11 +83,14 @@
 import { computed, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
-import { api } from '@/boot/axios';
 import ChampRecherche from '@/shared/components/ChampRecherche.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
-import { LIBELLE_TYPE_DEMANDE, montantLisible } from '@/shared/utils/libelles';
-import type { DemandeDocument, Inscription, TarifDemande, TypeDemandeDocument } from '@/types';
+import { DEVISE, LIBELLE_TYPE_DEMANDE, montantLisible } from '@/shared/utils/libelles';
+import { demandesDocumentsService } from '../services/documents-demande';
+import { inscriptionsService } from '../services/inscriptions';
+import type { Inscription } from '@/types';
+import type { DemandeDocument, TarifDemande, TypeDemandeDocument } from '../types';
+import { messageErreurApi } from '@/shared/utils/erreur-http';
 
 const ouvert = defineModel<boolean>({ required: true });
 const emit = defineEmits<{ enregistre: [DemandeDocument] }>();
@@ -129,12 +132,12 @@ watch(ouvert, async (o) => {
   erreur.value = '';
   form.value = { type: null, motif: '', inscriptionId: null };
   try {
-    const [tarifsRes, inscriptionsRes] = await Promise.all([
-      api.get('/documents-demande/tarifs'),
-      api.get('/inscriptions', { params: { all: '1' } }),
+    const [tarifsCharges, inscriptionsChargees] = await Promise.all([
+      demandesDocumentsService.tarifs(),
+      inscriptionsService.tous({ all: '1' }),
     ]);
-    tarifs.value = Array.isArray(tarifsRes.data) ? tarifsRes.data : [];
-    inscriptions.value = Array.isArray(inscriptionsRes.data?.data) ? inscriptionsRes.data.data : [];
+    tarifs.value = tarifsCharges;
+    inscriptions.value = inscriptionsChargees;
   } catch {
     tarifs.value = [];
     inscriptions.value = [];
@@ -149,12 +152,12 @@ async function envoyer() {
     const body: Record<string, unknown> = { type: form.value.type };
     if (form.value.motif.trim()) body.motif = form.value.motif.trim();
     if (form.value.inscriptionId) body.inscriptionId = form.value.inscriptionId;
-    const { data } = await api.post('/documents-demande', body, { silencieux: true });
-    $q.notify({ type: 'positive', message: t('demandeDocuments.createDialog.created', { number: data.numero }) });
-    emit('enregistre', data as DemandeDocument);
+    const demande = await demandesDocumentsService.creer(body, { silencieux: true });
+    $q.notify({ type: 'positive', message: t('demandeDocuments.createDialog.created', { number: demande.numero }) });
+    emit('enregistre', demande);
     ouvert.value = false;
-  } catch (e: any) {
-    erreur.value = e.response?.data?.message ?? t('demandeDocuments.createDialog.createFailed');
+  } catch (e: unknown) {
+    erreur.value = messageErreurApi(e) ?? t('demandeDocuments.createDialog.createFailed');
   } finally {
     enregistrement.value = false;
   }

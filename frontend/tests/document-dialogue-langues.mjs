@@ -13,8 +13,8 @@ try {
   page.setDefaultTimeout(8000);
   const errors = [];
   const apiFailures = [];
-  page.on('pageerror', error => errors.push(error.message));
-  page.on('response', response => {
+  page.on('pageerror', (error) => errors.push(error.message));
+  page.on('response', (response) => {
     if (response.url().includes('/api/') && response.status() >= 400) {
       apiFailures.push({ status: response.status(), path: new URL(response.url()).pathname });
     }
@@ -22,7 +22,7 @@ try {
   await page.goto(base + '/#/connexion', { waitUntil: 'networkidle' });
   await page.locator('input[type=email]').fill('direction@unipresence.gn');
   await page.locator('input[type=password]').fill('Passer@2026');
-  const loginResponse = page.waitForResponse(response => response.url().includes('/api/auth/login'));
+  const loginResponse = page.waitForResponse((response) => response.url().includes('/api/auth/login'));
   await page.locator('button[type=submit]').click();
   const login = await loginResponse;
   assert.ok(login.status() >= 200 && login.status() < 300, `Connexion QA refusée (${login.status()})`);
@@ -32,7 +32,16 @@ try {
   const dialog = page.locator('.q-dialog');
   await dialog.getByText('Fiche du document', { exact: true }).waitFor();
   const frText = await dialog.innerText();
-  for (const text of ['Fiche du document', 'Titre *', 'Type *', 'Auteurs', 'Résumé', 'Mots-clés', 'Fichier (archivage natif)', 'PDF joint']) {
+  for (const text of [
+    'Fiche du document',
+    'Titre *',
+    'Type *',
+    'Auteurs',
+    'Résumé',
+    'Mots-clés',
+    'Fichier (archivage natif)',
+    'PDF joint',
+  ]) {
     assert.ok(frText.includes(text), `Libellé français absent : ${text}`);
   }
   await dialog.getByRole('button', { name: 'Annuler', exact: true }).click();
@@ -42,7 +51,16 @@ try {
   await page.getByRole('button', { name: 'Deposit a document', exact: true }).click();
   await dialog.getByText('Document details', { exact: true }).waitFor();
   const enText = await dialog.innerText();
-  for (const text of ['Document details', 'Title *', 'Type *', 'Authors', 'Abstract', 'Keywords', 'File (native archiving)', 'Attached PDF']) {
+  for (const text of [
+    'Document details',
+    'Title *',
+    'Type *',
+    'Authors',
+    'Abstract',
+    'Keywords',
+    'File (native archiving)',
+    'Attached PDF',
+  ]) {
     assert.ok(enText.includes(text), `English label missing: ${text}`);
   }
   assert.deepEqual(errors, []);

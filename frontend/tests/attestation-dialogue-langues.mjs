@@ -13,8 +13,8 @@ try {
   page.setDefaultTimeout(Number(process.env.QA_BROWSER_TIMEOUT_MS || 10000));
   const errors = [];
   const apiFailures = [];
-  page.on('pageerror', error => errors.push(error.message));
-  page.on('response', response => {
+  page.on('pageerror', (error) => errors.push(error.message));
+  page.on('response', (response) => {
     if (response.url().includes('/api/') && response.status() >= 400) {
       apiFailures.push({ status: response.status(), path: new URL(response.url()).pathname });
     }
@@ -26,12 +26,15 @@ try {
     const me = await fetch(session.api + '/auth/me', { headers: { Authorization: `Bearer ${session.token}` } });
     assert.equal(me.status, 200);
     assert.equal((await me.json()).role, 'ADMIN');
-    await page.addInitScript(token => { localStorage.setItem('unipresence_token', token); localStorage.setItem('lang', 'fr-FR'); }, session.token);
+    await page.addInitScript((token) => {
+      localStorage.setItem('university_token', token);
+      localStorage.setItem('university_lang', 'fr-FR');
+    }, session.token);
   } else {
     await page.goto(base + '/#/connexion', { waitUntil: 'networkidle' });
     await page.locator('input[type=email]').fill('admin@unipresence.gn');
     await page.locator('input[type=password]').fill('Passer@2026');
-    const loginResponse = page.waitForResponse(response => response.url().includes('/api/auth/login'));
+    const loginResponse = page.waitForResponse((response) => response.url().includes('/api/auth/login'));
     await page.locator('button[type=submit]').click();
     const login = await loginResponse;
     assert.ok(login.status() >= 200 && login.status() < 300, `Connexion QA refusée (${login.status()})`);
@@ -43,7 +46,13 @@ try {
   await ouvrir.first().click();
   const dialog = page.locator('.q-dialog');
   const frText = await dialog.innerText();
-  for (const text of ['Étudiant *', "Type d'attestation *", 'Motif (bourse, banque, passeport…)', 'Rattachement', 'Émettre']) {
+  for (const text of [
+    'Étudiant *',
+    "Type d'attestation *",
+    'Motif (bourse, banque, passeport…)',
+    'Rattachement',
+    'Émettre',
+  ]) {
     assert.ok(frText.includes(text), `Libellé français absent : ${text}`);
   }
   await dialog.getByRole('button', { name: 'Annuler', exact: true }).click();
@@ -52,7 +61,13 @@ try {
   await page.getByText('English', { exact: true }).click();
   await page.getByRole('button', { name: 'Issue an attestation', exact: true }).first().click();
   const enText = await dialog.innerText();
-  for (const text of ['Student *', 'Attestation type *', 'Reason (scholarship, bank, passport…)', 'Academic track', 'Issue']) {
+  for (const text of [
+    'Student *',
+    'Attestation type *',
+    'Reason (scholarship, bank, passport…)',
+    'Academic track',
+    'Issue',
+  ]) {
     assert.ok(enText.includes(text), `English label missing: ${text}`);
   }
   assert.deepEqual(errors, []);
@@ -65,7 +80,9 @@ try {
     erreursApi: apiFailures,
     aucuneEcriture: true,
     sessionQaReutilisee: Boolean(process.env.QA_SESSION_FILE),
-    sourceSession: process.env.QA_SESSION_FILE ? JSON.parse(fs.readFileSync(process.env.QA_SESSION_FILE, 'utf8')).fixtureSource : 'POST /auth/login',
+    sourceSession: process.env.QA_SESSION_FILE
+      ? JSON.parse(fs.readFileSync(process.env.QA_SESSION_FILE, 'utf8')).fixtureSource
+      : 'POST /auth/login',
   };
   fs.writeFileSync(report, JSON.stringify(evidence, null, 2));
   console.log(JSON.stringify(evidence));

@@ -1,0 +1,23 @@
+{
+  "date": "2026-10-23T12:54:47.743Z",
+  "statut": "valide",
+  "resolutions": [
+    400,
+    201,
+    400,
+    400
+  ],
+  "resolutionEtPriseEnCharge": [
+    201,
+    400
+  ],
+  "observations": [
+    "Une résolution parmi quatre demandes simultanées",
+    "Résolution et prise en charge concurrentes : état terminal RESOLU conservé",
+    "Une seule trace de résolution par ticket",
+    "Lecture tiers et traitement enseignant refusés",
+    "Description absente du journal"
+  ],
+  "fixturesRestantes": 0,
+  "productionUntouched": true
+}

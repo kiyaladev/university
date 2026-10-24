@@ -13,17 +13,17 @@ const browser = await chromium.launch();
 const context = await browser.newContext({ locale: 'fr-FR', viewport: { width: 1280, height: 900 } });
 const page = await context.newPage();
 const errors = [];
-page.on('pageerror', error => errors.push(error.message));
-page.on('console', message => {
+page.on('pageerror', (error) => errors.push(error.message));
+page.on('console', (message) => {
   if (message.text().includes('intlify')) errors.push(message.text());
 });
 
 try {
   await page.addInitScript(() => {
-    localStorage.setItem('unipresence_token', 'options-langues-test-token');
-    localStorage.setItem('lang', 'fr-FR');
+    localStorage.setItem('university_token', 'options-langues-test-token');
+    localStorage.setItem('university_lang', 'fr-FR');
   });
-  await page.route('**/api/**', async route => {
+  await page.route('**/api/**', async (route) => {
     const url = new URL(route.request().url());
     let body = { data: [], total: 0 };
     if (url.pathname.endsWith('/auth/me')) {
@@ -42,8 +42,9 @@ try {
     await page.getByRole('combobox', { name: label, exact: true }).click();
     const options = page.locator('.q-menu [role="option"]');
     await options.first().waitFor();
-    const textes = (await options.allTextContents()).map(t => t.trim()).filter(Boolean);
-    for (const valeur of attendues) assert.ok(textes.includes(valeur), `${label}: option ${valeur}, reçues: ${textes.join(', ')}`);
+    const textes = (await options.allTextContents()).map((t) => t.trim()).filter(Boolean);
+    for (const valeur of attendues)
+      assert.ok(textes.includes(valeur), `${label}: option ${valeur}, reçues: ${textes.join(', ')}`);
     await page.keyboard.press('Escape');
   }
 
