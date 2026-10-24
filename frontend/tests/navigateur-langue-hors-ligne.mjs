@@ -2,9 +2,9 @@
  * Recette navigateur : changement de langue fr/en, titre « University » et
  * mode hors ligne.
  *
- * Le mode hors ligne est vérifié sur la file des séances : elle doit être
- * chiffrée dans le stockage local, et aucune donnée en clair ne doit y
- * subsister.
+ * Le mode hors ligne est vérifié sur la file des séances et sur les caches de
+ * tournée préparée (affectations, salles) : tout doit être chiffré dans le
+ * stockage local, et aucune donnée en clair ne doit y subsister.
  *
  *   node tests/navigateur-langue-hors-ligne.mjs [dossier du build] [dossier des preuves]
  */
@@ -228,8 +228,10 @@ try {
         code: 'REC-NAV',
         nom: 'Salle recette en clair',
       };
-      store.enregistrerAffectations([affectation]);
-      store.enregistrerSalles([salle]);
+      // Les caches de tournée sont chiffrés : leur écriture est asynchrone,
+      // il faut l'attendre avant de lire le stockage local.
+      await store.enregistrerAffectations([affectation]);
+      await store.enregistrerSalles([salle]);
       const resultat = await store.creer(
         {
           affectationId: affectation.id,
@@ -284,13 +286,53 @@ try {
       capture,
     );
 
+    // Les caches de tournée (affectations, salles) sont chiffrés comme la
+    // file : l'intitulé de l'affectation, le code et le nom de la salle ne
+    // doivent pas rester lisibles sur l'appareil.
+    const caches = stockage.filter(
+      (entree) =>
+        entree.cle.startsWith('university_affectations_tournee') || entree.cle.startsWith('university_salles_tournee'),
+    );
+    const problemesCaches = [];
+    if (caches.length !== 2) {
+      problemesCaches.push(`attendu : deux caches de tournée ; obtenu : ${caches.length}`);
+    }
+    for (const cache of caches) {
+      if (!cache.valeur.startsWith('upf1:')) {
+        problemesCaches.push(`le cache « ${cache.cle} » n’est pas chiffré : « ${cache.valeur.slice(0, 60)}… »`);
+        continue;
+      }
+      for (const marqueur of [
+        'Recette navigateur',
+        'Salle recette en clair',
+        'REC-NAV',
+        '"intitule"',
+        '"code"',
+        '"nom"',
+      ]) {
+        if (cache.valeur.includes(marqueur)) {
+          problemesCaches.push(`le cache « ${cache.cle} » contient « ${marqueur} » en clair`);
+        }
+      }
+    }
+    noter(
+      'hors ligne — caches de tournée chiffrés',
+      problemesCaches.length ? 'KO' : 'OK',
+      problemesCaches.join(' | ') ||
+        caches.map((cache) => `${cache.cle} chiffrée (${cache.valeur.length} caractères)`).join(' | '),
+      problemesCaches.length ? await capturer(page, dossierPreuves, 'navigateur-hors-ligne-caches') : undefined,
+    );
+
     // Aucun reste en clair dans le stockage local, toutes clés confondues.
     const marqueurs = [
       'THEMATIQUE_EN_CLAIR_A_NE_PAS_LIRE',
       'Recette navigateur',
       'Salle recette en clair',
+      'REC-NAV',
       '"idClient"',
       '"thematique"',
+      '"intitule"',
+      '"enregistreesLe"',
     ];
     const enClair = [];
     for (const entree of stockage) {
@@ -317,22 +359,31 @@ try {
       return {
         file: store?.file?.length ?? -1,
         thematique: store?.file?.[0]?.thematique ?? '',
+        affectations: store?.affectationsCache?.length ?? -1,
+        salles: store?.sallesCache?.length ?? -1,
+        intitule: store?.affectationsCache?.[0]?.intitule ?? '',
+        nomSalle: store?.sallesCache?.[0]?.nom ?? '',
         ecranVide: (document.body.innerText || '').trim().length,
       };
     });
-    if (restaure.file !== 1 || !restaure.thematique.includes('THEMATIQUE_EN_CLAIR')) {
+    const cachesRestitues =
+      restaure.affectations === 1 &&
+      restaure.salles === 1 &&
+      restaure.intitule.includes('Recette navigateur') &&
+      restaure.nomSalle.includes('Salle recette en clair');
+    if (restaure.file !== 1 || !restaure.thematique.includes('THEMATIQUE_EN_CLAIR') || !cachesRestitues) {
       const captureRestaure = await capturer(page, dossierPreuves, 'navigateur-hors-ligne-rechargement');
       noter(
         'hors ligne — rechargement et restitution de la file',
         'KO',
-        `attendu : une séance en file après rechargement hors ligne ; obtenu : ${JSON.stringify(restaure)}`,
+        `attendu : une séance en file et les caches de tournée après rechargement hors ligne ; obtenu : ${JSON.stringify(restaure)}`,
         captureRestaure,
       );
     } else {
       noter(
         'hors ligne — rechargement et restitution de la file',
         'OK',
-        `une séance restituée après rechargement hors ligne, écran ${restaure.ecranVide} caractères`,
+        `une séance et les caches de tournée restitués après rechargement hors ligne, écran ${restaure.ecranVide} caractères`,
       );
     }
     await contexte.setOffline(false);
