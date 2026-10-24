@@ -162,6 +162,7 @@ import type {
   StatutEvaluation,
   TypeEvaluation,
   ChipFiltre,
+  FiltresPage,
 } from '@/types';
 
 const $q = useQuasar();
@@ -188,7 +189,7 @@ const evaluationEditee = ref<Evaluation | null>(null);
 const modeVue = usePresentationListe();
 
 const FILTRES_VIDES = { recherche: '', anneeId: null, promotionId: null, matiereId: null, type: null, statut: null };
-const filtres = ref<Record<string, any>>({ ...FILTRES_VIDES });
+const filtres = ref<FiltresPage>({ ...FILTRES_VIDES });
 // `/evaluations?promotion=…` : arrivée depuis la fiche d'un étudiant.
 if (typeof route.query.promotion === 'string' && route.query.promotion) {
   filtres.value.promotionId = route.query.promotion;

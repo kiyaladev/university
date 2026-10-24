@@ -135,7 +135,7 @@ import AssistanceMesTicketsPanneau from '../components/AssistanceMesTicketsPanne
 import AssistanceGestionPanneau from '../components/AssistanceGestionPanneau.vue';
 import AssistanceEquipementsPanneau from '../components/AssistanceEquipementsPanneau.vue';
 import AssistanceTicketDialogue from '../components/AssistanceTicketDialogue.vue';
-import type { CategorieIncident, EquipementCampus, StatutTicket, TicketSupport } from '@/types';
+import type { CategorieIncident, EquipementCampus, StatutTicket, TicketSupport, FiltresPage } from '@/types';
 
 const $q = useQuasar();
 const { t } = useI18n();
@@ -168,7 +168,7 @@ const mes = reactive(
   }),
 );
 
-const filtres = ref<Record<string, any>>({
+const filtres = ref<FiltresPage>({
   recherche: '',
   statut: null,
   categorie: null,
@@ -193,7 +193,7 @@ const gestion = reactive(
   }),
 );
 
-const filtresEquip = ref<Record<string, any>>({ recherche: '', actif: null });
+const filtresEquip = ref<FiltresPage>({ recherche: '', actif: null });
 /** Parc d'équipements : l'API filtre mais ne pagine pas. */
 const equip = reactive(
   useListePaginee<EquipementCampus>({

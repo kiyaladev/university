@@ -120,8 +120,8 @@ watch(
   { immediate: true },
 );
 
-function enregistrerCanvasDetail(el: any) {
-  if (!el || !props.equipement) return;
+function enregistrerCanvasDetail(el: unknown) {
+  if (!(el instanceof HTMLCanvasElement) || !props.equipement) return;
   QRCode.toCanvas(el, props.equipement.qrCode, { width: 180, margin: 1 }).catch(() => {});
 }
 

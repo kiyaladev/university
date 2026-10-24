@@ -132,6 +132,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { accueilParRole } from '@/shared/utils/accueil';
 import { useAuthStore } from '@/stores/auth';
 import type { Role } from '@/types';
+import { messageErreurApi } from '@/shared/utils/erreur-http';
 
 const auth = useAuthStore();
 const router = useRouter();
@@ -144,10 +145,8 @@ const voirMotDePasse = ref(false);
 const erreur = ref('');
 
 /** Le back renvoie parfois un tableau de messages de validation. */
-function messageErreur(e: any): string {
-  const message = e?.response?.data?.message;
-  if (Array.isArray(message)) return message.join(' · ');
-  return message ?? t('loginPage.errors.default');
+function messageErreur(e: unknown): string {
+  return messageErreurApi(e) ?? t('loginPage.errors.default');
 }
 
 async function connexion() {
@@ -158,7 +157,7 @@ async function connexion() {
     if (suite) return router.push(suite);
     // Chaque rôle atterrit sur sa page d'entrée : tournée, séances, portail.
     return router.push(accueilParRole(utilisateur.role));
-  } catch (e: any) {
+  } catch (e: unknown) {
     erreur.value = messageErreur(e);
   }
 }

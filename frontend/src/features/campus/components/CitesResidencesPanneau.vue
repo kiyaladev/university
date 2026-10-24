@@ -218,7 +218,7 @@ import BarreFiltres from '@/shared/components/BarreFiltres.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
 import { usePresentationListe } from '@/shared/composables/usePresentationListe';
 import { nombreLisible } from '@/shared/utils/format';
-import type { ChipFiltre, Residence } from '@/types';
+import type { ChipFiltre, Residence, FiltresPage } from '@/types';
 
 const props = defineProps<{
   /** Le parc complet : les filtres « actif », « ville » et « capacité » s'appliquent ici. */
@@ -229,7 +229,7 @@ const props = defineProps<{
 }>();
 
 /** Filtres du panneau : la page les garde (et les inscrit dans l'URL). */
-const filtres = defineModel<Record<string, any>>('filtres', { required: true });
+const filtres = defineModel<FiltresPage>('filtres', { required: true });
 
 const emit = defineEmits<{
   creer: [];

@@ -90,7 +90,7 @@
 
       <template #body-cell-role="p">
         <q-td :props="p">
-          <q-chip dense color="primary" text-color="white">{{ LIBELLE_ROLE[p.row.role] }}</q-chip>
+          <q-chip dense color="primary" text-color="white">{{ libelleDepuis(LIBELLE_ROLE, p.row.role) }}</q-chip>
         </q-td>
       </template>
 
@@ -333,8 +333,8 @@ import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
 import { pageApi, texteApi, useListePaginee } from '@/shared/composables/useListePaginee';
 import { useConfirmation } from '@/shared/composables/useConfirmation';
 import BarrePagination from '@/shared/components/BarrePagination.vue';
-import { LIBELLE_ROLE } from '@/shared/utils/libelles';
-import type { Departement, Enseignant, Role, Utilisateur, ChipFiltre } from '@/types';
+import { LIBELLE_ROLE, libelleDepuis } from '@/shared/utils/libelles';
+import type { Departement, Enseignant, Role, Utilisateur, ChipFiltre, FiltresPage } from '@/types';
 
 const $q = useQuasar();
 const auth = useAuthStore();
@@ -351,7 +351,7 @@ const dialogOuvert = ref(false);
 const utilisateurEdite = ref<Utilisateur | null>(null);
 const enregistrement = ref(false);
 
-const filtres = ref<Record<string, any>>({ recherche: '', role: null, departementId: null });
+const filtres = ref<FiltresPage>({ recherche: '', role: null, departementId: null });
 const liste = reactive(
   useListePaginee<Utilisateur>({
     filtres,

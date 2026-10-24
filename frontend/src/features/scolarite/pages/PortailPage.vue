@@ -151,6 +151,7 @@ import PortailRestoPanel from '../components/PortailRestoPanel.vue';
 import type { ReponseRestoPortail } from '../components/PortailResto.types';
 import { portailService, type ResultatsPortail } from '../services/portail';
 import type { AttestationPortail, LigneResto, PortailProfil, PortefeuilleRestoPortail } from '../types';
+import { messageErreurApi } from '@/shared/utils/erreur-http';
 
 const { t } = useI18n();
 const $q = useQuasar();
@@ -226,9 +227,8 @@ async function charger() {
     ]);
     profil.value = p;
     resultats.value = r;
-  } catch (e: any) {
-    const message = e?.response?.data?.message;
-    erreur.value = Array.isArray(message) ? message.join(' · ') : (message ?? t('portail.messages.loadError'));
+  } catch (e: unknown) {
+    erreur.value = messageErreurApi(e) ?? t('portail.messages.loadError');
   }
 }
 

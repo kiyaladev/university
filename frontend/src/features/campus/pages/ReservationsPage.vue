@@ -100,7 +100,7 @@ import DialogueReservation from '../components/DialogueReservation.vue';
 import DialogueDetailReservation from '../components/DialogueDetailReservation.vue';
 import { reservationsService, type ParametresCalendrier } from '../services/reservations';
 import type { ReservationDetail, JourCalendrier } from '../types';
-import type { ReservationSalle, Salle, ChipFiltre } from '@/types';
+import type { ReservationSalle, Salle, ChipFiltre, FiltresPage } from '@/types';
 
 const auth = useAuthStore();
 const { t } = useI18n();
@@ -128,7 +128,7 @@ function dernierJourDuMois(iso = aujourdhui()): string {
   return `${iso.slice(0, 7)}-${String(dernier).padStart(2, '0')}`;
 }
 
-const filtresReservations = ref<Record<string, any>>({
+const filtresReservations = ref<FiltresPage>({
   dateDebut: premierJourDuMois(),
   dateFin: dernierJourDuMois(),
 });
@@ -150,7 +150,7 @@ function trierReservations(reservations: ReservationSalle[]): ReservationSalle[]
  * n'accepte qu'un `dateJour`). Elle renvoie déjà les salles et les séances.
  */
 const liste = reactive(
-  useListePaginee<ReservationSalle, Record<string, any>>({
+  useListePaginee<ReservationSalle, FiltresPage>({
     filtres: filtresReservations,
     // L'API ne pagine pas : la période arrive entière, le tri reste local.
     pageSize: 0,

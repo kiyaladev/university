@@ -52,7 +52,8 @@ export interface CorpsResidence {
 /** Champs acceptés à la création ou à la modification d'une chambre. */
 export interface CorpsChambre {
   code: string;
-  residenceId: string;
+  /** Résidence de rattachement : exigée par l'API, mais le formulaire la laisse vide. */
+  residenceId: string | null;
   categorie: string;
   lits: number;
   loyer: number;

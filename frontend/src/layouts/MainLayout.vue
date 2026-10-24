@@ -237,11 +237,20 @@ const enregistrement = ref(false);
 const justificatifsEnAttente = ref(0);
 const installable = ref(false);
 
+/**
+ * Invite d'installation que le navigateur déclenche (`beforeinstallprompt`).
+ * L'événement n'est pas dans les types du DOM : on en décrit le minimum.
+ */
+interface InviteInstallation {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
+}
+
 // Passer à `true` quand `university.apk` est publié dans /telechargement/
 // (scripts/apk.sh, docs/android.md) : sans fichier, le lien mènerait à une 404.
 const APK_PUBLIE = false;
 const proposerApk = computed(() => APK_PUBLIE && /android/i.test(navigator.userAgent) && !surAndroid());
-let invite: any = null;
+let invite: InviteInstallation | null = null;
 
 const { t } = useI18n();
 const titrePage = computed(() => titreRoute(route.meta.titre));
@@ -355,7 +364,7 @@ async function changerMotDePasse() {
 function preparerInstallation() {
   window.addEventListener('beforeinstallprompt', (e: Event) => {
     e.preventDefault();
-    invite = e as any;
+    invite = e as unknown as InviteInstallation;
     installable.value = true;
   });
   window.addEventListener('appinstalled', () => {

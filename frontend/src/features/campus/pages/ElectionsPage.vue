@@ -22,7 +22,7 @@ import ElectionsCandidatsDialogue from '../components/ElectionsCandidatsDialogue
 import ElectionsResultatsDialogue from '../components/ElectionsResultatsDialogue.vue';
 import { electionsService } from '../services/elections';
 import type { ActionTransitionElection } from '../types';
-import type { CandidatElection, Election, StatutElection } from '@/types';
+import type { CandidatElection, Election, StatutElection, FiltresPage } from '@/types';
 
 const $q = useQuasar();
 const auth = useAuthStore();
@@ -31,7 +31,7 @@ const { confirmer } = useConfirmation();
 
 const onglet = ref<StatutElection>('BROUILLON');
 
-const filtres = ref<Record<string, any>>({ recherche: '', type: null });
+const filtres = ref<FiltresPage>({ recherche: '', type: null });
 const liste = reactive(
   useListePaginee<Election>({
     filtres,

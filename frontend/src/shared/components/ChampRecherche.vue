@@ -13,10 +13,19 @@ import { onBeforeUnmount, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { api } from '@/boot/axios';
 
+/**
+ * Un élément renvoyé par l'API.
+ *
+ * L'endpoint est fourni par le parent : seul lui connaît la forme exacte de
+ * l'élément, qu'il transforme en libellé avec `labelFn`. On n'en retient ici
+ * que les champs affichables.
+ */
+type ElementApi = Record<string, string | number | boolean | null | undefined>;
+
 interface Option {
   label: string;
   value: string;
-  raw?: any;
+  raw?: ElementApi;
 }
 
 const props = withDefaults(
@@ -25,7 +34,14 @@ const props = withDefaults(
     endpoint: string;
     /** Champ de l'option à utiliser comme identifiant (par défaut id) */
     valueField?: string;
-    /** Fonction (item) => libellé affiché */
+    /**
+     * Fonction (item) => libellé affiché.
+     *
+     * La forme de l'élément est propre à l'endpoint : le parent la connaît et
+     * la déclare dans sa fonction. `any` reste donc nécessaire ici — c'est le
+     * seul endroit où l'écran touche la donnée brute.
+     */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- la forme de l'élément est propre à l'endpoint
     labelFn: (item: any) => string;
     /** Libellé affiché au-dessus du champ */
     label?: string;
@@ -63,6 +79,11 @@ const props = withDefaults(
 );
 
 const emit = defineEmits<{
+  /**
+   * `raw` est l'élément tel que l'API l'a renvoyé : sa forme est celle de
+   * l'endpoint, connue du seul parent qui l'a demandé.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- la forme de l'élément est propre à l'endpoint
   'update:modelValue': [value: string | null, raw?: any];
 }>();
 
@@ -76,8 +97,8 @@ const loading = ref(false);
  */
 const erreur = ref<string | null>(null);
 const recherche = ref('');
-const valeurCourante = ref<any>(props.modelValue ?? null);
-let timer: any = null;
+const valeurCourante = ref<string | null>(props.modelValue ?? null);
+let timer: ReturnType<typeof setTimeout> | null = null;
 /**
  * Numéro de la demande en cours. Deux recherches peuvent se chevaucher : sans
  * ce garde-fou, une réponse lente arrivée après une réponse rapide écrasait la
@@ -95,16 +116,19 @@ async function charger(rechercheLibre?: string) {
   loading.value = true;
   erreur.value = null;
   try {
-    const params: any = { all: 1 };
+    const params: Record<string, string | number> = { all: 1 };
     if (rechercheLibre) params.search = rechercheLibre;
     // `silencieux` : le composant affiche son propre message d'échec sous le
     // champ, la notification globale ferait doublon.
-    const { data } = await api.get(props.endpoint, { params, silencieux: true });
+    const { data } = await api.get<ElementApi[] | { data?: ElementApi[] }>(props.endpoint, {
+      params,
+      silencieux: true,
+    });
     if (mien !== requeteCourante) return;
-    const liste: any[] = Array.isArray(data) ? data : (data?.data ?? []);
+    const liste: ElementApi[] = Array.isArray(data) ? data : (data.data ?? []);
     options.value = liste.map((item) => ({
-      label: props.labelFn(item) || item?.[props.valueField] || '?',
-      value: item[props.valueField],
+      label: props.labelFn(item) || String(item?.[props.valueField] ?? '?'),
+      value: String(item[props.valueField]),
       raw: item,
     }));
   } catch {
@@ -128,7 +152,7 @@ function ouvrirFiltre(val: string, miseAJour: (cb: () => void) => void) {
 watch(
   () => props.modelValue,
   async (v) => {
-    valeurCourante.value = v;
+    valeurCourante.value = v ?? null;
     // Préchargement de l'item courant pour avoir le label affiché dans la zone
     if (!v || !props.preload) return;
     if (options.value.find((o) => o.value === v)) return;
@@ -142,13 +166,13 @@ watch(
     }
     const route = props.endpointDetail ?? props.endpoint;
     try {
-      const { data } = await api.get(`${route}/${v}`, { silencieux: true });
+      const { data } = await api.get<ElementApi[] | ElementApi>(`${route}/${v}`, { silencieux: true });
       const item = Array.isArray(data) ? data[0] : data;
       if (item && item[props.valueField]) {
         options.value = [
           {
-            label: props.labelFn(item) || item[props.valueField],
-            value: item[props.valueField],
+            label: props.labelFn(item) || String(item[props.valueField]),
+            value: String(item[props.valueField]),
             raw: item,
           },
           ...options.value,

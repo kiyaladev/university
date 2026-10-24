@@ -1,9 +1,11 @@
 import { defineStore } from 'pinia';
 import { Notify } from 'quasar';
+import axios from 'axios';
 import { api } from '../boot/axios';
 import { i18n } from '../boot/i18n';
 import { lireToken, proprietaireDepuisToken } from '@/shared/services/session';
 import { CLE_AFFECTATIONS, CLE_FILE_SEANCES, CLE_SALLES, clePour } from '@/shared/services/cles-stockage';
+import { extraireMessageErreur } from '@/shared/utils/erreur-http';
 import {
   OPTIONS_SEANCES,
   ecrireFileHorsLigne,
@@ -59,8 +61,18 @@ function lireSalles(owner: string): Salle[] {
   }
 }
 
-function erreurTransport(e: any) {
-  return !e?.response || e.response.status >= 500;
+/**
+ * Erreur métier : le serveur a refusé la séance. Elle ne doit pas être
+ * rejouée indéfiniment, contrairement à une panne de transport.
+ */
+function estErreurMetier(e: unknown): boolean {
+  return typeof e === 'object' && e !== null && 'metier' in e && e.metier === true;
+}
+
+/** Vrai quand l'échec vient du réseau (ou du serveur), pas du métier. */
+function erreurTransport(e: unknown): boolean {
+  if (axios.isAxiosError(e)) return !e.response || e.response.status >= 500;
+  return true;
 }
 
 export const useSeancesStore = defineStore('seancesHorsLigne', {
@@ -172,8 +184,8 @@ export const useSeancesStore = defineStore('seancesHorsLigne', {
               metier: true,
             });
           return { id: resultat.id as string, enFile: false };
-        } catch (e: any) {
-          if (!erreurTransport(e) || e.metier) throw e;
+        } catch (e: unknown) {
+          if (!erreurTransport(e) || estErreurMetier(e)) throw e;
         }
       }
 
@@ -246,11 +258,15 @@ export const useSeancesStore = defineStore('seancesHorsLigne', {
           });
         }
         return data;
-      } catch (e: any) {
+      } catch (e: unknown) {
+        const reponse = axios.isAxiosError(e) ? e.response : undefined;
+        const messageErreur = extraireMessageErreur(reponse?.data);
         if (!this.erreurReseauSignalee)
           Notify.create({
             type: 'warning',
-            message: e.response?.data?.message || i18n.global.t('seances.offline.unavailable'),
+            message: Array.isArray(messageErreur)
+              ? messageErreur.join(' · ')
+              : messageErreur || i18n.global.t('seances.offline.unavailable'),
           });
         this.erreurReseauSignalee = true;
         return { indisponible: true };

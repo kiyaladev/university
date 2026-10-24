@@ -86,7 +86,7 @@ async function charger() {
   ]);
   if (resultats[0].status === 'fulfilled') {
     dossiers.value = resultats[0].value.data;
-    inscriptions.value = resultats[0].value.total;
+    inscriptions.value = resultats[0].value.total ?? null;
   }
   if (resultats[1].status === 'fulfilled') documents.value = resultats[1].value;
   if (resultats.some((resultat) => resultat.status === 'rejected')) erreur.value = t('accueilScolarite.error');

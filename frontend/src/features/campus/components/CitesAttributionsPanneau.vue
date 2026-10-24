@@ -271,7 +271,7 @@ import PastilleStatut from '@/shared/components/PastilleStatut.vue';
 import { usePresentationListe } from '@/shared/composables/usePresentationListe';
 import { dateLisible } from '@/shared/utils/format';
 import { LIBELLE_STATUT_ATTRIBUTION } from '@/shared/utils/libelles';
-import type { AnneeAcademique, AttributionLogement, ChipFiltre, Residence } from '@/types';
+import type { AnneeAcademique, AttributionLogement, ChipFiltre, Residence, FiltresPage } from '@/types';
 
 const props = defineProps<{
   lignes: AttributionLogement[];
@@ -286,7 +286,7 @@ const props = defineProps<{
 }>();
 
 /** Filtres du panneau : la page les garde (et les inscrit dans l'URL). */
-const filtres = defineModel<Record<string, any>>('filtres', { required: true });
+const filtres = defineModel<FiltresPage>('filtres', { required: true });
 /** Pagination : la page garde l'état, pour rester synchronisée avec l'URL. */
 const page = defineModel<number>('page', { required: true });
 const pageSize = defineModel<number>('pageSize', { required: true });

@@ -103,13 +103,13 @@ import { useI18n } from 'vue-i18n';
 import { type QTableColumn } from 'quasar';
 import BarreFiltres from '@/shared/components/BarreFiltres.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
-import type { ChipFiltre, Filiere } from '@/types';
+import type { ChipFiltre, Filiere, FiltresPage } from '@/types';
 
 /** Onglet « Filières » de la structure académique. */
 const props = defineProps<{
   filieres: Filiere[];
   chargement: boolean;
-  filtre: Record<string, any>;
+  filtre: FiltresPage;
   chips: ChipFiltre[];
   optionsDepartements: { label: string; value: string }[];
   titreVide: string;
@@ -118,7 +118,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  'update:filtre': [filtre: Record<string, any>];
+  'update:filtre': [filtre: FiltresPage];
   nouvelle: [];
   modifier: [filiere: Filiere];
   supprimer: [filiere: Filiere];

@@ -12,11 +12,11 @@ import { pageApi, texteApi, useListePaginee } from '@/shared/composables/useList
 import { badgesService, type ParametresBadges } from '../services/badges';
 import { LIBELLE_STATUT_BADGE, LIBELLE_TYPE_BADGE, optionsDepuis } from '@/shared/utils/libelles';
 import { ouvrirImpression } from '@/shared/services/impression';
-import type { BadgeAcces } from '@/types';
+import type { BadgeAcces, FiltresPage } from '@/types';
 
 const auth = useAuthStore();
 
-const filtres = ref<Record<string, any>>({ recherche: '', type: null, statut: null });
+const filtres = ref<FiltresPage>({ recherche: '', type: null, statut: null });
 const liste = reactive(
   useListePaginee<BadgeAcces>({
     filtres,

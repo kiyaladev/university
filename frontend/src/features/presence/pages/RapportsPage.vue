@@ -238,8 +238,10 @@ function chemin(base: string, suffixe: string, extra: Record<string, string | un
   return { chemin: `/${base}/${suffixe}`, params: { ...parametres(), ...extra } };
 }
 
-const extraStatutEnseignant = () =>
-  onglet.value === 'paiement' || statutEnseignant.value ? { statutEnseignant: statutEnseignant.value } : {};
+const extraStatutEnseignant = (): Record<string, string | undefined> =>
+  onglet.value === 'paiement' || statutEnseignant.value
+    ? { statutEnseignant: statutEnseignant.value ?? undefined }
+    : {};
 
 /** Export CSV de l'onglet affiché, filtres et période inclus. */
 function exporter() {

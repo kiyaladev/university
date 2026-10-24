@@ -98,11 +98,11 @@ import BarreFiltres from '@/shared/components/BarreFiltres.vue';
 import GrilleCalendrier from '@/shared/components/GrilleCalendrier.vue';
 import { LIBELLE_STATUT_ENCADREMENT } from '@/shared/utils/libelles';
 import { dateHeureLisible } from '@/shared/utils/format';
-import type { ChipFiltre, StatutEncadrement, TravailEncadre } from '@/types';
+import type { ChipFiltre, StatutEncadrement, TravailEncadre, FiltresPage } from '@/types';
 import type { SoutenanceCalendrier } from '../types';
 
 /** Filtres de l'onglet : la page les détient, le panneau les affiche. */
-const filtres = defineModel<Record<string, any>>('filtres', { required: true });
+const filtres = defineModel<FiltresPage>('filtres', { required: true });
 
 const props = defineProps<{
   soutenances: SoutenanceCalendrier[];

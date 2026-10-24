@@ -322,7 +322,7 @@ import { useListePaginee } from '@/shared/composables/useListePaginee';
 import { useConfirmation } from '@/shared/composables/useConfirmation';
 import { useAuthStore } from '@/stores/auth';
 import { dateLisible, nombreLisible } from '@/shared/utils/libelles';
-import type { SuspicionPlagiat, ChipFiltre } from '@/types';
+import type { SuspicionPlagiat, ChipFiltre, FiltresPage } from '@/types';
 import {
   lireRecapitulatifRecalcul,
   lireTableauDeBordPlagiat,
@@ -352,7 +352,7 @@ const recalculEnCours = ref(false);
 const dernierRecap = ref<{ titre: string; message: string } | null>(null);
 
 // La bibliothèque renvoie ici avec le document à examiner.
-const filtres = ref<Record<string, any>>(route.query.documentId ? { documentId: String(route.query.documentId) } : {});
+const filtres = ref<FiltresPage>(route.query.documentId ? { documentId: String(route.query.documentId) } : {});
 
 const liste = reactive(
   useListePaginee<SuspicionPlagiat>({

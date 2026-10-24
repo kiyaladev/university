@@ -159,7 +159,7 @@ import ExamensCartes from '../components/ExamensCartes.vue';
 import ExamensFicheDialog from '../components/ExamensFicheDialog.vue';
 import { examensService } from '../services/examens';
 import { LIBELLE_STATUT_EXAMEN, LIBELLE_TYPE_EXAMEN, aujourdhui, decalerJours } from '@/shared/utils/libelles';
-import type { Examen, StatutExamen, ChipFiltre } from '@/types';
+import type { Examen, StatutExamen, ChipFiltre, FiltresPage } from '@/types';
 
 const $q = useQuasar();
 const { t } = useI18n();
@@ -189,7 +189,7 @@ function filtresParDefaut() {
   };
 }
 
-const filtres = ref<Record<string, any>>(filtresParDefaut());
+const filtres = ref<FiltresPage>(filtresParDefaut());
 
 /** La recherche texte n'est pas gérée par `/examens` : elle reste locale. */
 const ex = reactive(

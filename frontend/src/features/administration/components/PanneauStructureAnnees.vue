@@ -97,20 +97,20 @@ import { type QTableColumn } from 'quasar';
 import BarreFiltres from '@/shared/components/BarreFiltres.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
 import { dateLisible } from '@/shared/utils/libelles';
-import type { AnneeAcademique } from '@/types';
+import type { AnneeAcademique, FiltresPage } from '@/types';
 
 /** Onglet « Années » de la structure académique : les années et leurs promotions. */
 defineProps<{
   annees: AnneeAcademique[];
   chargement: boolean;
-  filtre: Record<string, any>;
+  filtre: FiltresPage;
   titreVide: string;
   peutGerer: boolean;
   peutSupprimer: boolean;
 }>();
 
 const emit = defineEmits<{
-  'update:filtre': [filtre: Record<string, any>];
+  'update:filtre': [filtre: FiltresPage];
   nouvelle: [];
   modifier: [annee: AnneeAcademique];
   supprimer: [annee: AnneeAcademique];

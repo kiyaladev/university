@@ -309,7 +309,7 @@ import EtatVide from '@/shared/components/EtatVide.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
 import { pageApi, texteApi, useListePaginee } from '@/shared/composables/useListePaginee';
 import { useConfirmation } from '@/shared/composables/useConfirmation';
-import type { AnneeAcademique, Enseignant, Matiere, Promotion, ChipFiltre } from '@/types';
+import type { AnneeAcademique, Enseignant, Matiere, Promotion, ChipFiltre, FiltresPage } from '@/types';
 
 const $q = useQuasar();
 const auth = useAuthStore();
@@ -331,7 +331,7 @@ const enregistrement = ref(false);
 
 // Filtres gardés dans l'URL : l'arrivée depuis « Enseignants », « Matières »
 // ou « Structure académique » pré-filtre la liste des charges.
-const filtres = ref<Record<string, any>>({
+const filtres = ref<FiltresPage>({
   recherche: '',
   enseignantId: null,
   matiereId: null,

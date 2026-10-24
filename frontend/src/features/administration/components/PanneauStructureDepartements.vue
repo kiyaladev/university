@@ -93,20 +93,20 @@ import { useI18n } from 'vue-i18n';
 import { type QTableColumn } from 'quasar';
 import BarreFiltres from '@/shared/components/BarreFiltres.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
-import type { Departement } from '@/types';
+import type { Departement, FiltresPage } from '@/types';
 
 /** Onglet « Départements » de la structure académique. */
 defineProps<{
   departements: Departement[];
   chargement: boolean;
-  filtre: Record<string, any>;
+  filtre: FiltresPage;
   titreVide: string;
   peutGerer: boolean;
   peutSupprimer: boolean;
 }>();
 
 const emit = defineEmits<{
-  'update:filtre': [filtre: Record<string, any>];
+  'update:filtre': [filtre: FiltresPage];
   nouvelle: [];
   modifier: [departement: Departement];
   supprimer: [departement: Departement];

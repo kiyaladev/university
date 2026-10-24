@@ -372,8 +372,19 @@ async function posterMessage() {
   }
 }
 
-async function changerStatut(cible: StatutReclamation) {
+/**
+ * Un statut de réclamation, parmi ceux que connaît le dossier.
+ *
+ * Le stepper émet une cible en texte ; le garde-fou évite qu'une cible
+ * inconnue parte vers l'API.
+ */
+function estStatutReclamation(valeur: string): valeur is StatutReclamation {
+  return Object.keys(LIBELLE_STATUT_RECLAMATION).some((cle) => cle === valeur);
+}
+
+async function changerStatut(cible: string) {
   if (!props.reclamation) return;
+  if (!estStatutReclamation(cible)) return;
   let commentaire = '';
   if (cible === 'REJETE') {
     // Le motif est celui saisi dans l'invite : il arrive par le callback,
@@ -415,7 +426,7 @@ function ouvrirAssigner() {
     message: $t('reclamations.dialog.detail.assignPrompt'),
     options: {
       type: 'radio',
-      model: props.reclamation?.assigneAId ?? null,
+      model: props.reclamation?.assigneAId ?? '',
       items: props.membresStaff.map((u) => ({
         label: `${u.prenom} ${u.nom}`,
         value: u.id,

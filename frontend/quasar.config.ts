@@ -4,6 +4,11 @@ import { defineConfig } from '#q-app/wrappers';
 import { rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import type {
+  CacheKeyWillBeUsedCallbackParam,
+  CachedResponseWillBeUsedCallbackParam,
+  RouteMatchCallbackOptions,
+} from 'workbox-core';
 // La config est empaquetée par esbuild : elle peut donc reprendre les
 // services de l'application, qui n'ont aucune dépendance au navigateur.
 import { CACHE_API } from './src/shared/services/cles-stockage';
@@ -11,9 +16,18 @@ import { decoderChargeUtile } from './src/shared/services/session';
 
 export default defineConfig((ctx) => {
   const inclureMediasDemo = ctx.dev || Boolean(process.env.QA_BUILD_DIR && process.env.INCLUDE_DEMO_MEDIA === 'true');
-  if (ctx.prod && !process.env.API_URL) throw new Error('API_URL est obligatoire pour une compilation de production. Utilisez QA_BUILD_DIR pour isoler une recette.');
-  if (ctx.prod && !process.env.QA_BUILD_DIR && /^(?:localhost|127(?:\.\d{1,3}){3}|\[?::1\]?)$/i.test(new URL(process.env.API_URL!).hostname)) {
-    throw new Error('Une API locale exige QA_BUILD_DIR : le dossier servi en production ne doit pas recevoir un build de recette.');
+  if (ctx.prod && !process.env.API_URL)
+    throw new Error(
+      'API_URL est obligatoire pour une compilation de production. Utilisez QA_BUILD_DIR pour isoler une recette.',
+    );
+  if (
+    ctx.prod &&
+    !process.env.QA_BUILD_DIR &&
+    /^(?:localhost|127(?:\.\d{1,3}){3}|\[?::1\]?)$/i.test(new URL(process.env.API_URL!).hostname)
+  ) {
+    throw new Error(
+      'Une API locale exige QA_BUILD_DIR : le dossier servi en production ne doit pas recevoir un build de recette.',
+    );
   }
   return {
     boot: ['stockage', 'axios', 'i18n', 'accessibilite'],
@@ -31,7 +45,11 @@ export default defineConfig((ctx) => {
       // du tsconfig généré (.quasar/tsconfig.json) que lit vue-tsc.
       alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
       afterBuild({ quasarConf }) {
-        if (!inclureMediasDemo) rmSync(join(quasarConf.build.distDir, 'media', 'demonstration'), { recursive: true, force: true });
+        // `distDir` est renseigné par Quasar à chaque build ; on le vérifie
+        // quand même, le type de `quasarConf.build` étant optionnel.
+        const distDir = quasarConf.build?.distDir;
+        if (!inclureMediasDemo && distDir !== undefined)
+          rmSync(join(distDir, 'media', 'demonstration'), { recursive: true, force: true });
       },
       ...(process.env.QA_BUILD_DIR ? { distDir: process.env.QA_BUILD_DIR } : {}),
       target: {
@@ -39,7 +57,7 @@ export default defineConfig((ctx) => {
         node: 'node20',
       },
       typescript: {
-        strict: false,
+        strict: true,
         vueShim: true,
       },
       vueRouterMode: 'hash',
@@ -109,31 +127,38 @@ export default defineConfig((ctx) => {
             // Les lectures de l'API : le réseau d'abord, le cache en secours.
             // Une réponse en cache vaut mieux qu'un écran vide en salle, mais
             // elle ne doit jamais primer sur la donnée fraîche.
-            urlPattern: ({ url, request }: any) =>
+            urlPattern: ({ url, request }: RouteMatchCallbackOptions) =>
               request.method === 'GET' && url.pathname.startsWith('/api/') && !url.searchParams.has('token'),
             handler: 'NetworkFirst',
             options: {
               cacheName: CACHE_API,
-              plugins: [{
-                // Le cache HTTP ignore Authorization : une clé propre à la
-                // session empêche de lire le résultat du compte précédent.
-                cacheKeyWillBeUsed: async ({ request }: any) => {
-                  const authorization = request.headers.get('Authorization') || 'anonymous';
-                  const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(authorization));
-                  const key = Array.from(new Uint8Array(hash)).map(byte => byte.toString(16).padStart(2, '0')).join('');
-                  const url = new URL(request.url);
-                  url.searchParams.set('__session', key);
-                  return url.toString();
+              plugins: [
+                {
+                  // Le cache HTTP ignore Authorization : une clé propre à la
+                  // session empêche de lire le résultat du compte précédent.
+                  cacheKeyWillBeUsed: async ({ request }: CacheKeyWillBeUsedCallbackParam) => {
+                    const authorization = request.headers.get('Authorization') || 'anonymous';
+                    const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(authorization));
+                    const key = Array.from(new Uint8Array(hash))
+                      .map((byte) => byte.toString(16).padStart(2, '0'))
+                      .join('');
+                    const url = new URL(request.url);
+                    url.searchParams.set('__session', key);
+                    return url.toString();
+                  },
+                  cachedResponseWillBeUsed: async ({
+                    request,
+                    cachedResponse,
+                  }: CachedResponseWillBeUsedCallbackParam) => {
+                    const authorization = request.headers.get('Authorization');
+                    if (authorization) {
+                      const charge = decoderChargeUtile(authorization);
+                      if (!charge?.exp || charge.exp * 1000 <= Date.now()) return null;
+                    }
+                    return cachedResponse;
+                  },
                 },
-                cachedResponseWillBeUsed: async ({ request, cachedResponse }: any) => {
-                  const authorization = request.headers.get('Authorization');
-                  if (authorization) {
-                    const charge = decoderChargeUtile(authorization);
-                    if (!charge?.exp || charge.exp * 1000 <= Date.now()) return null;
-                  }
-                  return cachedResponse;
-                },
-              }],
+              ],
               networkTimeoutSeconds: 4,
               expiration: { maxEntries: 120, maxAgeSeconds: 60 * 60 * 24 },
               cacheableResponse: { statuses: [200] },

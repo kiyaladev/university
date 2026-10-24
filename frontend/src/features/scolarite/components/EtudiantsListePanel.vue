@@ -220,7 +220,14 @@
           <span v-else>{{ $t('common.format.emptyValue') }}</span>
         </div>
         <div class="q-mt-sm">
-          <q-chip v-if="dernierePromo(e)" outline color="primary" dense :label="dernierePromo(e)" icon="school" />
+          <q-chip
+            v-if="dernierePromo(e)"
+            outline
+            color="primary"
+            dense
+            :label="dernierePromo(e) ?? undefined"
+            icon="school"
+          />
           <span v-else class="text-caption text-grey-7">{{ $t('etudiants.cards.noInscription') }}</span>
         </div>
       </q-card-section>

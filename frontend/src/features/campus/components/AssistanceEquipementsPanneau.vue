@@ -205,7 +205,7 @@ import BarreFiltres from '@/shared/components/BarreFiltres.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
 import { usePresentationListe } from '@/shared/composables/usePresentationListe';
 import { ouvrirImpression } from '@/shared/services/impression';
-import type { ChipFiltre, EquipementCampus } from '@/types';
+import type { ChipFiltre, EquipementCampus, FiltresPage } from '@/types';
 
 const props = defineProps<{
   lignes: EquipementCampus[];
@@ -214,7 +214,7 @@ const props = defineProps<{
 }>();
 
 /** Filtres du panneau : la page les garde (et les inscrit dans l'URL). */
-const filtres = defineModel<Record<string, any>>('filtres', { required: true });
+const filtres = defineModel<FiltresPage>('filtres', { required: true });
 
 const emit = defineEmits<{
   creer: [];

@@ -6,6 +6,7 @@ import { i18n } from '../boot/i18n';
  */
 import { defineStore } from 'pinia';
 import { Notify } from 'quasar';
+import axios from 'axios';
 import { api } from '../boot/axios';
 import { useSeancesStore } from './seances';
 import { lireToken, proprietaireDepuisToken } from '@/shared/services/session';
@@ -18,6 +19,7 @@ import {
   lireFileHorsLigne,
   type EchecSynchronisation,
 } from '@/shared/services/file-hors-ligne';
+import { extraireMessageErreur } from '@/shared/utils/erreur-http';
 import type { Pointage } from '../types';
 
 const CLE_FILE = CLE_FILE_POINTAGES;
@@ -31,6 +33,26 @@ const CLE_FILE = CLE_FILE_POINTAGES;
  */
 export type PointageFile = Pointage & { idClient?: string };
 
+/** État du store : la file est typée, sinon TypeScript en déduit `never[]`. */
+interface EtatPointages {
+  proprietaire: string;
+  file: PointageFile[];
+  erreurs: Record<string, string | undefined>;
+  ancienneFile: number;
+  fileChargee: boolean;
+  erreurReseauSignalee: boolean;
+  enLigne: boolean;
+  synchronisation: boolean;
+  generationReseau: number;
+}
+
+/** Réponse de `POST /controles/sync` : chaque pointage est accepté ou rejeté. */
+interface ResultatSyncPointages {
+  recus?: number;
+  synchronises?: number;
+  echecs?: EchecSynchronisation[];
+}
+
 function proprietaire(): string {
   return proprietaireDepuisToken(lireToken());
 }
@@ -39,7 +61,7 @@ function cleFile(owner: string): string {
   return clePour(CLE_FILE, owner);
 }
 
-function lireErreurs(owner: string): Record<string, string> {
+function lireErreurs(owner: string): Record<string, string | undefined> {
   try {
     return JSON.parse(localStorage.getItem(`${cleFile(owner)}_erreurs`) || '{}');
   } catch {
@@ -53,7 +75,7 @@ async function lireFile(owner: string): Promise<PointageFile[]> {
 }
 
 export const usePointagesStore = defineStore('pointages', {
-  state: () => ({
+  state: (): EtatPointages => ({
     proprietaire: proprietaire(),
     file: [] as PointageFile[],
     erreurs: lireErreurs(proprietaire()),
@@ -150,9 +172,10 @@ export const usePointagesStore = defineStore('pointages', {
         // en file ») ; une erreur métier est relancée et notifiée par l'appelant.
         await api.post('/controles', prepare, { silencieux: true });
         return true;
-      } catch (e: any) {
+      } catch (e: unknown) {
         // Une erreur métier (400/403) ne doit pas être rejouée indéfiniment.
-        if (e.response?.status && e.response.status < 500) throw e;
+        const statut = axios.isAxiosError(e) ? e.response?.status : undefined;
+        if (statut !== undefined && statut < 500) throw e;
         await this.mettreEnFile(prepare);
         return false;
       }
@@ -222,8 +245,12 @@ export const usePointagesStore = defineStore('pointages', {
         if (owner !== this.proprietaire || !this.file.length) return;
         const envoyes = JSON.parse(JSON.stringify(this.file)) as PointageFile[];
         // Silencieux : la file reste intacte et le catch prévient une seule fois.
-        const { data } = await api.post('/controles/sync', { pointages: envoyes }, { silencieux: true });
-        const echecs = (data.echecs ?? []) as EchecSynchronisation[];
+        const { data } = await api.post<ResultatSyncPointages>(
+          '/controles/sync',
+          { pointages: envoyes },
+          { silencieux: true },
+        );
+        const echecs = data.echecs ?? [];
         // Un échec définitif (preuve déjà consommée) ne aboutira jamais : le
         // pointage est retiré de la file au lieu d'être réessayé sans fin.
         const definitifs = new Set(echecs.filter(echecDefinitif).map((e) => e.seanceId));
@@ -270,12 +297,16 @@ export const usePointagesStore = defineStore('pointages', {
             timeout: 8000,
           });
         return data;
-      } catch (error: any) {
+      } catch (error: unknown) {
         // La file reste intacte ; l'écouteur online n'émet pas de rejet non traité.
+        const reponse = axios.isAxiosError(error) ? error.response : undefined;
+        const messageErreur = extraireMessageErreur(reponse?.data);
         if (!this.erreurReseauSignalee)
           Notify.create({
             type: 'warning',
-            message: error.response?.data?.message || i18n.global.t('filePointages.unavailable'),
+            message: Array.isArray(messageErreur)
+              ? messageErreur.join(' · ')
+              : messageErreur || i18n.global.t('filePointages.unavailable'),
           });
         this.erreurReseauSignalee = true;
         return { indisponible: true };

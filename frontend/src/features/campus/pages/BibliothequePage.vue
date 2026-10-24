@@ -144,7 +144,7 @@ import BibliothequeCartes from '../components/BibliothequeCartes.vue';
 import BibliothequeApercu from '../components/BibliothequeApercu.vue';
 import { useAuthStore } from '@/stores/auth';
 import { LIBELLE_TYPE_DOCUMENT } from '@/shared/utils/libelles';
-import type { DocumentDepot, ChipFiltre } from '@/types';
+import type { DocumentDepot, ChipFiltre, FiltresPage } from '@/types';
 
 const $q = useQuasar();
 const auth = useAuthStore();
@@ -156,9 +156,9 @@ const rechercheSelectionnee = ref<string | null>(null);
 const rechercheTexte = ref('');
 const suggestions = ref<DocumentDepot[]>([]);
 const chargementSuggestions = ref(false);
-let timerSuggestions: any = null;
+let timerSuggestions: ReturnType<typeof setTimeout> | null = null;
 
-const filtres = ref<Record<string, any>>({
+const filtres = ref<FiltresPage>({
   type: '',
   departementId: '',
   anneeEdition: null,

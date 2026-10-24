@@ -260,7 +260,7 @@ import PanneauStructureDepartements from '@/features/administration/components/P
 import PanneauStructureFilieres from '@/features/administration/components/PanneauStructureFilieres.vue';
 import PanneauStructurePromotions from '@/features/administration/components/PanneauStructurePromotions.vue';
 import { structureService, type PromotionListee } from '@/features/administration/services/structure';
-import type { AnneeAcademique, Departement, Filiere, Niveau, ChipFiltre } from '@/types';
+import type { AnneeAcademique, Departement, Filiere, Niveau, ChipFiltre, FiltresPage } from '@/types';
 
 const $q = useQuasar();
 const auth = useAuthStore();
@@ -281,7 +281,7 @@ const promotions = ref<PromotionListee[]>([]);
 const peutGerer = computed(() => auth.peut('structure.gerer'));
 const peutSupprimer = computed(() => auth.peut('structure.supprimer'));
 
-const filtres = ref<Record<string, Record<string, any>>>({
+const filtres = ref<Record<string, FiltresPage>>({
   annees: {},
   departements: {},
   filieres: {},

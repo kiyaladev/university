@@ -54,10 +54,10 @@ import { useI18n } from 'vue-i18n';
 import BarreFiltres from '@/shared/components/BarreFiltres.vue';
 import ChampRecherche from '@/shared/components/ChampRecherche.vue';
 import { LIBELLE_TYPE_DOCUMENT } from '@/shared/utils/libelles';
-import type { ChipFiltre } from '@/types';
+import type { ChipFiltre, FiltresPage } from '@/types';
 
 /** Les filtres de la page : elle garde la main pour l'URL et le rechargement. */
-const filtres = defineModel<Record<string, any>>('filtres', { required: true });
+const filtres = defineModel<FiltresPage>('filtres', { required: true });
 
 defineProps<{
   /** Chips des filtres actifs (la page les compose). */

@@ -138,7 +138,7 @@ import BarreFiltres from '@/shared/components/BarreFiltres.vue';
 import BarrePagination from '@/shared/components/BarrePagination.vue';
 import ChoixSemestre from '../components/ChoixSemestre.vue';
 import { LIBELLE_SESSION_DELIBERATION, LIBELLE_STATUT_DELIBERATION } from '@/shared/utils/libelles';
-import type { AnneeAcademique, DeliberationLigne, Matiere, Promotion, ChipFiltre } from '@/types';
+import type { AnneeAcademique, DeliberationLigne, Matiere, Promotion, ChipFiltre, FiltresPage } from '@/types';
 import type { DeliberationListe } from '@/features/scolarite/types';
 import { ouvrirImpression } from '@/shared/services/impression';
 import { deliberationsService } from '../services/deliberations';
@@ -164,7 +164,7 @@ const page = ref(1);
 const pageSize = ref(15);
 
 const FILTRES_VIDES = { recherche: '', anneeId: null, promotionId: null, session: null, statut: null };
-const filtres = ref<Record<string, any>>({ ...FILTRES_VIDES });
+const filtres = ref<FiltresPage>({ ...FILTRES_VIDES });
 
 /**
  * `/deliberations` ne filtre que sur l'année : promotion, session, statut et

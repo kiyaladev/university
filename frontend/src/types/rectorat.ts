@@ -60,6 +60,14 @@ export interface StatistiqueMesrs {
   id: string;
   anneeId: string;
   annee?: Pick<AnneeAcademique, 'id' | 'libelle'>;
+  /**
+   * Snapshot des chiffres au moment de la génération.
+   *
+   * Sa forme suit celle que le Rectorat agrège (effectif, taux de réussite,
+   * masse salariale, patrimoine…) : elle évolue avec le backend, d'où un
+   * objet libre plutôt qu'un contrat figé côté front.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- la forme du snapshot suit les agrégats du backend
   donnees: any;
   genereLe: string;
   genereParId?: string | null;

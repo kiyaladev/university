@@ -91,7 +91,7 @@ import { soutenancesService } from '../services/soutenances';
 import { travauxService } from '../services/travaux';
 import { LIBELLE_STATUT_ENCADREMENT, LIBELLE_TYPE_ENCADREMENT } from '@/shared/utils/libelles';
 import { aujourdhui } from '@/shared/utils/format';
-import type { ChipFiltre, StatutEncadrement, TravailEncadre } from '@/types';
+import type { ChipFiltre, StatutEncadrement, TravailEncadre, FiltresPage } from '@/types';
 import type { SoutenanceCalendrier } from '../types';
 
 const $q = useQuasar();
@@ -104,7 +104,7 @@ const onglet = ref<'travaux' | 'soutenances'>('travaux');
 const soutenancesAVenir = ref<SoutenanceCalendrier[]>([]);
 const detail = ref<TravailEncadre | null>(null);
 
-const filtresTravaux = ref<Record<string, any>>({
+const filtresTravaux = ref<FiltresPage>({
   recherche: '',
   type: null,
   statut: null,
@@ -135,7 +135,7 @@ const trav = reactive(
 );
 
 // Les filtres de soutenance sont purement locaux : aucun rechargement.
-const filtresSoutenances = ref<Record<string, any>>({
+const filtresSoutenances = ref<FiltresPage>({
   recherche: '',
   statut: null,
 });
@@ -146,7 +146,7 @@ const dialogSoutenance = ref(false);
 const travailSoutenance = ref<TravailEncadre | null>(null);
 const modeSoutenance = ref<'planifier' | 'jury'>('planifier');
 
-function chipsCommuns(f: Record<string, any>): ChipFiltre[] {
+function chipsCommuns(f: FiltresPage): ChipFiltre[] {
   const cs: ChipFiltre[] = [];
   if (f.recherche) cs.push({ label: `« ${f.recherche} »`, value: f.recherche, icone: 'search', defaut: true });
   if (f.type) cs.push({ label: LIBELLE_TYPE_ENCADREMENT[f.type] ?? f.type, value: f.type, icone: 'work', cle: 'type' });

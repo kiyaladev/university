@@ -26,3 +26,22 @@ export function traduireLibelles<T extends Record<string, string>>(namespace: st
 export function optionsDepuis(libelles: Record<string, string>) {
   return Object.entries(libelles).map(([value, label]) => ({ value, label }));
 }
+
+/**
+ * Libellé d'une valeur dans une table de libellés, tolérant aux valeurs
+ * inconnues.
+ *
+ * Les tables sont typées par domaine (`Record<Role, string>`) : indexer une
+ * table avec une clé extérieure à son domaine n'a pas de sens. Mais la donnée
+ * vient du serveur, et une API plus récente que l'application peut porter une
+ * valeur absente de la table — ou une donnée de table (`p.row` d'un `q-table`)
+ * dont le type n'est pas connu ici. Le libellé manque alors, et l'appelant
+ * retombe sur la valeur brute.
+ */
+export function libelleDepuis(
+  libelles: Readonly<Record<string, string | undefined>>,
+  valeur: string,
+  repli?: string,
+): string {
+  return libelles[valeur] ?? repli ?? valeur;
+}

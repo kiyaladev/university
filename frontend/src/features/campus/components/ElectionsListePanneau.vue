@@ -279,7 +279,7 @@ import { usePresentationListe } from '@/shared/composables/usePresentationListe'
 import { LIBELLE_TYPE_ELECTION, OPTIONS_TYPE_ELECTION, dateHeureElection } from '../services/elections';
 import { LIBELLE_STATUT_ELECTION } from '@/shared/utils/libelles';
 import type { ActionTransitionElection } from '../types';
-import type { ChipFiltre, Election, StatutElection } from '@/types';
+import type { ChipFiltre, Election, StatutElection, FiltresPage } from '@/types';
 
 defineProps<{
   lignes: Election[];
@@ -291,7 +291,7 @@ defineProps<{
 }>();
 
 /** Filtres du panneau : la page les garde (et les inscrit dans l'URL). */
-const filtres = defineModel<Record<string, any>>('filtres', { required: true });
+const filtres = defineModel<FiltresPage>('filtres', { required: true });
 /** Pagination : la page garde l'état, pour rester synchronisée avec l'URL. */
 const page = defineModel<number>('page', { required: true });
 const pageSize = defineModel<number>('pageSize', { required: true });

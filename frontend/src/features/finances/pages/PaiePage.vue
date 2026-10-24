@@ -137,7 +137,7 @@ import TableauFeuillesPaie from '../components/TableauFeuillesPaie.vue';
 import CartesFeuillesPaie from '../components/CartesFeuillesPaie.vue';
 import { paieService, type ActionFeuillePaie } from '../services/paie';
 import { LIBELLE_STATUT_PAIE, montantLisible } from '@/shared/utils/libelles';
-import type { FeuillePaie } from '@/types';
+import type { FeuillePaie, FiltresPage } from '@/types';
 import { ouvrirImpression } from '@/shared/services/impression';
 
 const $q = useQuasar();
@@ -153,7 +153,7 @@ const detail = ref<FeuillePaie | null>(null);
 // La barre de filtres travaille sur un Record : la recherche plein texte est
 // désactivée parce que l'API des feuilles n'indexe rien d'autre que le couple
 // statut / année — un champ de recherche inerte serait un mensonge.
-const filtres = ref<Record<string, any>>({ statut: null, annee: null });
+const filtres = ref<FiltresPage>({ statut: null, annee: null });
 
 /** Feuilles de paie : paginées côté serveur, filtres gardés dans l'URL. Un
  *  changement de filtre repart de la première page. */

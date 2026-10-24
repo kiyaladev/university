@@ -143,7 +143,15 @@ import { ouvrirImpression } from '@/shared/services/impression';
 import { LIBELLE_STATUT_INSCRIPTION, dateLisible } from '@/shared/utils/libelles';
 import { inscriptionsService } from '../services/inscriptions';
 import { etudiantsService } from '../services/etudiants';
-import type { AnneeAcademique, Etudiant, Inscription, Promotion, StatutInscription, ChipFiltre } from '@/types';
+import type {
+  AnneeAcademique,
+  Etudiant,
+  Inscription,
+  Promotion,
+  StatutInscription,
+  ChipFiltre,
+  FiltresPage,
+} from '@/types';
 
 const $q = useQuasar();
 const { t } = useI18n();
@@ -163,7 +171,7 @@ const modeVue = usePresentationListe();
  * date d'inscription, à défaut la date de création du dossier. `etudiant`
  * (`/inscriptions?etudiant=<id>`) restreint aux dossiers d'un étudiant.
  */
-const filtres = ref<Record<string, any>>({
+const filtres = ref<FiltresPage>({
   recherche: '',
   statut: null,
   anneeId: null,

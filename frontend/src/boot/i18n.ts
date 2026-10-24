@@ -53,7 +53,10 @@ function appliquerLangueQuasar(locale: AppLocale): void {
 
 /** Charge les messages d'une langue s'ils ne le sont pas déjà. */
 async function chargerSiBesoin(locale: AppLocale): Promise<void> {
-  if (Object.keys(i18n.global.messages.value[locale] ?? {}).length) return;
+  // `getLocaleMessage` rend le catalogue de la langue, ou un objet vide si
+  // elle n'est pas encore chargée : même comportement que la lecture directe
+  // de `messages.value[locale]`.
+  if (Object.keys(i18n.global.getLocaleMessage(locale)).length) return;
   i18n.global.setLocaleMessage(locale, await chargerMessages(locale));
 }
 

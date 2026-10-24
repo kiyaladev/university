@@ -73,7 +73,7 @@
         <div class="col-12 q-pb-sm">
           <q-card flat bordered class="carte">
             <q-card-section>
-              <div v-for="c in p.cols.filter((c) => c.name !== 'actions')" :key="c.name" class="q-mb-sm">
+              <div v-for="c in colonnesSansActions(p.cols)" :key="c.name" class="q-mb-sm">
                 <div class="text-caption text-grey-7">{{ c.label }}</div>
                 <template v-if="c.name === 'examen'"
                   >{{ p.row.examen?.codeExamen }} · {{ p.row.examen?.intitule }}</template
@@ -247,7 +247,8 @@ import EtatVide from '@/shared/components/EtatVide.vue';
 import { pageApi, useListePaginee } from '@/shared/composables/useListePaginee';
 import { useConfirmation } from '@/shared/composables/useConfirmation';
 import { LIBELLE_STADE_TIRAGE, dateHeureLisible } from '@/shared/utils/libelles';
-import type { Examen, StadeTirage, Tirage, ChipFiltre } from '@/types';
+import { colonnesSansActions } from '@/shared/utils/colonnes';
+import type { Examen, StadeTirage, Tirage, ChipFiltre, FiltresPage } from '@/types';
 import { ouvrirImpression } from '@/shared/services/impression';
 import { examensService } from '../services/examens';
 import { tirageService } from '../services/tirage';
@@ -265,7 +266,7 @@ const tirageAImprimer = ref<string | null>(null);
 /** Examen sur lequel la page a été ouverte depuis la fiche d'un examen. */
 const examenFiltre = ref<Examen | null>(null);
 
-const filtres = ref<Record<string, any>>({
+const filtres = ref<FiltresPage>({
   recherche: '',
   examenId: null as string | null,
   stade: null as StadeTirage | null,

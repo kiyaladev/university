@@ -206,7 +206,7 @@ import {
   montantLisible,
 } from '@/shared/utils/libelles';
 import { elements } from '@/shared/utils/collections';
-import type { Etudiant, Inscription, ModePaiement, Paiement, StatutPaiement, ChipFiltre } from '@/types';
+import type { Etudiant, Inscription, ModePaiement, Paiement, StatutPaiement, ChipFiltre, FiltresPage } from '@/types';
 
 const $q = useQuasar();
 const route = useRoute();
@@ -221,7 +221,7 @@ const modeVue = usePresentationListe();
 const cibleUrl = (cle: string) => (typeof route.query[cle] === 'string' && route.query[cle]) || null;
 const inscriptionUrl = cibleUrl('inscription');
 
-const filtres = ref<Record<string, any>>({
+const filtres = ref<FiltresPage>({
   recherche: '',
   statut: null,
   mode: null,

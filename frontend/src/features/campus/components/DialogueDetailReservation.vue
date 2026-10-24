@@ -142,6 +142,7 @@ import { dateHeureLisible } from '@/shared/utils/format';
 import { reservationsService } from '../services/reservations';
 import type { ReservationDetail } from '../types';
 import type { Salle } from '@/types';
+import { messageErreurApi } from '@/shared/utils/erreur-http';
 
 const props = defineProps<{
   modelValue: boolean;
@@ -215,8 +216,8 @@ async function decider(statut: 'CONFIRME' | 'REFUSE') {
       message: t(statut === 'CONFIRME' ? 'reservations.detailDialog.confirmed' : 'reservations.detailDialog.refused'),
     });
     emit('change');
-  } catch (e: any) {
-    erreur.value = e.response?.data?.message ?? t('reservations.detailDialog.decisionFailed');
+  } catch (e: unknown) {
+    erreur.value = messageErreurApi(e) ?? t('reservations.detailDialog.decisionFailed');
   } finally {
     enCours.value = '';
   }
@@ -233,8 +234,8 @@ async function modifier() {
     });
     $q.notify({ type: 'positive', message: t('reservations.detailDialog.updated') });
     emit('change');
-  } catch (e: any) {
-    erreur.value = e.response?.data?.message ?? t('reservations.detailDialog.updateFailed');
+  } catch (e: unknown) {
+    erreur.value = messageErreurApi(e) ?? t('reservations.detailDialog.updateFailed');
   } finally {
     enCours.value = '';
   }
@@ -255,8 +256,8 @@ async function annuler() {
     $q.notify({ type: 'positive', message: t('reservations.detailDialog.cancelled') });
     emit('change');
     emit('update:modelValue', false);
-  } catch (e: any) {
-    erreur.value = e.response?.data?.message ?? t('reservations.detailDialog.cancelFailed');
+  } catch (e: unknown) {
+    erreur.value = messageErreurApi(e) ?? t('reservations.detailDialog.cancelFailed');
   } finally {
     enCours.value = '';
   }
