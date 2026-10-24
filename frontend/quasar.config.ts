@@ -57,7 +57,7 @@ export default defineConfig((ctx) => {
         node: 'node20',
       },
       typescript: {
-        strict: false,
+        strict: true,
         vueShim: true,
       },
       vueRouterMode: 'hash',
