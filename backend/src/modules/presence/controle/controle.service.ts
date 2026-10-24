@@ -711,7 +711,9 @@ export class ControleService {
             })
             .catch((e: unknown) => {
               if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
-                throw new ForbiddenException(t('controle.cette_seance_a_deja_ete_controlee_par_un_autre_agent_seule_l'));
+                throw new ForbiddenException(
+                  t('controle.cette_seance_a_deja_ete_controlee_par_un_autre_agent_seule_l'),
+                );
               }
               throw e;
             });
@@ -781,7 +783,8 @@ export class ControleService {
    * la file du contrôleur le retire au lieu de le réessayer indéfiniment.
    */
   async synchroniser(dto: SyncPointagesDto, user: AuthUser, ip?: string) {
-    const resultats: Array<{ seanceId: string; ok: boolean; erreur?: string | string[]; code?: string; id?: string }> = [];
+    const resultats: Array<{ seanceId: string; ok: boolean; erreur?: string | string[]; code?: string; id?: string }> =
+      [];
 
     for (const p of dto.pointages) {
       try {
