@@ -1,0 +1,73 @@
+{
+  "date": "2026-10-24T11:01:00.969Z",
+  "build": "/tmp/mc/l7/build-nav",
+  "front": "http://127.0.0.1:5029",
+  "totaux": {
+    "scenarios": 12,
+    "ok": 12,
+    "ko": 0
+  },
+  "resultats": [
+    {
+      "scenario": "création d’examen — écran /examens",
+      "statut": "OK",
+      "detail": "titre « Organisation des examens — University »"
+    },
+    {
+      "scenario": "création d’un examen",
+      "statut": "OK",
+      "detail": "examen « Examen recette navigateur 202610241059 » (code RECNAV571794) présent dans la liste — notification : check_circle\nExamen planifié"
+    },
+    {
+      "scenario": "grille des frais",
+      "statut": "OK",
+      "detail": "titre « Frais d'inscription — University »"
+    },
+    {
+      "scenario": "moyens de preuve",
+      "statut": "OK",
+      "detail": "titre « Moyens de preuve — University »"
+    },
+    {
+      "scenario": "correction de pointage",
+      "statut": "OK",
+      "detail": "titre « Corrections des pointages — University »"
+    },
+    {
+      "scenario": "pages découpées — /seances",
+      "statut": "OK",
+      "detail": "titre « Séances — University », 1 bloc(s) de contenu"
+    },
+    {
+      "scenario": "pages découpées — /paiements",
+      "statut": "OK",
+      "detail": "titre « Paiements — University », 2 bloc(s) de contenu"
+    },
+    {
+      "scenario": "pages découpées — /inscriptions",
+      "statut": "OK",
+      "detail": "titre « Inscriptions — University », 1 bloc(s) de contenu"
+    },
+    {
+      "scenario": "pages découpées — /cites (3 onglet(s))",
+      "statut": "OK",
+      "detail": "titre « Cités universitaires — University », onglets ouverts sans erreur"
+    },
+    {
+      "scenario": "pages découpées — /patrimoine (3 onglet(s))",
+      "statut": "OK",
+      "detail": "titre « Patrimoine & matériel — University », onglets ouverts sans erreur"
+    },
+    {
+      "scenario": "pages découpées — /resto (3 onglet(s))",
+      "statut": "OK",
+      "detail": "titre « Restaurant universitaire — University », onglets ouverts sans erreur"
+    },
+    {
+      "scenario": "pages découpées — /stages (2 onglet(s))",
+      "statut": "OK",
+      "detail": "titre « Stages & mémoires — University », onglets ouverts sans erreur"
+    }
+  ],
+  "anomalies": []
+}
