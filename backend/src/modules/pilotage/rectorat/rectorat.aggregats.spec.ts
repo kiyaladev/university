@@ -287,36 +287,6 @@ describe('RectoratService — indicateurs de bruit de fond', () => {
   });
 });
 
-describe('RectoratService — tableau de bord rapide', () => {
-  it('renvoie les compteurs d’ouverture et l’année active', async () => {
-    const { prisma, delegates } = fairePrisma();
-    delegates.inscription.count.mockResolvedValue(120);
-    delegates.reclamation.count.mockResolvedValue(4);
-    delegates.ticketSupport.count.mockResolvedValue(2);
-    const service = new RectoratService(prisma);
-
-    const tableau = await service.dashboardRapide();
-
-    expect(tableau).toMatchObject({
-      anneeActive: { id: 'annee-1', libelle: '2025-2026' },
-      effectif: 120,
-      nbReclamationsEnCours: 4,
-      nbIncidentsHelpdesk24h: 2,
-      nbEquipementsObsoletes: 0,
-    });
-  });
-
-  it('n’annonce aucune année active quand le registre est vierge', async () => {
-    const { prisma, delegates } = fairePrisma();
-    delegates.anneeAcademique.findFirst.mockResolvedValue(null);
-    const service = new RectoratService(prisma);
-
-    const tableau = await service.dashboardRapide();
-
-    expect(tableau.anneeActive).toBeNull();
-  });
-});
-
 describe('RectoratService — snapshots MESRS', () => {
   it('refuse de générer un bilan pour une année inconnue', async () => {
     const { prisma, delegates } = fairePrisma();

@@ -111,34 +111,7 @@ export class RectoratService {
   // ---------------------------------------------------------- agrégats live
 
   /**
-   * Agrégat rapide pour la tuile d'accueil : pas de détail par promotion,
-   * juste les compteurs qui ouvrent la page.
-   */
-  async dashboardRapide() {
-    const anneeActive = await this.prisma.anneeAcademique.findFirst({ where: { active: true } });
-    const [effectif, reclamations, tickets24h, obsolescents] = await Promise.all([
-      this.prisma.inscription.count({
-        where: {
-          ...baseInscriptionNonAnnulee(),
-          ...(anneeActive ? { anneeId: anneeActive.id } : {}),
-        },
-      }),
-      this.prisma.reclamation.count({ where: { statut: { notIn: reclamationFermee() } } }),
-      this.prisma.ticketSupport.count({ where: { createdAt: { gte: ilYA1JOUR() } } }),
-      this.obsolescents(),
-    ]);
-
-    return {
-      anneeActive: anneeActive ? { id: anneeActive.id, libelle: anneeActive.libelle } : null,
-      effectif,
-      nbReclamationsEnCours: reclamations,
-      nbIncidentsHelpdesk24h: tickets24h,
-      nbEquipementsObsoletes: obsolescents,
-    };
-  }
-
-  /**
-   * Chiffres détaillés : ce que la page Recto­rat affiche. Filtré par année si
+   * Chiffres détaillés : ce que la page Rectorat affiche. Filtré par année si
    * précisée, sinon l'année active.
    */
   async chiffres(anneeId?: string) {
