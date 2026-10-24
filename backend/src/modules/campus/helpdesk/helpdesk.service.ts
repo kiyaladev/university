@@ -54,7 +54,7 @@ const EQUIPEMENT_AUDIT = {
   emplacement: true,
   actif: true,
   createdAt: true,
-} satisfies Prisma.EquipementCampusSelect;
+} satisfies Prisma.EquipementHelpdeskSelect;
 
 /**
  * Colonnes lues pour l'état « avant » d'un ticket. Les champs de texte libre
@@ -152,7 +152,7 @@ export class EquipementsService extends CrudService {
     prisma: PrismaService,
     private parametres: ParametresService,
   ) {
-    super(prisma, 'equipementCampus', {
+    super(prisma, 'equipementHelpdesk', {
       orderBy: { libelle: 'asc' },
       // Le code imprimé dans le QR est un identifiant de résolution public :
       // l'inventaire ne doit pas le recopier dans chaque réponse authentifiée.
@@ -184,7 +184,7 @@ export class EquipementsService extends CrudService {
     const equipement =
       codeQr.length > 64
         ? null
-        : await this.prisma.equipementCampus.findUnique({
+        : await this.prisma.equipementHelpdesk.findUnique({
             where: { codeQr },
             select: { id: true, libelle: true, emplacement: true, actif: true },
           });
@@ -206,7 +206,7 @@ export class EquipementsService extends CrudService {
    */
   async creer(dto: CreateEquipementDto, user: AuthUser) {
     return this.prisma.$transaction(async (tx) => {
-      const equipement = await tx.equipementCampus.create({
+      const equipement = await tx.equipementHelpdesk.create({
         data: {
           libelle: dto.libelle,
           emplacement: dto.emplacement || null,
@@ -230,7 +230,7 @@ export class EquipementsService extends CrudService {
    */
   async modifier(id: string, dto: UpdateEquipementDto, user: AuthUser) {
     return this.prisma.$transaction(async (tx) => {
-      const avant = await tx.equipementCampus.findUnique({ where: { id }, select: EQUIPEMENT_AUDIT });
+      const avant = await tx.equipementHelpdesk.findUnique({ where: { id }, select: EQUIPEMENT_AUDIT });
       if (!avant) {
         throw new NotFoundException(t('common.crud.itemNotFound', { label: 'Équipement' }));
       }
@@ -240,7 +240,7 @@ export class EquipementsService extends CrudService {
         ...(dto.emplacement != null ? { emplacement: dto.emplacement || null } : {}),
         ...(dto.actif != null ? { actif: dto.actif } : {}),
       };
-      const apres = await tx.equipementCampus.update({ where: { id }, data, select: EQUIPEMENT_AUDIT });
+      const apres = await tx.equipementHelpdesk.update({ where: { id }, data, select: EQUIPEMENT_AUDIT });
       await journaliser(tx, user, 'EQUIPEMENT_MODIFICATION', 'Equipement', id, {
         avant: instantaneEquipement(avant),
         apres: instantaneEquipement(apres),
@@ -252,11 +252,11 @@ export class EquipementsService extends CrudService {
 
   async supprimer(id: string, user: AuthUser) {
     return this.prisma.$transaction(async (tx) => {
-      const avant = await tx.equipementCampus.findUnique({ where: { id }, select: EQUIPEMENT_AUDIT });
+      const avant = await tx.equipementHelpdesk.findUnique({ where: { id }, select: EQUIPEMENT_AUDIT });
       if (!avant) {
         throw new NotFoundException(t('helpdesk.equipement_inconnu_ou_desactive'));
       }
-      await tx.equipementCampus.delete({ where: { id } });
+      await tx.equipementHelpdesk.delete({ where: { id } });
       await journaliser(tx, user, 'EQUIPEMENT_SUPPRESSION', 'Equipement', id, {
         avant: instantaneEquipement(avant),
         apres: null,
@@ -273,7 +273,7 @@ export class EquipementsService extends CrudService {
   async imprimerQr(id: string, baseUrl: string): Promise<string> {
     // `findOne` intentionally omits codeQr from authenticated API responses;
     // printing is the one internal path that needs the stored code itself.
-    const equipement = await this.prisma.equipementCampus.findUnique({
+    const equipement = await this.prisma.equipementHelpdesk.findUnique({
       where: { id },
       select: { id: true, libelle: true, emplacement: true, codeQr: true },
     });
@@ -372,7 +372,7 @@ export class TicketsService extends CrudService<Prisma.TicketSupportGetPayload<{
   /** Déclaration rapide : n'importe quel utilisateur connecté. */
   async declarer(dto: DeclarerTicketDto, user: AuthUser) {
     if (dto.equipementId) {
-      const equipement = await this.prisma.equipementCampus.findUnique({
+      const equipement = await this.prisma.equipementHelpdesk.findUnique({
         where: { id: dto.equipementId },
       });
       if (!equipement || !equipement.actif) {

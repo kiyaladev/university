@@ -34,14 +34,14 @@ import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
 import { equipementsService } from '../services/assistance';
-import type { EquipementCampus } from '@/types';
+import type { EquipementHelpdesk } from '@/types';
 
 /**
  * Fiche de l'équipement du campus. La création génère le code QR (UP-IT-…) ;
  * seul le libellé et l'emplacement sont saisis, le code reste machine.
  */
 const ouvert = defineModel<boolean>({ required: true });
-const props = defineProps<{ equipement?: EquipementCampus | null }>();
+const props = defineProps<{ equipement?: EquipementHelpdesk | null }>();
 const emit = defineEmits<{ enregistre: [] }>();
 
 const $q = useQuasar();

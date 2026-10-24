@@ -1,5 +1,5 @@
 import { creer, lire, lister, modifier, supprimer } from '@/shared/services/http';
-import type { EquipementCampus, TicketSupport } from '@/types';
+import type { EquipementHelpdesk, TicketSupport } from '@/types';
 
 /**
  * Assistance : le parc d'équipements du campus (les cartes QR que l'on scanne)
@@ -52,16 +52,16 @@ export interface StatsTickets {
 
 export const equipementsService = {
   /** Parc des équipements : l'API filtre mais ne pagine pas cette ressource. */
-  liste: (params: ParametresEquipements = {}) => lister<EquipementCampus>('/equipements', params),
+  liste: (params: ParametresEquipements = {}) => lister<EquipementHelpdesk>('/equipements', params),
 
-  creer: (corps: CorpsEquipement) => creer<EquipementCampus>('/equipements', corps),
+  creer: (corps: CorpsEquipement) => creer<EquipementHelpdesk>('/equipements', corps),
 
-  modifier: (id: string, corps: Partial<CorpsEquipement>) => modifier<EquipementCampus>(`/equipements/${id}`, corps),
+  modifier: (id: string, corps: Partial<CorpsEquipement>) => modifier<EquipementHelpdesk>(`/equipements/${id}`, corps),
 
   supprimer: (id: string) => supprimer(`/equipements/${id}`),
 
   /** Équipement désigné par son code QR (scan d'une carte). */
-  parCode: (code: string) => lire<EquipementCampus>(`/equipements/par-code/${encodeURIComponent(code)}`),
+  parCode: (code: string) => lire<EquipementHelpdesk>(`/equipements/par-code/${encodeURIComponent(code)}`),
 };
 
 export const ticketsService = {

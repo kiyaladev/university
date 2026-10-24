@@ -168,6 +168,24 @@ export const SERIES_NUMERO = {
     largeur: 5,
     millesime: 'civile',
   },
+  /**
+   * Recette externe : « RECX-2026-00001 ».
+   *
+   * Le préfixe « REC- » appartient à la série des réclamations : les recettes
+   * portent « RECX- » pour qu'une référence identifie sans ambiguïté le
+   * document qu'elle désigne (règle « un préfixe = un module »).
+   *
+   * Le numéro est saisi à la main (il figure sur le reçu ou la facture
+   * délivrée par l'université) : la série est déclarée ici pour réserver le
+   * préfixe, pas pour generar le numéro.
+   */
+  RECETTE_EXTERNE: {
+    prefixe: 'RECX-',
+    modele: 'recetteExterne',
+    champ: 'numero',
+    largeur: 5,
+    millesime: 'civile',
+  },
   /** Badge d'accès : « BADGE-2026-00001 ». */
   BADGE_ACCES: {
     prefixe: 'BADGE-',
@@ -181,6 +199,18 @@ export const SERIES_NUMERO = {
 /** Préfixe complet d'une série : préfixe + millésime + tiret. */
 export function prefixeSerie(serie: SerieNumerique, annee: string): string {
   return `${serie.prefixe}${annee}-`;
+}
+
+/**
+ * Format attendu d'une référence de série : « RECX-2026-00001 ».
+ *
+ * Le motif est déduit de la série (préfixe, millésime de quatre chiffres,
+ * séquence à zéros initiaux de largeur fixe) : un préfixe déclaré dans
+ * `SERIES_NUMERO` ne peut donc pas avoir deux formats concurrents.
+ */
+export function formatNumeroSerie(serie: SerieNumerique): RegExp {
+  const prefixe = serie.prefixe.replace(/[.*+?^${}()|[\]\\-]/g, '\\$&');
+  return new RegExp(`^${prefixe}\\d{4}-\\d{${serie.largeur}}$`);
 }
 
 /**

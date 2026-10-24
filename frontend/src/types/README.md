@@ -45,7 +45,6 @@ fichiers. Il conserve les commentaires `///` du schéma.
 
 Les types qui ne sont pas des enums Prisma restent écrits à la main :
 
-- `TypeBadge` : la colonne `BadgeAcces.type` est une chaîne libre en base ;
 - `StatutCarteEtudiante` : le modèle `CarteEtudiante` réutilise l'enum Prisma
   `StatutAttestation` (EMIS / REVOQUE), le nom d'usage est conservé.
 

@@ -1,5 +1,6 @@
 {
   "recette_introuvable": "Recette introuvable",
+  "numero_invalide": "Le numéro de recette doit suivre le format {format}.",
   "cette_recette_a_deja_ete_encaissee_paiement_deja_rattache": "Cette recette a déjà été encaissée (paiement déjà rattaché)",
   "modification_comptable_apres_encaissement_interdite": "Le type, la date, le montant et la devise sont figés après encaissement",
   "modification_concurrente": "La recette a été modifiée simultanément. Rechargez-la avant de réessayer.",

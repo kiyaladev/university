@@ -1,6 +1,7 @@
 import {
   IsBoolean,
   IsEnum,
+  IsIn,
   IsInt,
   IsNumber,
   IsOptional,
@@ -11,8 +12,9 @@ import {
   Min,
   MinLength,
 } from 'class-validator';
-import { ModePaiement, StatutDemande, TypeDemandeDocument } from '@prisma/client';
+import { ModePaiement, OperateurPaiement, StatutDemande, TypeDemandeDocument } from '@prisma/client';
 import { QueryDto } from '../../../common/dto';
+import { OPERATEURS_MOBILE_MONEY } from '../../../common/finances/paiement';
 
 const TELEPHONE = /^\+?[\d\s().-]{6,20}$/;
 
@@ -42,9 +44,8 @@ export class PayerDto {
   simuler?: boolean;
 
   @IsOptional()
-  @IsString()
-  @MaxLength(40)
-  operateur?: string;
+  @IsIn(OPERATEURS_MOBILE_MONEY)
+  operateur?: OperateurPaiement;
 
   @IsOptional()
   @Matches(TELEPHONE, { message: 'Numéro de téléphone invalide' })

@@ -189,7 +189,14 @@ export interface Soutenance {
   president?: Pick<Enseignant, 'id' | 'nom' | 'prenom'> | null;
 }
 
-export interface EquipementCampus {
+/**
+ * Fiche d'équipement suivie par le helpdesk (signalement par QR).
+ *
+ * Ce n'est pas l'inventaire patrimonial : l'écran « Patrimoine » porte un
+ * autre type (`EquipementPatrimoine`), avec catégorie, valeur et
+ * réparations. Les deux inventaires sont distincts côté base.
+ */
+export interface EquipementHelpdesk {
   id: string;
   libelle: string;
   emplacement?: string | null;
@@ -212,7 +219,7 @@ export interface TicketSupport {
   traiteLe?: string | null;
   clicheLe?: string | null;
   createdAt: string;
-  equipement?: EquipementCampus | null;
+  equipement?: EquipementHelpdesk | null;
   utilisateur?: { id: string; nom: string; prenom: string } | null;
   traitePar?: { id: string; nom: string; prenom: string } | null;
 }

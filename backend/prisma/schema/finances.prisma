@@ -15,6 +15,14 @@ enum ModePaiement {
   VIREMENT // banque
 }
 
+/// Opérateur ayant encaissé le paiement (Mobile Money ou autre canal).
+enum OperateurPaiement {
+  ORANGE_MONEY
+  MTN_MOMO
+  TELECEL
+  AUTRE // guichet, virement, passerelle inconnue…
+}
+
 /// Cycle de vie d'une feuille de paie vacataires.
 enum StatutPaie {
   BROUILLON // calculée, non figée
@@ -24,16 +32,16 @@ enum StatutPaie {
 
 /// Transaction de paiement (Mobile Money, guichet, virement).
 model Paiement {
-  id            String         @id @default(uuid())
-  reference     String         @unique // "PAY-2026-00001"
-  montant       Decimal        @db.Decimal(14, 2)
-  devise        String         @default("GNF")
-  mode          ModePaiement   @default(MOBILE_MONEY)
-  operateur     String? // "ORANGE_MONEY", "MTN_MOMO", "TELECEL"…
+  id            String             @id @default(uuid())
+  reference     String             @unique // "PAY-2026-00001"
+  montant       Decimal            @db.Decimal(14, 2)
+  devise        String             @default("GNF")
+  mode          ModePaiement       @default(MOBILE_MONEY)
+  operateur     OperateurPaiement? // ORANGE_MONEY, MTN_MOMO, TELECEL, AUTRE
   telephone     String? // numéro Mobile Money du payeur
   nomComplet    String? // donneur d'ordre affiché au guichet
   motif         String? // "Frais d'inscription L1"
-  statut        StatutPaiement @default(EN_ATTENTE)
+  statut        StatutPaiement     @default(EN_ATTENTE)
   transactionId String? // référence renvoyée par l'opérateur Mobile Money
 
   inscriptionId String?
@@ -134,7 +142,7 @@ enum TypeRecette {
 
 model RecetteExterne {
   id          String      @id @default(uuid())
-  numero      String      @unique // "REC-2026-00001"
+  numero      String      @unique // "RECX-2026-00001" (préfixe réservé aux recettes)
   type        TypeRecette
   libelle     String
   description String?
@@ -148,6 +156,7 @@ model RecetteExterne {
   creeParId   String?
   creePar     User?       @relation("RecetteCreePar", fields: [creeParId], references: [id], onDelete: SetNull)
   createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
 
   @@index([type, date])
 }

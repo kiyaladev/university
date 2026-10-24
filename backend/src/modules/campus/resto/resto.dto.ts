@@ -11,7 +11,7 @@ import {
   IsUUID,
   Min,
 } from 'class-validator';
-import { ModePaiement, StatutConsommation, StatutPaiement, TypeRepas } from '@prisma/client';
+import { ModePaiement, OperateurPaiement, StatutConsommation, StatutPaiement, TypeRepas } from '@prisma/client';
 import { QueryDto } from '../../../common/dto';
 import { OPERATEURS_MOBILE_MONEY } from '../../../common/finances/paiement';
 
@@ -42,7 +42,7 @@ export class RechargerPortefeuilleDto {
 
   @IsOptional()
   @IsIn(OPERATEURS_MOBILE_MONEY)
-  operateur?: string;
+  operateur?: OperateurPaiement;
 
   @IsOptional()
   @IsString()
@@ -151,5 +151,5 @@ export class RechargerPortailDto {
 
   @IsOptional()
   @IsIn(OPERATEURS_MOBILE_MONEY)
-  operateur?: string;
+  operateur?: OperateurPaiement;
 }

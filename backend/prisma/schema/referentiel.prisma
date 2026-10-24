@@ -28,6 +28,7 @@ model AnneeAcademique {
   active    Boolean  @default(false)
   cloturee  Boolean  @default(false)
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   promotions           Promotion[]
   affectations         Affectation[]
@@ -71,6 +72,7 @@ model Filiere {
   departementId String
   departement   Departement @relation(fields: [departementId], references: [id], onDelete: Restrict)
   createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
 
   promotions Promotion[]
 }
@@ -87,6 +89,7 @@ model Promotion {
   annee   AnneeAcademique @relation(fields: [anneeId], references: [id], onDelete: Restrict)
 
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   affectations Affectation[]
 
@@ -216,6 +219,7 @@ model Affectation {
 
   volumeHorairePrevu Int      @default(0) // heures contractuelles à réaliser
   createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
   creneaux Creneau[]
   seances  Seance[]

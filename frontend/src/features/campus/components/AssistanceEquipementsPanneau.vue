@@ -205,10 +205,10 @@ import BarreFiltres from '@/shared/components/BarreFiltres.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
 import { usePresentationListe } from '@/shared/composables/usePresentationListe';
 import { ouvrirImpression } from '@/shared/services/impression';
-import type { ChipFiltre, EquipementCampus, FiltresPage } from '@/types';
+import type { ChipFiltre, EquipementHelpdesk, FiltresPage } from '@/types';
 
 const props = defineProps<{
-  lignes: EquipementCampus[];
+  lignes: EquipementHelpdesk[];
   chargement: boolean;
   estAdmin: boolean;
 }>();
@@ -218,8 +218,8 @@ const filtres = defineModel<FiltresPage>('filtres', { required: true });
 
 const emit = defineEmits<{
   creer: [];
-  modifier: [equipement: EquipementCampus];
-  supprimer: [equipement: EquipementCampus];
+  modifier: [equipement: EquipementHelpdesk];
+  supprimer: [equipement: EquipementHelpdesk];
   reinitialiser: [];
 }>();
 
@@ -252,7 +252,7 @@ const colonnes = computed<QTableColumn[]>(() => [
   {
     name: 'tickets',
     label: t('helpdesk.table.columns.tickets'),
-    field: (r: EquipementCampus) => r._count?.tickets ?? 0,
+    field: (r: EquipementHelpdesk) => r._count?.tickets ?? 0,
     align: 'left',
   },
   { name: 'actions', label: '', field: 'id', align: 'right' },
@@ -263,7 +263,7 @@ function copier(texte: string) {
   $q.notify({ type: 'info', message: t('helpdesk.messages.codeCopied') });
 }
 
-function imprimerQr(e: EquipementCampus) {
+function imprimerQr(e: EquipementHelpdesk) {
   void ouvrirImpression(`/equipements/${e.id}/imprimer-qr`);
 }
 

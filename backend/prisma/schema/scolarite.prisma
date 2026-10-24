@@ -205,6 +205,7 @@ model Note {
   saisieParId   String?
   saisiePar     User?       @relation("NoteSaisiePar", fields: [saisieParId], references: [id], onDelete: SetNull)
   saisieLe      DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
 
   @@unique([evaluationId, inscriptionId])
   @@index([inscriptionId])
@@ -251,10 +252,11 @@ model DeliberationLigne {
   inscriptionId  String
   inscription    Inscription  @relation(fields: [inscriptionId], references: [id], onDelete: Restrict)
 
-  moyenne  Float        @default(0) // /20 calculée par le jury
-  decision DecisionJury @default(AJOURNE)
-  mention  String? // "passable", "bien", "très bien"…
-  rang     Int?
+  moyenne   Float        @default(0) // /20 calculée par le jury
+  decision  DecisionJury @default(AJOURNE)
+  mention   String? // "passable", "bien", "très bien"…
+  rang      Int?
+  updatedAt DateTime     @updatedAt
 
   @@unique([deliberationId, inscriptionId])
 }
@@ -304,6 +306,7 @@ model Soutenance {
   // Colonne conservée « creeLe » en base : le champ Prisma suit la
   // convention `createdAt` du reste du modèle.
   createdAt        DateTime       @default(now()) @map("creeLe")
+  updatedAt        DateTime       @updatedAt
 }
 
 // ---------------------------------------------------------------------------
@@ -348,6 +351,7 @@ model InscriptionFormation {
   paiementId  String?                    @unique
   paiement    Paiement?                  @relation("PaiementFormation", fields: [paiementId], references: [id], onDelete: SetNull)
   inscriteLe  DateTime                   @default(now())
+  updatedAt   DateTime                   @updatedAt
 
   @@index([formationId])
 }

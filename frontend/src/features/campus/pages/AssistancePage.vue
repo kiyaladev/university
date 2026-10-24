@@ -135,7 +135,7 @@ import AssistanceMesTicketsPanneau from '../components/AssistanceMesTicketsPanne
 import AssistanceGestionPanneau from '../components/AssistanceGestionPanneau.vue';
 import AssistanceEquipementsPanneau from '../components/AssistanceEquipementsPanneau.vue';
 import AssistanceTicketDialogue from '../components/AssistanceTicketDialogue.vue';
-import type { CategorieIncident, EquipementCampus, StatutTicket, TicketSupport, FiltresPage } from '@/types';
+import type { CategorieIncident, EquipementHelpdesk, StatutTicket, TicketSupport, FiltresPage } from '@/types';
 
 const $q = useQuasar();
 const { t } = useI18n();
@@ -150,10 +150,10 @@ const stats = ref<Record<string, number> | null>(null);
 
 const declarerOuvert = ref(false);
 const categorieInitiale = ref<CategorieIncident | ''>('');
-const equipementScanne = ref<EquipementCampus | null>(null);
+const equipementScanne = ref<EquipementHelpdesk | null>(null);
 const ticketDetail = ref<TicketSupport | null>(null);
 const equipementDialogOuvert = ref(false);
-const equipementEdite = ref<EquipementCampus | null>(null);
+const equipementEdite = ref<EquipementHelpdesk | null>(null);
 
 const scanEquipement = ref(false);
 const codeScanne = ref('');
@@ -196,7 +196,7 @@ const gestion = reactive(
 const filtresEquip = ref<FiltresPage>({ recherche: '', actif: null });
 /** Parc d'équipements : l'API filtre mais ne pagine pas. */
 const equip = reactive(
-  useListePaginee<EquipementCampus>({
+  useListePaginee<EquipementHelpdesk>({
     filtres: filtresEquip,
     pageSize: 0,
     syncUrl: true,
@@ -243,12 +243,12 @@ async function changerStatut(ticket: TicketSupport, statut: StatutTicket) {
   }
 }
 
-function ouvrirEquipement(e: EquipementCampus | null) {
+function ouvrirEquipement(e: EquipementHelpdesk | null) {
   equipementEdite.value = e;
   equipementDialogOuvert.value = true;
 }
 
-async function supprimerEquipement(e: EquipementCampus) {
+async function supprimerEquipement(e: EquipementHelpdesk) {
   const ok = await confirmer({
     titre: t('helpdesk.deleteEquipmentDialog.title'),
     message: t('helpdesk.deleteEquipmentDialog.message', { libelle: e.libelle }),

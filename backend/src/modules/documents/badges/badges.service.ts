@@ -8,7 +8,7 @@
  */
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { t } from '../../../common/i18n';
-import { Prisma, StatutBadge } from '@prisma/client';
+import { Prisma, StatutBadge, TypeBadge } from '@prisma/client';
 import { randomBytes } from 'node:crypto';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { chargerEtablissement } from '../../../common/impression/index';
@@ -64,7 +64,7 @@ export class BadgesService {
   private instantaneAudit(badge: {
     id: string;
     numero: string;
-    type: string;
+    type: TypeBadge;
     statut: StatutBadge;
     dateValidite: Date;
     zonesAccess: string | null;

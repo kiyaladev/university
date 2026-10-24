@@ -96,8 +96,8 @@ describe('types du domaine', () => {
   });
 
   it('ne recopie plus les enums du schéma', () => {
-    // Seule exception : `TypeBadge`, dont la colonne est une chaîne libre en
-    // base (pas d'enum Prisma). Voir `src/types/README.md`.
+    // Les enums viennent tous du schéma Prisma : aucun alias écrit à la main
+    // dans les fichiers de domaine. Voir `src/types/README.md`.
     const recopies: string[] = [];
     for (const nom of fichiersDomaines) {
       const contenu = readFileSync(join(DOSSIER_TYPES, nom), 'utf8');
@@ -105,6 +105,6 @@ describe('types du domaine', () => {
         recopies.push(alias[1]);
       }
     }
-    expect(recopies).toEqual(['TypeBadge']);
+    expect(recopies).toEqual([]);
   });
 });

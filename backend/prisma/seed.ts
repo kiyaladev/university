@@ -95,7 +95,7 @@ async function main() {
   await prisma.evaluation.deleteMany();
   await prisma.matiere.deleteMany();
   await prisma.ticketSupport.deleteMany();
-  await prisma.equipementCampus.deleteMany();
+  await prisma.equipementHelpdesk.deleteMany();
   await prisma.recharge.deleteMany();
   await prisma.consommationResto.deleteMany();
   await prisma.portefeuilleResto.deleteMany();
@@ -947,7 +947,7 @@ async function main() {
   await Promise.all([
     prisma.recetteExterne.create({
       data: {
-        numero: 'REC-2026-00001',
+        numero: 'RECX-2026-00001',
         type: 'LOCATION_AMPHI',
         libelle: 'Location Amphithéâtre A — Colloque AUF',
         description: 'Colloque sous-régional 2 jours',
@@ -958,7 +958,7 @@ async function main() {
     }),
     prisma.recetteExterne.create({
       data: {
-        numero: 'REC-2026-00002',
+        numero: 'RECX-2026-00002',
         type: 'ANALYSE_LABO',
         libelle: 'Analyse spectrométrique — Échantillon CMDT-2026-008',
         description: 'Spectrométrie IR + UV-Vis',
@@ -970,7 +970,7 @@ async function main() {
     }),
     prisma.recetteExterne.create({
       data: {
-        numero: 'REC-2026-00003',
+        numero: 'RECX-2026-00003',
         type: 'PRESTATION_FORMATION',
         libelle: 'Formation continue Excel avancé — Cohorte 1',
         description: '24h sur 4 jours, 18 participants',
@@ -981,7 +981,7 @@ async function main() {
     }),
     prisma.recetteExterne.create({
       data: {
-        numero: 'REC-2026-00004',
+        numero: 'RECX-2026-00004',
         type: 'PRESTATION_CONSEIL',
         libelle: 'Audit organisationnel — Service pédagogique',
         montant: 450000,
@@ -1714,7 +1714,7 @@ async function main() {
   // ---------- 3. Beaucoup de paiements ----------
   const allInscriptions = await prisma.inscription.findMany({ include: { etudiant: true } });
   const modesPaiement = ['MOBILE_MONEY', 'MOBILE_MONEY', 'ESPECES', 'VIREMENT'];
-  const operateurs = ['ORANGE_MONEY', 'MTN_MOMO'];
+  const operateurs = ['ORANGE_MONEY', 'MTN_MOMO'] as const;
   for (let i = 0; i < 30; i++) {
     const ins = allInscriptions[i % allInscriptions.length];
     const mode = modesPaiement[i % modesPaiement.length];
@@ -2090,7 +2090,7 @@ async function main() {
   }
 
   // ---------- 12. Helpdesk: +20 tickets ----------
-  const equipementsCampus = await prisma.equipementCampus.findMany();
+  const equipementsHelpdesk = await prisma.equipementHelpdesk.findMany();
   for (let i = 0; i < 20; i++) {
     const categorie = piocher(['VIDEO', 'SON', 'RESEAU', 'ELECTRICITE', 'MOBILIER', 'INFORMATIQUE']);
     const priorite = piocher(['BASSE', 'NORMALE', 'NORMALE', 'HAUTE', 'HAUTE']);
@@ -2099,7 +2099,7 @@ async function main() {
     await prisma.ticketSupport.create({
       data: {
         numero: `TKT-2026-${String(100 + i).padStart(4, '0')}`,
-        equipementId: equipementsCampus.length > 0 ? equipementsCampus[0].id : null,
+        equipementId: equipementsHelpdesk.length > 0 ? equipementsHelpdesk[0].id : null,
         categorie: categorie as any,
         description: `Problème ${categorie.toLowerCase()} signalé pendant un cours`,
         priorite: priorite as any,
@@ -2553,7 +2553,7 @@ async function main() {
             : 450000;
     await prisma.recetteExterne.create({
       data: {
-        numero: `REC-2026-${String(100 + i).padStart(4, '0')}`,
+        numero: `RECX-2026-${String(100 + i).padStart(5, '0')}`,
         type: type as any,
         libelle: `${type} - ${date.toLocaleDateString('fr-FR')}`,
         montant,

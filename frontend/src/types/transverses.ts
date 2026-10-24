@@ -10,6 +10,7 @@ import type {
   StatutBadge,
   StatutElection,
   StatutVOD,
+  TypeBadge,
   TypeElection,
   TypeRessourceVOD,
 } from './generated/enums';
@@ -19,6 +20,7 @@ export type {
   StatutBadge,
   StatutElection,
   StatutVOD,
+  TypeBadge,
   TypeElection,
   TypeRessourceVOD,
 } from './generated/enums';
@@ -29,12 +31,6 @@ export type {
  * pour ne rien changer aux imports existants.
  */
 export type StatutCarteEtudiante = StatutAttestation;
-
-/**
- * Type de badge d'accès : la colonne `BadgeAcces.type` est une chaîne libre en
- * base (pas d'enum Prisma), les valeurs sont donc énumérées à la main.
- */
-export type TypeBadge = 'VISITEUR' | 'INTERVENANT' | 'TECHNICIEN' | 'VIP';
 
 export interface CarteEtudiante {
   id: string;

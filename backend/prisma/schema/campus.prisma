@@ -148,6 +148,7 @@ model ReservationSalle {
   // Colonne conservée « creeLe » en base : le champ Prisma suit la
   // convention `createdAt` du reste du modèle.
   createdAt   DateTime               @default(now()) @map("creeLe")
+  updatedAt   DateTime               @updatedAt
 
   @@index([salleId, dateJour])
 }
@@ -156,15 +157,27 @@ model ReservationSalle {
 // 6. Support IT & helpdesk campus (QR sur les équipements)
 // ---------------------------------------------------------------------------
 
-model EquipementCampus {
+/// Fiche d'équipement suivie par le helpdesk : la cible des signalements QR.
+///
+/// Ce modèle n'est **pas** l'inventaire patrimonial : il ne porte ni catégorie,
+/// ni valeur, ni date d'acquisition. Il sert à coller un QR sur un appareil
+/// pour qu'un usager signale une panne sans passer par le guichet. L'autre
+/// inventaire est `EquipementPatrimoine` (voir § « Gestion du Patrimoine »).
+///
+/// Le nom de la table reste « EquipementCampus » : le renommage du modèle est
+/// documentaire, la colonne et les identifiants en base ne bougent pas.
+model EquipementHelpdesk {
   id          String   @id @default(uuid())
   libelle     String // "Vidéoprojecteur salle S204"
   emplacement String?
   codeQr      String   @unique // "UP-IT-<base64url>"
   actif       Boolean  @default(true)
   createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   tickets TicketSupport[]
+
+  @@map("EquipementCampus")
 }
 
 model TicketSupport {
@@ -177,9 +190,9 @@ model TicketSupport {
   declarantNom           String?
   declarantEmail         String?
   declarantTelephone     String?
-  // Équipement Helpdesk (salle, signalement QR rapide)
+  // Équipement du helpdesk (salle, signalement QR rapide)
   equipementId           String?
-  equipement             EquipementCampus?     @relation(fields: [equipementId], references: [id], onDelete: SetNull)
+  equipement             EquipementHelpdesk?   @relation(fields: [equipementId], references: [id], onDelete: SetNull)
   // Liaison optionnelle au patrimoine (lorsque le ticket provient d'un
   // équipement inventorié). Au plus UN des deux inventaires est renseigné :
   // CHECK "TicketSupport_un_seul_inventaire", posé en SQL par la migration
@@ -210,11 +223,14 @@ model CategoriePatrimoine {
   libelle            String
   dureeAmortissement Int? // mois
   actif              Boolean                @default(true)
+  updatedAt          DateTime               @updatedAt
   equipements        EquipementPatrimoine[]
 }
 
-/// Équipement physique inventorié (le Helpdesk utilise déjà `EquipementCampus`
-/// pour les QR de signalement ; ce modèle est distinct pour l'inventaire MESRS).
+/// Équipement physique inventorié (l'inventaire MESRS : catégorie, valeur,
+/// date d'acquisition, réparations). Le helpdesk utilise déjà
+/// `EquipementHelpdesk` pour les QR de signalement : les deux inventaires sont
+/// volontairement distincts (voir § « Support IT & helpdesk campus »).
 model EquipementPatrimoine {
   id                String              @id @default(uuid())
   numeroSerie       String              @unique
@@ -267,6 +283,7 @@ model ReparationMateriel {
   resoluParId     String?
   resoluPar       User?                @relation("ReparationResoluePar", fields: [resoluParId], references: [id], onDelete: SetNull)
   notes           String?
+  updatedAt       DateTime             @updatedAt
 
   @@index([statut])
   @@index([equipementId])
@@ -326,6 +343,8 @@ model Reclamation {
   // Colonne conservée « creeLe » en base : le champ Prisma suit la
   // convention `createdAt` du reste du modèle.
   createdAt           DateTime            @default(now()) @map("creeLe")
+  // Dernière évolution de la réclamation (statut, affectation, escalade).
+  updatedAt           DateTime            @updatedAt
   fermeLe             DateTime?
   notes               String?
 

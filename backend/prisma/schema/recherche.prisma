@@ -99,6 +99,7 @@ model SuspicionPlagiat {
   acquittePar   User?                  @relation("SuspicionAcquitteePar", fields: [acquitteParId], references: [id], onDelete: SetNull)
   acquitteLe    DateTime?
   commentaire   String?
+  updatedAt     DateTime               @updatedAt
 
   @@index([statut])
   @@index([score])
