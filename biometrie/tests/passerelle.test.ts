@@ -9,7 +9,7 @@ import { describe, expect, it } from 'bun:test';
 import { createHash, createHmac } from 'node:crypto';
 import { RegistreAntiRejeu } from '../src/anti-rejeu';
 import type { ConfigurationPasserelle } from '../src/configuration';
-import { creerPasserelle, origineAutorisee, VERSION_PASSERELLE } from '../src/passeurelle';
+import { creerPasserelle, origineAutorisee, VERSION_PASSERELLE } from '../src/passerelle';
 import type { Capture, PiloteLecteur } from '../src/pilote';
 
 const APPAREIL_ID = '3f2b6c1a-9d4e-4a71-8c2f-0b5a7e9d1c33';

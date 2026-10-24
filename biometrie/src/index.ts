@@ -14,7 +14,7 @@
  *     enrôlés, avec un avertissement au démarrage.
  */
 import { chargerConfiguration, ErreurConfiguration } from './configuration';
-import { creerPasserelle, VERSION_PASSERELLE } from './passeurelle';
+import { creerPasserelle, VERSION_PASSERELLE } from './passerelle';
 import { PILOTES } from './pilotes';
 import type { PiloteLecteur } from './pilote';
 
