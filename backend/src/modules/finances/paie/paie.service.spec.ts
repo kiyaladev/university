@@ -10,7 +10,7 @@ describe('PaieService — historique avant/après', () => {
     const findUnique = jest.fn().mockResolvedValue({ id: 'feuille-1' });
     const service = new PaieService({ feuillePaie: { findUnique } } as any, {} as any);
 
-    await service.detail('feuille-1');
+    await service.lire('feuille-1');
 
     expect(findUnique.mock.calls[0][0].include.lignes.include.enseignant.select).toEqual({
       id: true,

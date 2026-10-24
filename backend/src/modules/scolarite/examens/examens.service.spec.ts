@@ -34,7 +34,7 @@ describe('Périmètre des examens et scans', () => {
 
   it('force la liste à l’examen attribué au contrôleur', async () => {
     const { db, service } = prepare();
-    await service.liste({} as any, controleur);
+    await service.lister({} as any, controleur);
     expect(db.examen.findMany.mock.calls[0][0].where.surveillantId).toBe(controleur.id);
     expect(db.examen.count.mock.calls[0][0].where.surveillantId).toBe(controleur.id);
   });

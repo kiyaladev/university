@@ -14,7 +14,7 @@ const estPublic = (methode: string) =>
   Reflect.getMetadata(IS_PUBLIC_KEY, (BadgesController.prototype as any)[methode]) === true;
 
 describe('BadgesController — droits par rôle', () => {
-  it.each(['liste', 'trouver', 'creer', 'modifier', 'annuler', 'rallonger'])(
+  it.each(['lister', 'trouver', 'creer', 'modifier', 'annuler', 'rallonger'])(
     'confie %s à l’administration et à la scolarité',
     (methode) => {
       expect(roles(methode)).toEqual([Role.ADMIN, Role.SCOLARITE]);

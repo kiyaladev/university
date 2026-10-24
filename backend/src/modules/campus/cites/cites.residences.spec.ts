@@ -54,7 +54,7 @@ describe('filtres de la liste des résidences', () => {
   it('applique le filtre de ville, insensible à la casse', async () => {
     const { service, findMany, count } = preparer('residence');
 
-    await service.findAll({ ville: 'conakry' } as any);
+    await service.lister({ ville: 'conakry' } as any);
 
     const attendu = { ville: { contains: 'conakry', mode: 'insensitive' } };
     expect(findMany).toHaveBeenCalledWith(expect.objectContaining({ where: attendu }));
@@ -64,7 +64,7 @@ describe('filtres de la liste des résidences', () => {
   it("applique le filtre d'état actif", async () => {
     const { service, findMany } = preparer('residence');
 
-    await service.findAll({ actif: false } as any);
+    await service.lister({ actif: false } as any);
 
     expect(findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { actif: false } }));
   });
@@ -72,7 +72,7 @@ describe('filtres de la liste des résidences', () => {
   it('cumule ville et état', async () => {
     const { service, findMany } = preparer('residence');
 
-    await service.findAll({ ville: 'Kindia', actif: true } as any);
+    await service.lister({ ville: 'Kindia', actif: true } as any);
 
     expect(findMany).toHaveBeenCalledWith(
       expect.objectContaining({ where: { ville: { contains: 'Kindia', mode: 'insensitive' }, actif: true } }),
@@ -82,7 +82,7 @@ describe('filtres de la liste des résidences', () => {
   it("ne filtre rien quand l'écran n'a rien demandé", async () => {
     const { service, findMany } = preparer('residence');
 
-    await service.findAll({} as any);
+    await service.lister({} as any);
 
     expect(findMany).toHaveBeenCalledWith(expect.objectContaining({ where: {} }));
   });
@@ -90,7 +90,7 @@ describe('filtres de la liste des résidences', () => {
   it('laisse la recherche textuelle au service CRUD', async () => {
     const { service, findMany } = preparer('residence');
 
-    await service.findAll({ search: 'Cité', ville: 'Kindia' } as any);
+    await service.lister({ search: 'Cité', ville: 'Kindia' } as any);
 
     expect(findMany).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -110,12 +110,12 @@ describe('filtres de la liste des résidences', () => {
   it('transmet bien la requête du contrôleur au service', async () => {
     const { prisma } = preparer('residence');
     const service = new ResidencesService(prisma);
-    const findAll = jest.spyOn(service, 'findAll');
+    const lister = jest.spyOn(service, 'lister');
     const controller = new ResidencesController(service);
 
-    await controller.findAll({ ville: 'Kindia', actif: false } as any);
+    await controller.lister({ ville: 'Kindia', actif: false } as any);
 
-    expect(findAll).toHaveBeenCalledWith({ ville: 'Kindia', actif: false });
+    expect(lister).toHaveBeenCalledWith({ ville: 'Kindia', actif: false });
   });
 });
 
@@ -124,7 +124,7 @@ describe('filtres des chambres et des attributions', () => {
     const { prisma, findMany } = preparer('chambre');
     const controller = new ChambresController(new ChambresService(prisma));
 
-    await controller.findAll({ residenceId: 'residence-1', statut: 'LIBRE', categorie: 'CHAMBRE_SOLO' } as any);
+    await controller.lister({ residenceId: 'residence-1', statut: 'LIBRE', categorie: 'CHAMBRE_SOLO' } as any);
 
     expect(findMany).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -137,7 +137,7 @@ describe('filtres des chambres et des attributions', () => {
     const { prisma, findMany } = preparer('attributionLogement');
     const controller = new AttributionsController(new AttributionsService(prisma));
 
-    await controller.liste({ residenceId: 'residence-1', statut: 'EN_ATTENTE' } as any);
+    await controller.lister({ residenceId: 'residence-1', statut: 'EN_ATTENTE' } as any);
 
     expect(findMany).toHaveBeenCalledWith(
       expect.objectContaining({

@@ -6,14 +6,14 @@ import { CurrentUser, Roles, ProtectedDocument, DocumentScope } from '../../../c
 import type { AuthUser } from '../../../common/decorators';
 import { DocumentsDemandeService } from './documents-demande.service';
 import {
-  CreerDemandeDto,
-  CreerTarifDto,
+  CreateDemandeDto,
+  CreateTarifDto,
   DocumentsDemandeQueryDto,
   LancerTraitementDto,
   MarquerPreteDto,
   MesDemandesQueryDto,
   ModePaiementDto,
-  ModifierTarifDto,
+  UpdateTarifDto,
   PayerDto,
   RemettreDto,
   RejeterDemandeDto,
@@ -41,8 +41,8 @@ export class DocumentsDemandeController {
 
   @Roles(...ROLES_LECTURE)
   @Get()
-  liste(@Query() query: DocumentsDemandeQueryDto, @CurrentUser() user: AuthUser) {
-    return this.service.liste(query, user);
+  lister(@Query() query: DocumentsDemandeQueryDto, @CurrentUser() user: AuthUser) {
+    return this.service.lister(query, user);
   }
 
   @Roles(...ROLES_LECTURE)
@@ -60,13 +60,13 @@ export class DocumentsDemandeController {
 
   @Roles(Role.ADMIN)
   @Post('tarifs')
-  creerTarif(@Body() dto: CreerTarifDto, @CurrentUser() user: AuthUser) {
+  creerTarif(@Body() dto: CreateTarifDto, @CurrentUser() user: AuthUser) {
     return this.service.creerTarif(dto, user);
   }
 
   @Roles(Role.ADMIN)
   @Put('tarifs/:id')
-  modifierTarif(@Param('id') id: string, @Body() dto: ModifierTarifDto, @CurrentUser() user: AuthUser) {
+  modifierTarif(@Param('id') id: string, @Body() dto: UpdateTarifDto, @CurrentUser() user: AuthUser) {
     return this.service.modifierTarif(id, dto, user);
   }
 
@@ -74,7 +74,7 @@ export class DocumentsDemandeController {
 
   @Roles(Role.ADMIN, Role.SCOLARITE, Role.DIRECTION, Role.ETUDIANT)
   @Get(':id')
-  findOne(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+  lire(@Param('id') id: string, @CurrentUser() user: AuthUser) {
     return this.service.findOnePour(id, user);
   }
 
@@ -82,7 +82,7 @@ export class DocumentsDemandeController {
 
   @Roles(Role.ETUDIANT)
   @Post()
-  creer(@Body() dto: CreerDemandeDto, @CurrentUser() user: AuthUser) {
+  creer(@Body() dto: CreateDemandeDto, @CurrentUser() user: AuthUser) {
     return this.service.creer(dto, user);
   }
 

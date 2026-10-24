@@ -87,7 +87,7 @@ export class PromotionsService extends CrudService {
   }
 
   /** Une promotion qui porte encore inscriptions, affectations ou frais se garde. */
-  async remove(id: string, user?: AuthUser) {
+  async supprimer(id: string, user?: AuthUser) {
     return this.prisma.$transaction(
       async (tx) => {
         const actuelle: any = await tx.promotion.findUnique({

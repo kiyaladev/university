@@ -177,7 +177,7 @@ export class BibliothequeService extends CrudService {
    * Avec un jeton (staff) : tout le fonds, et le filtre « publié / non » via
    * ?public=. La page publique et la page du staff partagent donc l'URL.
    */
-  async liste(query: DocumentQueryDto, utilisateur: AuthUser | null) {
+  async lister(query: DocumentQueryDto, utilisateur: AuthUser | null) {
     const filtres = {
       ...(query.type ? { type: query.type } : {}),
       ...(query.departementId ? { departementId: query.departementId } : {}),
@@ -186,7 +186,7 @@ export class BibliothequeService extends CrudService {
     const where = fondsComplet(utilisateur)
       ? { ...filtres, ...(query.public ? { public: query.public === 'true' } : {}) }
       : { ...filtres, public: true };
-    const resultat = await this.findAll(query, where);
+    const resultat = await super.lister(query, where);
     return {
       ...resultat,
       data: (resultat.data as any[]).map((d) => {

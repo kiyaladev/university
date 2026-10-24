@@ -14,33 +14,33 @@ import { AnneesService } from './annees.service';
 export class AnneesController {
   constructor(private readonly service: AnneesService) {}
 
-  @Get() findAll(@Query() query: QueryDto) {
-    return this.service.findAll(query);
+  @Get() lister(@Query() query: QueryDto) {
+    return this.service.lister(query);
   }
 
   @Get('active') active() {
     return this.service.active();
   }
 
-  @Get(':id') findOne(@Param('id') id: string) {
-    return this.service.findOne(id);
+  @Get(':id') lire(@Param('id') id: string) {
+    return this.service.lire(id);
   }
 
   @Roles(Role.ADMIN, Role.SCOLARITE)
   @Post()
-  create(@Body() dto: CreateAnneeDto, @CurrentUser() user: AuthUser) {
+  creer(@Body() dto: CreateAnneeDto, @CurrentUser() user: AuthUser) {
     return this.service.creer(dto, user);
   }
 
   @Roles(Role.ADMIN, Role.SCOLARITE)
   @Put(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateAnneeDto, @CurrentUser() user: AuthUser) {
+  modifier(@Param('id') id: string, @Body() dto: UpdateAnneeDto, @CurrentUser() user: AuthUser) {
     return this.service.modifier(id, dto, user);
   }
 
   @Roles(Role.ADMIN)
   @Delete(':id')
-  remove(@Param('id') id: string, @CurrentUser() user: AuthUser) {
-    return this.service.remove(id, user);
+  supprimer(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.service.supprimer(id, user);
   }
 }

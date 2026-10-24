@@ -41,7 +41,7 @@ describe('Demande de document passée « prête » et attestation vérifiable', 
       emettrePourDemandeTx: jest.fn().mockResolvedValue({ id: 'att-1', numero: 'ATT-2026-00001' }),
     };
     const service = new DocumentsDemandeService(prisma as any, {} as any, attestations as any);
-    jest.spyOn(service, 'findOne').mockResolvedValue(demande as any);
+    jest.spyOn(service, 'lire').mockResolvedValue(demande as any);
     return { service, tx, attestations };
   }
 

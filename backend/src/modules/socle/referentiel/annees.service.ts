@@ -140,7 +140,7 @@ export class AnneesService extends CrudService {
    * séances, délibérations…) : dès qu'elle a servi, on la clôture, on ne
    * l'efface pas.
    */
-  async remove(id: string, user?: AuthUser) {
+  async supprimer(id: string, user?: AuthUser) {
     return this.prisma.$transaction(
       async (tx) => {
         const annee = await tx.anneeAcademique.findUnique({

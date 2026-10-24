@@ -40,7 +40,7 @@ export class RecettesService {
 
   // ------------------------------------------------------- lecture
 
-  async liste(query: RecetteQueryDto): Promise<Paginated<any>> {
+  async lister(query: RecetteQueryDto): Promise<Paginated<any>> {
     const pagination = paginer(query);
 
     const where: Prisma.RecetteExterneWhereInput = {

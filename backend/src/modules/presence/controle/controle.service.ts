@@ -235,7 +235,7 @@ export class ControleService {
 
   // ------------------------------------------------------------- consultation
 
-  async liste(query: ControleQueryDto, user: AuthUser) {
+  async lister(query: ControleQueryDto, user: AuthUser) {
     const enseignantId = user.role === Role.ENSEIGNANT ? (user.enseignantId ?? '__aucun__') : query.enseignantId;
     const departementId =
       estChefDeDepartement(user) || (user.role === Role.CONTROLEUR && user.departementId)
@@ -280,7 +280,7 @@ export class ControleService {
     return pagine(data, total, pagination);
   }
 
-  async findOne(id: string, user?: AuthUser) {
+  async lire(id: string, user?: AuthUser) {
     const where: Prisma.ControleWhereInput = {
       id,
       ...(user?.role === Role.ENSEIGNANT
@@ -597,7 +597,7 @@ export class ControleService {
     // l'utilisateur, la correction d'un pointage appartenait à n'importe quel
     // enseignant ou contrôleur. Le garde-fou `controleurId` ci-dessous
     // suffisait aujourd'hui par accident, pas par conception.
-    const existant = await this.findOne(id, user);
+    const existant = await this.lire(id, user);
     if (existant.controleurId !== user.id && ![Role.ADMIN, Role.DIRECTION].includes(user.role as any)) {
       throw new ForbiddenException(t('controle.seul_l_auteur_du_controle_ou_la_direction_peut_le_corriger'));
     }

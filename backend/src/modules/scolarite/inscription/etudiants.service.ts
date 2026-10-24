@@ -93,11 +93,11 @@ export class EtudiantsService extends CrudService {
   }
 
   listePour(query: QueryDto, filters: Record<string, unknown>, user: AuthUser) {
-    return this.lecture(user).findAll(query, { AND: [filters, this.perimetre(user)] });
+    return this.lecture(user).lister(query, { AND: [filters, this.perimetre(user)] });
   }
 
   async detailPour(id: string, user: AuthUser) {
-    const result = await this.lecture(user).findAll({ pageSize: 1 }, { AND: [{ id }, this.perimetre(user)] });
+    const result = await this.lecture(user).lister({ pageSize: 1 }, { AND: [{ id }, this.perimetre(user)] });
     if (!result.data[0]) throw new NotFoundException(t('common.notFound'));
     return result.data[0];
   }
@@ -237,7 +237,7 @@ export class EtudiantsService extends CrudService {
    * notes, attestations…), elle se désactive. Le portail étudiant refuse
    * alors l'accès au compte rattaché.
    */
-  async remove(id: string, user?: AuthUser) {
+  async supprimer(id: string, user?: AuthUser) {
     await this.prisma.$transaction(async (tx) => {
       const avant: any = await tx.etudiant.findUnique({ where: { id } });
       if (!avant) throw new NotFoundException(t('common.notFound'));

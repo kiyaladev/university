@@ -437,7 +437,7 @@ export class PlagiatService {
   }
 
   /** Fiche d'une suspicion : lecture, jamais journalisée. */
-  async detail(id: string) {
+  async lire(id: string) {
     const suspicion = await this.prisma.suspicionPlagiat.findUnique({
       where: { id },
       include: {

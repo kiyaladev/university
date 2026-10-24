@@ -20,8 +20,8 @@ export class CourrierController {
   constructor(private readonly service: CourrierService) {}
 
   @Get()
-  liste(@Query() query: CourrierQueryDto, @CurrentUser() user: AuthUser) {
-    return this.service.liste(query, user);
+  lister(@Query() query: CourrierQueryDto, @CurrentUser() user: AuthUser) {
+    return this.service.lister(query, user);
   }
 
   /** Déclaré avant `:id` pour ne pas être capturé par le handler générique. */
@@ -32,7 +32,7 @@ export class CourrierController {
   }
 
   @Get(':id')
-  detail(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+  lire(@Param('id') id: string, @CurrentUser() user: AuthUser) {
     return this.service.trouver(id, user);
   }
 

@@ -23,26 +23,26 @@ export class MatieresController {
   // La lecture était ouverte à tout le monde, y compris aux chefs de département
   // d'autres filières ; l'écriture, elle, laissait un chef de département
   // réécrire n'importe quelle UE et en déplacer le rattachement.
-  @Get() findAll(@Query() query: MatiereQueryDto, @CurrentUser() user: AuthUser) {
-    return this.service.findAll(query, perimetreMatiere(user, query.departementId));
+  @Get() lister(@Query() query: MatiereQueryDto, @CurrentUser() user: AuthUser) {
+    return this.service.lister(query, perimetreMatiere(user, query.departementId));
   }
-  @Get(':id') findOne(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+  @Get(':id') lire(@Param('id') id: string, @CurrentUser() user: AuthUser) {
     return this.service.trouverPerimetre(id, user);
   }
   @Roles(Role.ADMIN, Role.SCOLARITE, Role.CHEF_DEPARTEMENT)
   @Post()
-  create(@Body() dto: CreateMatiereDto, @CurrentUser() user: AuthUser) {
+  creer(@Body() dto: CreateMatiereDto, @CurrentUser() user: AuthUser) {
     exigerPerimetre(user, dto.departementId);
     return this.service.creer(dto, user);
   }
   @Roles(Role.ADMIN, Role.SCOLARITE, Role.CHEF_DEPARTEMENT)
   @Put(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateMatiereDto, @CurrentUser() user: AuthUser) {
+  modifier(@Param('id') id: string, @Body() dto: UpdateMatiereDto, @CurrentUser() user: AuthUser) {
     return this.service.modifierPerimetre(id, dto, user);
   }
   @Roles(Role.ADMIN)
   @Delete(':id')
-  remove(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+  supprimer(@Param('id') id: string, @CurrentUser() user: AuthUser) {
     return this.service.supprimer(id, user);
   }
 }

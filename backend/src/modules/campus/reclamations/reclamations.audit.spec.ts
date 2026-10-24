@@ -719,7 +719,7 @@ describe('Journal avant/après des réclamations', () => {
   it("n'inscrit rien au journal pour une lecture : liste, détail, tableau de bord et agents", async () => {
     const { service, prisma, journal, mutations } = preparer();
 
-    await service.liste({}, admin);
+    await service.lister({}, admin);
     await service.findOnePour('rec-1', admin);
     await service.mesReclamations({}, etudiant);
     await service.dashboard();

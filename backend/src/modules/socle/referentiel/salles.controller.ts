@@ -14,20 +14,20 @@ import { SallesService } from './salles.service';
 export class SallesController {
   constructor(private readonly service: SallesService) {}
 
-  @Get() findAll(@Query() query: QueryDto, @CurrentUser() user: AuthUser) {
+  @Get() lister(@Query() query: QueryDto, @CurrentUser() user: AuthUser) {
     return this.service.listePour(query, user);
   }
-  @Get(':id') findOne(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+  @Get(':id') lire(@Param('id') id: string, @CurrentUser() user: AuthUser) {
     return this.service.fichePour(id, user);
   }
   @Roles(Role.ADMIN, Role.SCOLARITE)
   @Post()
-  create(@Body() dto: CreateSalleDto, @CurrentUser() user: AuthUser) {
+  creer(@Body() dto: CreateSalleDto, @CurrentUser() user: AuthUser) {
     return this.service.creer(dto, user);
   }
   @Roles(Role.ADMIN, Role.SCOLARITE)
   @Put(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateSalleDto, @CurrentUser() user: AuthUser) {
+  modifier(@Param('id') id: string, @Body() dto: UpdateSalleDto, @CurrentUser() user: AuthUser) {
     return this.service.modifier(id, dto, user);
   }
   @Roles(Role.ADMIN, Role.SCOLARITE)
@@ -37,7 +37,7 @@ export class SallesController {
   }
   @Roles(Role.ADMIN)
   @Delete(':id')
-  remove(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+  supprimer(@Param('id') id: string, @CurrentUser() user: AuthUser) {
     return this.service.supprimer(id, user);
   }
 }

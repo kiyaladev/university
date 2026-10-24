@@ -50,7 +50,7 @@ export class TirageService {
 
   // ------------------------------------------------------- lecture
 
-  async liste(query: TirageQueryDto): Promise<Paginated<any>> {
+  async lister(query: TirageQueryDto): Promise<Paginated<any>> {
     const pagination = paginer(query);
 
     const where: Prisma.TirageWhereInput = {

@@ -31,7 +31,7 @@ describe('Périmètre des créneaux', () => {
 
   it('force le professeur connecté même si une autre identité est demandée', async () => {
     const { db, service } = prepare();
-    await service.liste({ enseignantId: 'prof-2' } as any, enseignant);
+    await service.lister({ enseignantId: 'prof-2' } as any, enseignant);
     expect(db.creneau.findMany.mock.calls[0][0].where.affectation.enseignantId).toBe('prof-1');
     expect(db.creneau.count.mock.calls[0][0].where.affectation.enseignantId).toBe('prof-1');
   });
@@ -54,18 +54,18 @@ describe('Périmètre des créneaux', () => {
 
   it('limite le chef au département du créneau dans la liste', async () => {
     const { db, service } = prepare();
-    await service.liste({} as any, chef);
+    await service.lister({} as any, chef);
     expect(db.creneau.findMany.mock.calls[0][0].where.affectation.enseignant.departementId).toBe('dept-1');
   });
 
   it('limite le contrôleur à son département dans la liste et l’accès direct', async () => {
     const { db, service } = prepare();
-    await service.liste({ promotionId: 'promo-1' } as any, controleur);
+    await service.lister({ promotionId: 'promo-1' } as any, controleur);
     expect(db.creneau.findMany.mock.calls[0][0].where.affectation.enseignant.departementId).toBe('dept-2');
     expect(db.creneau.findMany.mock.calls[0][0].where.affectation.promotionId).toBe('promo-1');
 
     db.creneau.findFirst.mockResolvedValue(null);
-    await expect(service.findOne('c-2', controleur)).rejects.toThrow(NotFoundException);
+    await expect(service.lire('c-2', controleur)).rejects.toThrow(NotFoundException);
     expect(db.creneau.findFirst).toHaveBeenLastCalledWith(
       expect.objectContaining({
         where: { id: 'c-2', affectation: { enseignant: { departementId: 'dept-2' } } },
@@ -75,7 +75,7 @@ describe('Périmètre des créneaux', () => {
 
   it('limite la liste étudiante à sa promotion validée de l’année active et projette les seuls champs d’affichage', async () => {
     const { db, service } = prepare();
-    await service.liste({ anneeId: 'annee-demandee', promotionId: 'promo-demandee' } as any, etudiant);
+    await service.lister({ anneeId: 'annee-demandee', promotionId: 'promo-demandee' } as any, etudiant);
     const requete = db.creneau.findMany.mock.calls[0][0];
     expect(requete.where.affectation).toEqual({
       anneeId: 'annee-demandee',
@@ -99,15 +99,15 @@ describe('Périmètre des créneaux', () => {
   it('permet aux étudiants de lire les créneaux mais leur interdit toutes les mutations', () => {
     const rolesLecture = Reflect.getMetadata(ROLES_KEY, CreneauxController);
     expect(rolesLecture).toContain(Role.ETUDIANT);
-    expect(Reflect.getMetadata(ROLES_KEY, CreneauxController.prototype.create)).not.toContain(Role.ETUDIANT);
-    expect(Reflect.getMetadata(ROLES_KEY, CreneauxController.prototype.update)).not.toContain(Role.ETUDIANT);
-    expect(Reflect.getMetadata(ROLES_KEY, CreneauxController.prototype.remove)).not.toContain(Role.ETUDIANT);
+    expect(Reflect.getMetadata(ROLES_KEY, CreneauxController.prototype.creer)).not.toContain(Role.ETUDIANT);
+    expect(Reflect.getMetadata(ROLES_KEY, CreneauxController.prototype.modifier)).not.toContain(Role.ETUDIANT);
+    expect(Reflect.getMetadata(ROLES_KEY, CreneauxController.prototype.supprimer)).not.toContain(Role.ETUDIANT);
   });
 
   it('masque un créneau hors périmètre lorsqu’il est demandé directement', async () => {
     const { db, service } = prepare();
     db.creneau.findFirst.mockResolvedValue(null);
-    await expect(service.findOne('c-1', enseignant)).rejects.toThrow(NotFoundException);
+    await expect(service.lire('c-1', enseignant)).rejects.toThrow(NotFoundException);
     expect(db.creneau.findFirst).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: 'c-1', affectation: { enseignantId: 'prof-1' } },
@@ -117,14 +117,14 @@ describe('Périmètre des créneaux', () => {
 
   it('refuse le détail direct sans session au lieu de lire sans filtre', async () => {
     const { db, service } = prepare();
-    await expect(service.findOne('c-1')).rejects.toThrow(UnauthorizedException);
+    await expect(service.lire('c-1')).rejects.toThrow(UnauthorizedException);
     expect(db.creneau.findFirst).not.toHaveBeenCalled();
     expect(db.creneau.findUnique).not.toHaveBeenCalled();
   });
 
   it('retourne un périmètre vide à un chef sans département', async () => {
     const { db, service } = prepare();
-    await service.liste({} as any, { ...chef, departementId: null });
+    await service.lister({} as any, { ...chef, departementId: null });
     expect(db.creneau.findMany.mock.calls[0][0].where.affectation.enseignant.departementId).toBe(
       '__aucun_departement__',
     );
@@ -157,7 +157,7 @@ describe('Périmètre des créneaux', () => {
     await expect(service.modifier('cr-dept-2', { heureDebut: '09:00' } as any, chef)).rejects.toThrow(
       NotFoundException,
     );
-    await expect(service.remove('cr-dept-2', chef)).rejects.toThrow(NotFoundException);
+    await expect(service.supprimer('cr-dept-2', chef)).rejects.toThrow(NotFoundException);
     expect(db.creneau.findFirst).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({ affectation: { enseignant: { departementId: 'dept-1' } } }),

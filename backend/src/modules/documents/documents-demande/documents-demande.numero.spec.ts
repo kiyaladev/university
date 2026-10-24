@@ -52,7 +52,7 @@ function serviceAvec(references: string[]) {
   const prisma: any = { $transaction: jest.fn((operation: (client: any) => unknown) => operation(tx)) };
   const service = new DocumentsDemandeService(prisma as any);
   jest.spyOn(service, 'findOnePour').mockResolvedValue({ ...DEMANDE } as any);
-  jest.spyOn(service, 'findOne').mockResolvedValue({ ...DEMANDE } as any);
+  jest.spyOn(service, 'lire').mockResolvedValue({ ...DEMANDE } as any);
   return { service, tx, paiementFindMany };
 }
 

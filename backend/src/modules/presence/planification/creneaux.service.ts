@@ -103,8 +103,8 @@ export class CreneauxService extends CrudService {
     };
   }
 
-  liste(query: CreneauQueryDto, user: AuthUser) {
-    if (user.role !== Role.ETUDIANT) return this.findAll(query, this.where(query, user));
+  lister(query: CreneauQueryDto, user: AuthUser) {
+    if (user.role !== Role.ETUDIANT) return super.lister(query, this.where(query, user));
 
     const where = this.where(query, user);
     const pagination = paginer(query);
@@ -155,7 +155,7 @@ export class CreneauxService extends CrudService {
     }));
   }
 
-  async findOne(id: string, user?: AuthUser) {
+  async lire(id: string, user?: AuthUser) {
     if (!user) throw new UnauthorizedException(t('common.unauthorized'));
     const creneau = await this.prisma.creneau.findFirst({
       where: { id, ...this.where({}, user) },
@@ -306,7 +306,7 @@ export class CreneauxService extends CrudService {
     );
   }
 
-  async remove(id: string, user?: AuthUser) {
+  async supprimer(id: string, user?: AuthUser) {
     return this.prisma.$transaction(
       async (tx) => {
         const creneau: any = await tx.creneau.findFirst({

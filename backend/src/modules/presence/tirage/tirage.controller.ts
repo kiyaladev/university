@@ -14,13 +14,13 @@ export class TirageController {
 
   @Roles(Role.ADMIN, Role.SCOLARITE)
   @Get()
-  liste(@Query() query: TirageQueryDto) {
-    return this.service.liste(query);
+  lister(@Query() query: TirageQueryDto) {
+    return this.service.lister(query);
   }
 
   @Roles(Role.ADMIN, Role.SCOLARITE)
   @Get(':id')
-  detail(@Param('id') id: string) {
+  lire(@Param('id') id: string) {
     return this.service.trouver(id);
   }
 

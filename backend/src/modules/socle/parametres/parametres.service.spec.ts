@@ -15,7 +15,7 @@ describe('ParametresService — règles de pointage minimales', () => {
   });
 
   it('réserve la liste complète à ADMIN et limite la route utilisée au pointage', () => {
-    expect(Reflect.getMetadata(ROLES_KEY, ParametresController.prototype.liste)).toEqual([Role.ADMIN]);
+    expect(Reflect.getMetadata(ROLES_KEY, ParametresController.prototype.lister)).toEqual([Role.ADMIN]);
     expect(Reflect.getMetadata(ROLES_KEY, ParametresController.prototype.reglesPointage)).toEqual([
       Role.ADMIN,
       Role.SCOLARITE,

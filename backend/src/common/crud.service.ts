@@ -43,6 +43,12 @@ export interface CrudOptions {
  * Service CRUD générique sur un modèle Prisma. Les services métier en héritent
  * et ne redéfinissent que ce qui leur est spécifique.
  *
+ * Les cinq méthodes portent les verbes français de la convention du projet
+ * (`lister`, `lire`, `creer`, `modifier`, `supprimer`) : les services métier
+ * les surchargent avec leurs propres paramètres (utilisateur, transaction…).
+ * Les signatures de base sont donc volontairement larges (`unknown`,
+ * `...contexte`) pour rester compatibles avec ces surcharges.
+ *
  * Le type du modèle reste `any` par défaut : les services qui l'héritent sans
  * le préciser s'appuient sur le delegate Prisma résolu à l'exécution, dont la
  * forme exacte n'est connue qu'au moment de l'appel.
@@ -70,9 +76,9 @@ export class CrudService<T = any> {
     };
   }
 
-  async findAll(query: QueryDto = {}, where: Record<string, unknown> = {}): Promise<Paginated<T>> {
+  async lister(query: QueryDto = {}, where: unknown = {}): Promise<Paginated<T>> {
     const pagination = paginer(query);
-    const fullWhere = { ...where, ...this.searchWhere(query.search) };
+    const fullWhere = { ...(where as Record<string, unknown>), ...this.searchWhere(query.search) };
 
     // `?sort=` part d'une liste blanche : un champ inconnu sur le modèle doit
     // rendre une 400 explicite, pas une PrismaClientValidationError en 500.
@@ -120,7 +126,7 @@ export class CrudService<T = any> {
     return Object.keys(defaut ?? {});
   }
 
-  async findOne(id: string): Promise<T> {
+  async lire(id: string, ..._contexte: unknown[]): Promise<T> {
     const item = await this.delegate.findUnique({
       where: { id },
       ...(this.options.select ? { select: this.options.select } : { include: this.options.include }),
@@ -132,7 +138,7 @@ export class CrudService<T = any> {
     return item;
   }
 
-  async create(data: unknown): Promise<T> {
+  async creer(data: unknown, ..._contexte: unknown[]): Promise<T> {
     return this.delegate.create({
       data,
       include: this.options.include,
@@ -140,8 +146,8 @@ export class CrudService<T = any> {
     });
   }
 
-  async update(id: string, data: unknown): Promise<T> {
-    await this.findOne(id);
+  async modifier(id: string, data: unknown, ..._contexte: unknown[]): Promise<T> {
+    await this.lire(id);
     return this.delegate.update({
       where: { id },
       data,
@@ -150,8 +156,8 @@ export class CrudService<T = any> {
     });
   }
 
-  async remove(id: string): Promise<{ id: string }> {
-    await this.findOne(id);
+  async supprimer(id: string, ..._contexte: unknown[]): Promise<{ id: string }> {
+    await this.lire(id);
     await this.delegate.delete({ where: { id } });
     return { id };
   }

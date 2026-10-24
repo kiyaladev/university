@@ -57,12 +57,12 @@ export class UsersService extends CrudService {
     return { ...this.selectProfil(), password: true };
   }
 
-  async findOne(id: string) {
-    return this.profilSecurise(await super.findOne(id));
+  async lire(id: string) {
+    return this.profilSecurise(await super.lire(id));
   }
 
-  async list(query: UserQueryDto) {
-    const res = await this.findAll(query, {
+  async lister(query: UserQueryDto) {
+    const res = await super.lister(query, {
       ...(query.role ? { role: query.role } : {}),
       ...(query.departementId ? { departementId: query.departementId } : {}),
     });

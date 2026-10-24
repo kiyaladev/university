@@ -120,7 +120,7 @@ export class StagesService extends CrudService {
   // ------------------------------------------------------------------
 
   /** Périmètre : l'étudiant ne lit que ses travaux, l'enseignant ses encadrements. */
-  async liste(query: TravailQueryDto, user: AuthUser) {
+  async lister(query: TravailQueryDto, user: AuthUser) {
     if (!ROLES_PILOTES.includes(user.role) && user.role !== Role.ETUDIANT && user.role !== Role.ENSEIGNANT) {
       throw new ForbiddenException(t('stages.ce_travail_ne_vous_appartient_pas'));
     }
@@ -147,11 +147,11 @@ export class StagesService extends CrudService {
       where.createdAt = { gte: annee.dateDebut, lt: fin };
     }
 
-    return this.findAll(query, where);
+    return super.lister(query, where);
   }
 
   /** Détail d'un travail, avec la même garde de périmètre que la liste. */
-  async detail(id: string, user: AuthUser) {
+  async lire(id: string, user: AuthUser) {
     const where: Prisma.TravailEncadreWhereInput = { id };
     if (user.role === Role.ETUDIANT) {
       where.etudiantId = user.etudiantId ?? '—';
@@ -220,7 +220,7 @@ export class StagesService extends CrudService {
 
   /** Modification : la vie du statut passe par /transition, jamais par la PUT. */
   async modifier(id: string, dto: UpdateTravailDto, user: AuthUser) {
-    const travail: any = await this.findOne(id);
+    const travail: any = await super.lire(id);
     this.autoriserPropriete(travail, user);
 
     if (dto.statut !== undefined && dto.statut !== travail.statut) {
@@ -275,7 +275,7 @@ export class StagesService extends CrudService {
 
   /** Suppression : réservée à l'administration, tant que le dossier n'est pas engagé. */
   async supprimer(id: string, user: AuthUser) {
-    const travail: any = await this.findOne(id);
+    const travail: any = await super.lire(id);
     if (![StatutEncadrement.PROPOSE, StatutEncadrement.VALIDE].includes(travail.statut)) {
       throw new BadRequestException(
         t('stages.un_travail_travail_statut_ne_se_supprime_pas_abandonnez_le_o', { 'travail.statut': travail.statut }),
@@ -307,7 +307,7 @@ export class StagesService extends CrudService {
   // ------------------------------------------------------------------
 
   async transition(id: string, cible: StatutEncadrement, user: AuthUser) {
-    const travail: any = await this.findOne(id);
+    const travail: any = await super.lire(id);
     if (!this.verifierTransition(travail, cible, user)) {
       // Idempotent : revendiquer le même état n'est pas une erreur, c'est un no-op.
       return travail;

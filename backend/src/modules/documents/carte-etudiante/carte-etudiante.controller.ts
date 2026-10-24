@@ -44,8 +44,8 @@ export class CarteEtudianteController {
 
   @Roles(Role.ADMIN, Role.SCOLARITE)
   @Get()
-  liste(@Query() query: CarteEtudianteQueryDto) {
-    return this.service.liste(query);
+  lister(@Query() query: CarteEtudianteQueryDto) {
+    return this.service.lister(query);
   }
 
   @Roles(Role.ETUDIANT)

@@ -16,8 +16,8 @@ export class PromotionsController {
 
   @Roles(...LECTURE_STRUCTURE)
   @Get()
-  findAll(@Query() query: PromotionQueryDto) {
-    return this.service.findAll(query, {
+  lister(@Query() query: PromotionQueryDto) {
+    return this.service.lister(query, {
       ...(query.anneeId ? { anneeId: query.anneeId } : {}),
       ...(query.filiereId ? { filiereId: query.filiereId } : {}),
       ...(query.niveau ? { niveau: query.niveau } : {}),
@@ -25,22 +25,22 @@ export class PromotionsController {
   }
   @Roles(...LECTURE_STRUCTURE)
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.service.findOne(id);
+  lire(@Param('id') id: string) {
+    return this.service.lire(id);
   }
   @Roles(...GESTION)
   @Post()
-  create(@Body() dto: CreatePromotionDto, @CurrentUser() user: AuthUser) {
+  creer(@Body() dto: CreatePromotionDto, @CurrentUser() user: AuthUser) {
     return this.service.creer(dto, user);
   }
   @Roles(...GESTION)
   @Put(':id')
-  update(@Param('id') id: string, @Body() dto: UpdatePromotionDto, @CurrentUser() user: AuthUser) {
+  modifier(@Param('id') id: string, @Body() dto: UpdatePromotionDto, @CurrentUser() user: AuthUser) {
     return this.service.modifier(id, dto, user);
   }
   @Roles(Role.ADMIN)
   @Delete(':id')
-  remove(@Param('id') id: string, @CurrentUser() user: AuthUser) {
-    return this.service.remove(id, user);
+  supprimer(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.service.supprimer(id, user);
   }
 }

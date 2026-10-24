@@ -410,7 +410,7 @@ describe('ControleService — périmètre de consultation', () => {
     const { service, prisma } = preparer();
     prisma.controle.findMany = jest.fn().mockResolvedValue([]);
     prisma.controle.count = jest.fn().mockResolvedValue(0);
-    await service.liste(query, user);
+    await service.lister(query, user);
     expect(prisma.controle.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({ seance: { affectation: expected } }),
@@ -424,14 +424,14 @@ describe('ControleService — périmètre de consultation', () => {
     prisma.controle.findMany = jest.fn().mockResolvedValue([]);
     prisma.controle.count = jest.fn().mockResolvedValue(0);
     const controleur = { ...CONTROLEUR, departementId: 'dept-1' };
-    await service.liste({ controleurId: 'autre', departementId: 'dept-other' } as any, controleur);
+    await service.lister({ controleurId: 'autre', departementId: 'dept-other' } as any, controleur);
     expect(prisma.controle.findMany.mock.calls[0][0].where).toMatchObject({
       seance: { affectation: { enseignant: { departementId: 'dept-1' } } },
     });
     expect(prisma.controle.findMany.mock.calls[0][0].where.controleurId).toBe('autre');
 
     prisma.controle.findFirst.mockResolvedValue({ id: 'controle-1' });
-    await service.findOne('controle-autre', controleur);
+    await service.lire('controle-autre', controleur);
     expect(prisma.controle.findFirst).toHaveBeenCalledWith(
       expect.objectContaining({
         where: {
@@ -447,7 +447,7 @@ describe('ControleService — périmètre de consultation', () => {
     prisma.controle.findMany = jest.fn().mockResolvedValue([]);
     prisma.controle.count = jest.fn().mockResolvedValue(0);
 
-    await service.liste({}, CONTROLEUR);
+    await service.lister({}, CONTROLEUR);
 
     const select = prisma.controle.findMany.mock.calls[0][0].select;
     expect(select).toMatchObject({
@@ -475,7 +475,7 @@ describe('ControleService — périmètre de consultation', () => {
     }
 
     prisma.controle.findFirst.mockResolvedValue({ id: 'controle-1' });
-    await service.findOne('controle-1', CONTROLEUR);
+    await service.lire('controle-1', CONTROLEUR);
     expect(prisma.controle.findFirst.mock.calls[0][0].select).toEqual(select);
   });
 
@@ -483,12 +483,12 @@ describe('ControleService — périmètre de consultation', () => {
     const { service, prisma } = preparer();
     prisma.controle.findMany = jest.fn().mockResolvedValue([]);
     prisma.controle.count = jest.fn().mockResolvedValue(0);
-    await service.liste({ controleurId: 'autre' } as any, CONTROLEUR);
+    await service.lister({ controleurId: 'autre' } as any, CONTROLEUR);
     expect(prisma.controle.findMany.mock.calls[0][0].where.controleurId).toBe(CONTROLEUR.id);
     expect(prisma.controle.findMany.mock.calls[0][0].where.seance).not.toHaveProperty('affectation');
 
     prisma.controle.findFirst.mockResolvedValue(null);
-    await expect(service.findOne('controle-autre', CONTROLEUR)).rejects.toBeInstanceOf(NotFoundException);
+    await expect(service.lire('controle-autre', CONTROLEUR)).rejects.toBeInstanceOf(NotFoundException);
     expect(prisma.controle.findFirst.mock.calls[0][0].where).toEqual({
       id: 'controle-autre',
       controleurId: CONTROLEUR.id,
@@ -498,7 +498,7 @@ describe('ControleService — périmètre de consultation', () => {
   it.each([enseignant, chef])('refuse un contrôle hors périmètre même avec son identifiant', async (user) => {
     const { service, prisma } = preparer();
     prisma.controle.findFirst.mockResolvedValue(null);
-    await expect(service.findOne('controle-autre', user)).rejects.toBeInstanceOf(NotFoundException);
+    await expect(service.lire('controle-autre', user)).rejects.toBeInstanceOf(NotFoundException);
     expect(prisma.controle.findFirst.mock.calls[0][0].where.id).toBe('controle-autre');
   });
 });

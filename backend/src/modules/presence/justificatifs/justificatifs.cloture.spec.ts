@@ -39,7 +39,9 @@ describe('Mutations atomiques des justificatifs', () => {
       auditLog: { create: jest.fn() },
     };
     const prisma: any = { $transaction: jest.fn((fn: any) => fn(tx)) };
-    await expect(new JustificatifsService(prisma).remove('just-1', admin)).rejects.toBeInstanceOf(BadRequestException);
+    await expect(new JustificatifsService(prisma).supprimer('just-1', admin)).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
     expect(tx.justificatif.delete).not.toHaveBeenCalled();
   });
 
@@ -202,7 +204,7 @@ describe('Mutations atomiques des justificatifs', () => {
     const prisma: any = { $transaction: jest.fn((operation: any) => operation(tx)) };
     const service = new JustificatifsService(prisma);
 
-    await expect(service.remove('just-1', admin)).rejects.toBeInstanceOf(BadRequestException);
+    await expect(service.supprimer('just-1', admin)).rejects.toBeInstanceOf(BadRequestException);
     expect(tx.$queryRaw.mock.calls[0][0].join('?')).toContain('FOR SHARE');
     expect(tx.justificatif.delete).not.toHaveBeenCalled();
     expect(tx.auditLog.create).not.toHaveBeenCalled();

@@ -231,7 +231,9 @@ export class ScolariteService {
     if (!existante) throw new NotFoundException(t('scolarite.evaluation_introuvable'));
     await exigerAnneeOuverte(this.prisma, existante.anneeId);
     if (existante._count.notes > 0) {
-      throw new BadRequestException(
+      // 409 et non 400 : la demande est licite, c'est l'état de l'évaluation
+      // qui la refuse — des notes y sont déjà enregistrées.
+      throw new ConflictException(
         t('scolarite.impossible_de_supprimer_existante_intitule_des_notes_y_sont_de', {
           intitule: existante.intitule,
           nombre: existante._count.notes,
@@ -241,12 +243,12 @@ export class ScolariteService {
     return this.prisma.$transaction(async (tx) => {
       const avant = await tx.evaluation.findUnique({
         where: { id },
-        include: { _count: { select: { notes: true } } },
+        select: { intitule: true, anneeId: true, _count: { select: { notes: true } } },
       });
       if (!avant) throw new NotFoundException(t('scolarite.evaluation_introuvable'));
       await exigerAnneeOuverte(tx, avant.anneeId);
       if (avant._count.notes > 0) {
-        throw new BadRequestException(
+        throw new ConflictException(
           t('scolarite.impossible_de_supprimer_existante_intitule_des_notes_y_sont_de', {
             intitule: avant.intitule,
             nombre: avant._count.notes,

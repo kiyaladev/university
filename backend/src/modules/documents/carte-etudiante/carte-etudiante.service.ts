@@ -61,7 +61,7 @@ export class CarteEtudianteService {
 
   // ------------------------------------------------------------ consultation
 
-  async liste(query: CarteEtudianteQueryDto) {
+  async lister(query: CarteEtudianteQueryDto) {
     // La liste ne connaît pas le mode « tout » : la pagination est bornée à
     // 1 000 lignes et la page demandée est ramenée à 1 si elle est invalide.
     const pageDemandee = Number(query.page ?? 1);

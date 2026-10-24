@@ -56,7 +56,7 @@ export class SallesService extends CrudService {
 
   async listePour(query: QueryDto, user: AuthUser) {
     const select = this.projectionPour(user);
-    if (!select) return super.findAll(query);
+    if (!select) return super.lister(query);
 
     const pagination = paginer(query);
     const fullWhere = this.searchWhere(query.search);
@@ -75,7 +75,7 @@ export class SallesService extends CrudService {
 
   async fichePour(id: string, user: AuthUser) {
     const select = this.projectionPour(user);
-    if (!select) return super.findOne(id);
+    if (!select) return super.lire(id);
     const salle = await this.delegate.findUnique({ where: { id }, select });
     if (!salle) throw new NotFoundException(t('common.crud.itemNotFound', { label: 'Salle' }));
     return salle;

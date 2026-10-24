@@ -453,7 +453,7 @@ describe('VodService — journal d’audit avant/après', () => {
     };
     const service = new VodService(prisma);
 
-    await service.liste({} as any, PROFS);
+    await service.lister({} as any, PROFS);
     await service.trouverPour('vod-1', PROFS);
     await service.recherche('cours', ETUDIANT);
     await service.maCollecte(ETUDIANT);

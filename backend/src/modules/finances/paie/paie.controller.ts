@@ -15,15 +15,15 @@ export class PaieController {
   /** Liste paginée, filtrable par statut / année / mois. */
   @Roles(Role.ADMIN, Role.DIRECTION, Role.SCOLARITE)
   @Get()
-  liste(@Query() query: FeuilleQueryDto) {
-    return this.service.liste(query);
+  lister(@Query() query: FeuilleQueryDto) {
+    return this.service.lister(query);
   }
 
   /** Détail d'une feuille avec ses lignes (enseignant inclus). */
   @Roles(Role.ADMIN, Role.DIRECTION, Role.SCOLARITE)
   @Get(':id')
-  detail(@Param('id') id: string) {
-    return this.service.detail(id);
+  lire(@Param('id') id: string) {
+    return this.service.lire(id);
   }
 
   /** Création manuelle : mois + année → libellé « Janvier 2026 », période 1er … fin de mois. */

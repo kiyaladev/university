@@ -25,30 +25,30 @@ import { AttributionsService, ChambresService, ResidencesService } from './cites
 export class ResidencesController {
   constructor(private readonly service: ResidencesService) {}
 
-  @Get() findAll(@Query() query: ResidenceQueryDto) {
-    return this.service.findAll(query);
+  @Get() lister(@Query() query: ResidenceQueryDto) {
+    return this.service.lister(query);
   }
 
-  @Get(':id') findOne(@Param('id') id: string) {
-    return this.service.findOne(id);
+  @Get(':id') lire(@Param('id') id: string) {
+    return this.service.lire(id);
   }
 
   @Roles(Role.ADMIN, Role.SCOLARITE, Role.DIRECTION)
   @Post()
-  create(@Body() dto: CreateResidenceDto, @CurrentUser() user: AuthUser) {
+  creer(@Body() dto: CreateResidenceDto, @CurrentUser() user: AuthUser) {
     return this.service.creer(dto, user);
   }
 
   @Roles(Role.ADMIN, Role.SCOLARITE, Role.DIRECTION)
   @Put(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateResidenceDto, @CurrentUser() user: AuthUser) {
+  modifier(@Param('id') id: string, @Body() dto: UpdateResidenceDto, @CurrentUser() user: AuthUser) {
     return this.service.modifier(id, dto, user);
   }
 
   @Roles(Role.ADMIN)
   @Delete(':id')
-  remove(@Param('id') id: string, @CurrentUser() user: AuthUser) {
-    return this.service.remove(id, user);
+  supprimer(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.service.supprimer(id, user);
   }
 }
 
@@ -59,35 +59,35 @@ export class ResidencesController {
 export class ChambresController {
   constructor(private readonly service: ChambresService) {}
 
-  @Get() findAll(@Query() query: ChambreQueryDto) {
-    return this.service.findAll(query, {
+  @Get() lister(@Query() query: ChambreQueryDto) {
+    return this.service.lister(query, {
       ...(query.residenceId ? { residenceId: query.residenceId } : {}),
       ...(query.statut ? { statut: query.statut } : {}),
       ...(query.categorie ? { categorie: query.categorie } : {}),
     });
   }
 
-  @Get(':id') findOne(@Param('id') id: string) {
-    return this.service.findOne(id);
+  @Get(':id') lire(@Param('id') id: string) {
+    return this.service.lire(id);
   }
 
   /** La structure du parc (chambres, loyers) relève de la direction. */
   @Roles(Role.ADMIN, Role.DIRECTION)
   @Post()
-  create(@Body() dto: CreateChambreDto, @CurrentUser() user: AuthUser) {
+  creer(@Body() dto: CreateChambreDto, @CurrentUser() user: AuthUser) {
     return this.service.creer(dto, user);
   }
 
   @Roles(Role.ADMIN, Role.DIRECTION)
   @Put(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateChambreDto, @CurrentUser() user: AuthUser) {
+  modifier(@Param('id') id: string, @Body() dto: UpdateChambreDto, @CurrentUser() user: AuthUser) {
     return this.service.modifier(id, dto, user);
   }
 
   @Roles(Role.ADMIN)
   @Delete(':id')
-  remove(@Param('id') id: string, @CurrentUser() user: AuthUser) {
-    return this.service.remove(id, user);
+  supprimer(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.service.supprimer(id, user);
   }
 }
 
@@ -98,12 +98,12 @@ export class ChambresController {
 export class AttributionsController {
   constructor(private readonly service: AttributionsService) {}
 
-  @Get() liste(@Query() query: AttributionQueryDto) {
-    return this.service.liste(query);
+  @Get() lister(@Query() query: AttributionQueryDto) {
+    return this.service.lister(query);
   }
 
-  @Get(':id') findOne(@Param('id') id: string) {
-    return this.service.findOne(id);
+  @Get(':id') lire(@Param('id') id: string) {
+    return this.service.lire(id);
   }
 
   /** La demande est posée par la scolarité ou la direction, sur pièce. */

@@ -37,7 +37,7 @@ describe('Périmètre des réservations', () => {
 
   it('limite la liste d’un enseignant à ses propres demandes', async () => {
     const { db, service } = prepare();
-    await service.liste({} as any, teacher);
+    await service.lister({} as any, teacher);
     const where = db.reservationSalle.findMany.mock.calls[0][0].where;
     expect(where.demandeurId).toBe(teacher.id);
     expect(db.reservationSalle.count).toHaveBeenCalledWith({ where });

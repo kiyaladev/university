@@ -17,7 +17,7 @@ import { QueryDto } from '../../../common/dto';
 const TELEPHONE = /^\+?[\d\s().-]{6,20}$/;
 
 /** Déclaration d'une demande par l'étudiant. */
-export class CreerDemandeDto {
+export class CreateDemandeDto {
   @IsEnum(TypeDemandeDocument)
   type: TypeDemandeDocument;
 
@@ -92,7 +92,7 @@ export class RejeterDemandeDto {
 }
 
 /** Création d'un tarif par type. */
-export class CreerTarifDto {
+export class CreateTarifDto {
   @IsEnum(TypeDemandeDocument)
   type: TypeDemandeDocument;
 
@@ -106,7 +106,7 @@ export class CreerTarifDto {
 }
 
 /** Mise à jour partielle d'un tarif. */
-export class ModifierTarifDto {
+export class UpdateTarifDto {
   @IsOptional()
   @IsNumber()
   @Min(0)

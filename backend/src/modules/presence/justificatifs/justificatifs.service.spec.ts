@@ -21,7 +21,7 @@ describe('Périmètre des justificatifs', () => {
 
   it('borne la liste et retire la pièce jointe pour un enseignant', async () => {
     const { service, prisma } = preparer();
-    await service.liste({ all: '1' } as any, enseignant);
+    await service.lister({ all: '1' } as any, enseignant);
     expect(prisma.justificatif.findMany.mock.calls[0][0]).toEqual(
       expect.objectContaining({
         where: { enseignantId: 'ens-1' },
@@ -35,7 +35,7 @@ describe('Périmètre des justificatifs', () => {
 
   it('exclut la pièce volumineuse du registre de gestion tout en gardant le détail dédié', async () => {
     const { service, prisma } = preparer();
-    await service.liste({ pageSize: 50 } as any, { role: Role.SCOLARITE } as any);
+    await service.lister({ pageSize: 50 } as any, { role: Role.SCOLARITE } as any);
 
     expect(prisma.justificatif.findMany.mock.calls[0][0].omit).toEqual({ piece: true });
 
@@ -68,7 +68,7 @@ describe('Périmètre des justificatifs', () => {
 
   it('ignore le département demandé par un chef et borne sa liste à son profil', async () => {
     const { service, prisma } = preparer();
-    await service.liste(
+    await service.lister(
       { departementId: 'dept-other' } as any,
       {
         role: Role.CHEF_DEPARTEMENT,
@@ -97,7 +97,7 @@ describe('Périmètre des justificatifs', () => {
   it('ne renvoie pas la pièce jointe médicale au chef de département', async () => {
     const { service, prisma } = preparer();
     const chef = { role: Role.CHEF_DEPARTEMENT, departementId: 'dept-own', enseignantId: null } as any;
-    await service.liste({ all: '1' } as any, chef);
+    await service.lister({ all: '1' } as any, chef);
     expect(prisma.justificatif.findMany.mock.calls[0][0].select).toEqual(expect.not.objectContaining({ piece: true }));
 
     await service.findOnePour('just-1', chef);
@@ -106,7 +106,7 @@ describe('Périmètre des justificatifs', () => {
 
   it('n’inclut que l’identité utile de l’enseignant dans le registre du personnel', async () => {
     const { service, prisma } = preparer();
-    await service.liste({ all: '1' } as any, { role: Role.SCOLARITE } as any);
+    await service.lister({ all: '1' } as any, { role: Role.SCOLARITE } as any);
     const enseignantSelect = prisma.justificatif.findMany.mock.calls[0][0].include.enseignant.select;
 
     expect(enseignantSelect).toEqual({

@@ -12,11 +12,11 @@ import { JustificatifsService } from './justificatifs.service';
 export class JustificatifsController {
   constructor(private readonly service: JustificatifsService) {}
 
-  @Get() liste(@Query() query: JustificatifQueryDto, @CurrentUser() user: AuthUser) {
-    return this.service.liste(query, user);
+  @Get() lister(@Query() query: JustificatifQueryDto, @CurrentUser() user: AuthUser) {
+    return this.service.lister(query, user);
   }
 
-  @Get(':id') findOne(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+  @Get(':id') lire(@Param('id') id: string, @CurrentUser() user: AuthUser) {
     return this.service.findOnePour(id, user);
   }
 
@@ -35,7 +35,7 @@ export class JustificatifsController {
 
   @Roles(Role.ADMIN, Role.DIRECTION)
   @Delete(':id')
-  remove(@Param('id') id: string, @CurrentUser() user: AuthUser) {
-    return this.service.remove(id, user);
+  supprimer(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.service.supprimer(id, user);
   }
 }

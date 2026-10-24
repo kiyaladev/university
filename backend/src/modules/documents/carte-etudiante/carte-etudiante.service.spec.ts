@@ -97,7 +97,7 @@ describe('Protection des données de la carte étudiante', () => {
     };
     const service = new CarteEtudianteService(prisma, {} as any);
 
-    const resultat = await service.liste({ all: '1', pageSize: 1_000_000 } as any);
+    const resultat = await service.lister({ all: '1', pageSize: 1_000_000 } as any);
 
     expect(prisma.carteEtudiante.findMany).toHaveBeenCalledWith(
       expect.objectContaining({

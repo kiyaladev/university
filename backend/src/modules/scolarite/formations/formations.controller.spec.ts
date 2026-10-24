@@ -25,7 +25,7 @@ describe('FormationsController — droits par rôle', () => {
   });
 
   it.each([
-    'liste',
+    'lister',
     'dashboard',
     'creer',
     'modifier',

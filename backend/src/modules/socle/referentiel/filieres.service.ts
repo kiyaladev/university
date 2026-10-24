@@ -57,7 +57,7 @@ export class FilieresService extends CrudService {
   }
 
   /** Une filière qui porte encore des promotions ne peut pas s'effacer. */
-  async remove(id: string, user?: AuthUser) {
+  async supprimer(id: string, user?: AuthUser) {
     return this.prisma.$transaction(
       async (tx) => {
         const filiere = await tx.filiere.findUnique({

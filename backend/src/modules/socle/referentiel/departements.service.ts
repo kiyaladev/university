@@ -64,7 +64,7 @@ export class DepartementsService extends CrudService {
   }
 
   /** Un département qui porte encore des données métier ne peut pas s'effacer. */
-  async remove(id: string, user?: AuthUser) {
+  async supprimer(id: string, user?: AuthUser) {
     return this.prisma.$transaction(
       async (tx) => {
         const departement = await tx.departement.findUnique({

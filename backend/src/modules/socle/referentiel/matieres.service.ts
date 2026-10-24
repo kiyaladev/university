@@ -85,7 +85,7 @@ export class MatieresService extends CrudService {
       if (!matiere) throw new NotFoundException(t('common.notFound'));
       return matiere;
     }
-    const matiere = await this.findOne(id);
+    const matiere = await this.lire(id);
     return matiere;
   }
 

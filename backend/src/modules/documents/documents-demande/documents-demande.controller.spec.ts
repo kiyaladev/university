@@ -7,12 +7,12 @@ describe('Accès au registre des demandes de documents', () => {
     Reflect.getMetadata(ROLES_KEY, DocumentsDemandeController.prototype[method]);
 
   it('autorise la direction à lire le registre et le tableau de bord', () => {
-    expect(roles('liste')).toEqual([Role.ADMIN, Role.SCOLARITE, Role.DIRECTION]);
+    expect(roles('lister')).toEqual([Role.ADMIN, Role.SCOLARITE, Role.DIRECTION]);
     expect(roles('dashboard')).toEqual([Role.ADMIN, Role.SCOLARITE, Role.DIRECTION]);
   });
 
   it('déclare explicitement les rôles autorisés au détail', () => {
-    expect(roles('findOne')).toEqual([Role.ADMIN, Role.SCOLARITE, Role.DIRECTION, Role.ETUDIANT]);
+    expect(roles('lire')).toEqual([Role.ADMIN, Role.SCOLARITE, Role.DIRECTION, Role.ETUDIANT]);
   });
 
   it('garde les actions de traitement réservées à la scolarité et à l’administration', () => {

@@ -48,16 +48,16 @@ const LECTEURS_CRENEAUX = [...PERSONNEL, Role.ETUDIANT] as const;
 export class CreneauxController {
   constructor(private readonly service: CreneauxService) {}
 
-  @Get() findAll(@Query() query: CreneauQueryDto, @CurrentUser() user: AuthUser) {
-    return this.service.liste(query, user);
+  @Get() lister(@Query() query: CreneauQueryDto, @CurrentUser() user: AuthUser) {
+    return this.service.lister(query, user);
   }
 
   @Get('emploi-du-temps') emploiDuTemps(@Query() query: CreneauQueryDto, @CurrentUser() user: AuthUser) {
     return this.service.emploiDuTemps(query, user);
   }
 
-  @Get(':id') findOne(@Param('id') id: string, @CurrentUser() user: AuthUser) {
-    return this.service.findOne(id, user);
+  @Get(':id') lire(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.service.lire(id, user);
   }
 
   /**
@@ -67,20 +67,20 @@ export class CreneauxController {
    */
   @Roles(...PLANIFICATEURS, Role.CONTROLEUR)
   @Post()
-  create(@Body() dto: CreateCreneauDto, @CurrentUser() user: AuthUser) {
+  creer(@Body() dto: CreateCreneauDto, @CurrentUser() user: AuthUser) {
     return this.service.creer(dto, user);
   }
 
   @Roles(...PLANIFICATEURS, Role.CONTROLEUR)
   @Put(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateCreneauDto, @CurrentUser() user: AuthUser) {
+  modifier(@Param('id') id: string, @Body() dto: UpdateCreneauDto, @CurrentUser() user: AuthUser) {
     return this.service.modifier(id, dto, user);
   }
 
   @Roles(...PLANIFICATEURS)
   @Delete(':id')
-  remove(@Param('id') id: string, @CurrentUser() user: AuthUser) {
-    return this.service.remove(id, user);
+  supprimer(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.service.supprimer(id, user);
   }
 }
 
@@ -103,8 +103,8 @@ export class SeancesController {
     return this.service.apercuTournee(query);
   }
 
-  @Get() findAll(@Query() query: SeanceQueryDto, @CurrentUser() user: AuthUser) {
-    return this.service.liste(query, user);
+  @Get() lister(@Query() query: SeanceQueryDto, @CurrentUser() user: AuthUser) {
+    return this.service.lister(query, user);
   }
 
   /** Feuille de contrôle du jour (par défaut : aujourd'hui). */
@@ -114,10 +114,10 @@ export class SeancesController {
 
   /** Espace enseignant : mes séances. */
   @Get('mes-seances') mesSeances(@Query() query: SeanceQueryDto, @CurrentUser() user: AuthUser) {
-    return this.service.liste({ ...query, enseignantId: user.enseignantId ?? '—' }, user);
+    return this.service.lister({ ...query, enseignantId: user.enseignantId ?? '—' }, user);
   }
 
-  @Get(':id') findOne(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+  @Get(':id') lire(@Param('id') id: string, @CurrentUser() user: AuthUser) {
     return this.service.consulter(id, user);
   }
 
@@ -129,7 +129,7 @@ export class SeancesController {
    */
   @Roles(...PLANIFICATEURS, Role.CONTROLEUR)
   @Post()
-  create(@Body() dto: CreateSeanceDto, @CurrentUser() user: AuthUser) {
+  creer(@Body() dto: CreateSeanceDto, @CurrentUser() user: AuthUser) {
     return this.service.creer(dto, user);
   }
 
@@ -159,7 +159,7 @@ export class SeancesController {
 
   @Roles(...PLANIFICATEURS)
   @Put(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateSeanceDto, @CurrentUser() user: AuthUser) {
+  modifier(@Param('id') id: string, @Body() dto: UpdateSeanceDto, @CurrentUser() user: AuthUser) {
     return this.service.modifier(id, dto, user);
   }
 
@@ -171,7 +171,7 @@ export class SeancesController {
 
   @Roles(Role.ADMIN, Role.SCOLARITE)
   @Delete(':id')
-  remove(@Param('id') id: string, @CurrentUser() user: AuthUser) {
-    return this.service.remove(id, user);
+  supprimer(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.service.supprimer(id, user);
   }
 }

@@ -101,6 +101,51 @@ salles, enseignants, matières, affectations), `parametres`, `imports`,
 L’état vérifié de chaque module et le travail restant sont dans
 [suivi.md](suivi.md).
 
+## Conventions
+
+### Nommage des méthodes du backend
+
+Les méthodes des services et des contrôleurs suivent une seule convention :
+**français, verbes à l’infinitif**.
+
+| Besoin | Méthode |
+| --- | --- |
+| Lister une collection | `lister()` |
+| Lire un élément | `lire()` |
+| Créer | `creer()` |
+| Modifier | `modifier()` |
+| Supprimer | `supprimer()` |
+
+`common/crud.service.ts` porte ces cinq méthodes : les services métier les
+surchargent avec leurs propres paramètres (utilisateur, transaction…) et
+atteignent l’implémentation de base par `super.lister()`, `super.lire()`…
+
+Les actions métier conservent leur verbe : `valider()`, `cloturer()`,
+`payer()`, `imprimer()`, `reconcilier()`… Une méthode au nom métier décrit une
+action du domaine, pas une opération CRUD.
+
+Les anciens noms anglais (`findAll`, `findOne`, `create`, `update`, `remove`)
+et leur doublon français (`liste`) ont disparu : une seule façon de nommer,
+dans les services comme dans les contrôleurs et dans les tests. Un test qui
+référence un handler par son nom (`Controller.prototype.<methode>`,
+`Reflect.getMetadata(ROLES_KEY, …)`) référence le nom français.
+
+### Nommage des DTO
+
+Les DTO suivent la convention Nest/Swagger : `Create<Entité>Dto`,
+`Update<Entité>Dto`, `<Entité>QueryDto`. Les rares `Creer*Dto` et
+`Modifier*Dto` ont été renommés en `Create*Dto` et `Update*Dto` : le nom du DTO
+décrit l’opération attendue, il ne redit pas la langue de l’implémentation.
+
+### Ce que le renommage ne touche pas
+
+Le renommage est interne au code. Les **routes** (`GET /api/salles`), les
+**noms de propriétés JSON** des charges utiles et l’ensemble des **opérations
+Swagger** exposées restent identiques. Les `operationId` du document OpenAPI
+sont figés par `operationIdFactory` (`backend/src/main.ts`) : ils conservent le
+nom de méthode d’avant le renommage, si bien qu’un client généré continue de
+pointer les mêmes opérations.
+
 ## Rôles
 
 Définis par l’enum `Role` du schéma Prisma.

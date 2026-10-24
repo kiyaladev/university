@@ -169,7 +169,7 @@ describe('Tirage — contrôle anti-substitution à l’impression', () => {
 
   it('n’expose pas l’empreinte attendue d’un tirage programmé (liste, fiche, bordereau)', async () => {
     const { service } = preparer();
-    const page = await service.liste({} as any);
+    const page = await service.lister({} as any);
     const fiche = await service.trouver('tirage-1');
     const html = await service.imprimerBordereau('tirage-1');
     expect(page.data[0].empreinteSource).not.toContain(ATTENDUE);

@@ -141,7 +141,7 @@ describe('BadgesService — statut effectif', () => {
   it('applique le statut effectif à toute la liste', async () => {
     const { prisma, service } = preparer(badge({ dateValidite: new Date('2020-01-01T00:00:00Z') }));
 
-    const page = await service.liste({} as any);
+    const page = await service.lister({} as any);
 
     expect(page.data[0].statut).toBe(StatutBadge.EXPIRE);
     expect(prisma.badgeAcces.findMany).toHaveBeenCalled();

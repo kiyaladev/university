@@ -136,7 +136,7 @@ describe('ErreurHttpFilter — en conditions réelles', () => {
     }
 
     @Get('liste')
-    liste() {
+    lister() {
       throw new BadRequestException(['A requis', 'B invalide']);
     }
   }

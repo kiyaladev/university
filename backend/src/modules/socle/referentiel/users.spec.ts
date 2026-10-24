@@ -35,7 +35,7 @@ describe('projection des comptes utilisateurs', () => {
     };
     const service = new UsersService(prisma);
 
-    await expect(service.findOne('user-1')).resolves.toEqual({
+    await expect(service.lire('user-1')).resolves.toEqual({
       id: 'user-1',
       email: 'admin@example.test',
       role: 'ADMIN',
@@ -57,7 +57,7 @@ describe('projection des comptes utilisateurs', () => {
     };
     const service = new UsersService(prisma);
 
-    const resultat = await service.list({} as any);
+    const resultat = await service.lister({} as any);
 
     expect(resultat.data).toEqual([
       {

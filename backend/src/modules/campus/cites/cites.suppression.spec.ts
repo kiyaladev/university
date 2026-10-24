@@ -60,7 +60,7 @@ describe('Suppressions refusées dans les cités', () => {
   it('refuse la suppression d’une résidence qui porte des chambres (409)', async () => {
     const { service, tx } = preparerResidence(3);
 
-    const erreur = await service.remove('res-1', utilisateur).catch((e) => e);
+    const erreur = await service.supprimer('res-1', utilisateur).catch((e) => e);
 
     expect(erreur).toBeInstanceOf(ConflictException);
     expect(erreur.message).toContain('Cité Kaloum');
@@ -72,7 +72,7 @@ describe('Suppressions refusées dans les cités', () => {
   it('refuse la suppression d’une chambre qui porte des attributions (409)', async () => {
     const { service, tx } = preparerChambre(2);
 
-    const erreur = await service.remove('ch-1', utilisateur).catch((e) => e);
+    const erreur = await service.supprimer('ch-1', utilisateur).catch((e) => e);
 
     expect(erreur).toBeInstanceOf(ConflictException);
     expect(erreur.message).toContain('A-01');
@@ -84,7 +84,7 @@ describe('Suppressions refusées dans les cités', () => {
   it('supprime une résidence vide et la journalise', async () => {
     const { service, tx } = preparerResidence(0);
 
-    await expect(service.remove('res-1', utilisateur)).resolves.toEqual({ id: 'res-1' });
+    await expect(service.supprimer('res-1', utilisateur)).resolves.toEqual({ id: 'res-1' });
     expect(tx.residence.delete).toHaveBeenCalledWith({ where: { id: 'res-1' } });
     expect(tx.auditLog.create).toHaveBeenCalled();
   });

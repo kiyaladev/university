@@ -71,7 +71,7 @@ export class EtudiantsController {
   constructor(private readonly service: EtudiantsService) {}
 
   @Get()
-  liste(@Query() query: EtudiantQueryDto, @CurrentUser() user: AuthUser) {
+  lister(@Query() query: EtudiantQueryDto, @CurrentUser() user: AuthUser) {
     return this.service.listePour(
       query,
       {
@@ -83,7 +83,7 @@ export class EtudiantsController {
   }
 
   @Get(':id')
-  detail(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+  lire(@Param('id') id: string, @CurrentUser() user: AuthUser) {
     if (user.role === Role.ETUDIANT && id !== user.etudiantId) throw new NotFoundException(t('common.notFound'));
     return this.service.detailPour(id, user);
   }
@@ -103,8 +103,8 @@ export class EtudiantsController {
   /** Réservé à l'administration ; la fiche se désactive, elle ne s'efface pas. */
   @Roles(Role.ADMIN)
   @Delete(':id')
-  remove(@Param('id') id: string, @CurrentUser() user: AuthUser) {
-    return this.service.remove(id, user);
+  supprimer(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.service.supprimer(id, user);
   }
 }
 
@@ -116,7 +116,7 @@ export class FraisController {
 
   @Public()
   @Get()
-  liste(@Query() query: FraisQueryDto) {
+  lister(@Query() query: FraisQueryDto) {
     return this.service.tarifsPublics(query, {
       ...(query.anneeId ? { anneeId: query.anneeId } : {}),
       ...(query.promotionId ? { promotionId: query.promotionId } : {}),
@@ -163,7 +163,7 @@ export class PaiementsController {
 
   @Roles(Role.ADMIN, Role.SCOLARITE, Role.DIRECTION)
   @Get()
-  liste(@Query() query: PaiementQueryDto) {
+  lister(@Query() query: PaiementQueryDto) {
     return this.service.listePaiements(query);
   }
 
@@ -198,7 +198,7 @@ export class InscriptionsController {
   constructor(private readonly service: InscriptionService) {}
 
   @Get()
-  liste(@Query() query: InscriptionQueryDto, @CurrentUser() user: AuthUser) {
+  lister(@Query() query: InscriptionQueryDto, @CurrentUser() user: AuthUser) {
     return this.service.listeInscriptions(query, user);
   }
 
@@ -246,7 +246,7 @@ export class InscriptionsController {
    * libellé par identifiant côté client échouait en silence.
    */
   @Get(':id')
-  detail(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+  lire(@Param('id') id: string, @CurrentUser() user: AuthUser) {
     return this.service.trouverInscription(id, user);
   }
 }

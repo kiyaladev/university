@@ -46,7 +46,7 @@ export class RestoController {
 
   @Roles(...GESTIONNAIRES)
   @Get('portefeuille/:etudiantId')
-  detail(@Param('etudiantId') etudiantId: string) {
+  lire(@Param('etudiantId') etudiantId: string) {
     return this.service.detailPortefeuille(etudiantId);
   }
 

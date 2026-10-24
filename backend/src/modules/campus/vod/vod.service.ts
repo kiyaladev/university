@@ -167,7 +167,7 @@ export class VodService {
     return vod;
   }
 
-  async liste(query: VodQueryDto, user: AuthUser) {
+  async lister(query: VodQueryDto, user: AuthUser) {
     const pagination = paginer(query);
 
     const where: Prisma.CoursVODWhereInput = {

@@ -95,7 +95,7 @@ describe('Clôture des années académiques', () => {
 
   it('refuse de supprimer une année close avant l’accès Prisma de suppression', async () => {
     const { tx, service } = preparer(true);
-    await expect(service.remove('annee-1', user)).rejects.toBeInstanceOf(BadRequestException);
+    await expect(service.supprimer('annee-1', user)).rejects.toBeInstanceOf(BadRequestException);
     expect(tx.anneeAcademique.delete).not.toHaveBeenCalled();
   });
 
@@ -120,7 +120,7 @@ describe('Clôture des années académiques', () => {
       },
     });
 
-    await expect(service.remove('annee-1', user)).rejects.toMatchObject({ status: 409 });
+    await expect(service.supprimer('annee-1', user)).rejects.toMatchObject({ status: 409 });
     expect(prisma.$transaction.mock.calls[0][1]).toMatchObject({
       isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
     });
@@ -151,13 +151,13 @@ describe('Clôture des années académiques', () => {
       },
     });
 
-    await expect(service.remove('annee-1', user)).rejects.toMatchObject({ status: 409 });
+    await expect(service.supprimer('annee-1', user)).rejects.toMatchObject({ status: 409 });
     expect(tx.anneeAcademique.delete).not.toHaveBeenCalled();
   });
 
   it('supprime une année vide et journalise le snapshot dans la transaction', async () => {
     const { prisma, tx, service } = preparer();
-    await service.remove('annee-1', user);
+    await service.supprimer('annee-1', user);
 
     expect(prisma.$transaction).toHaveBeenCalledTimes(1);
     expect(tx.anneeAcademique.delete).toHaveBeenCalledWith({ where: { id: 'annee-1' } });

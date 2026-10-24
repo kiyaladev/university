@@ -78,7 +78,7 @@ export class AffectationsService extends CrudService {
   }
 
   async modifierPour(id: string, dto: UpdateAffectationDto, user: AuthUser) {
-    const actuelle: any = await this.findOne(id);
+    const actuelle: any = await this.lire(id);
     await exigerAnneeOuverte(this.prisma, actuelle.anneeId);
     if (dto.anneeId !== undefined) await exigerAnneeOuverte(this.prisma, dto.anneeId);
     const anneeCible = dto.anneeId ?? actuelle.anneeId;
@@ -104,8 +104,8 @@ export class AffectationsService extends CrudService {
     });
   }
 
-  async remove(id: string, user?: AuthUser) {
-    const actuelle: any = await this.findOne(id);
+  async supprimer(id: string, user?: AuthUser) {
+    const actuelle: any = await this.lire(id);
     await exigerAnneeOuverte(this.prisma, actuelle.anneeId);
     return this.prisma.$transaction(async (tx) => {
       const avant: any = await tx.affectation.findUnique({ where: { id }, include: AFFECTATION_INCLUDE });
@@ -150,7 +150,7 @@ export class AffectationsService extends CrudService {
 
   /** Vérifie qu'une affectation existe et reste dans le périmètre du demandeur. */
   async trouverPerimetre(id: string, user: AuthUser) {
-    const affectation: any = await this.findOne(id);
+    const affectation: any = await this.lire(id);
     if (estChefDeDepartement(user) || user.role === Role.CONTROLEUR) {
       if (!user.departementId || affectation.enseignant?.departementId !== user.departementId) {
         throw new NotFoundException(t('common.notFound'));

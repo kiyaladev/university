@@ -9,19 +9,19 @@ import { AuthentificationOptionnelle, UtilisateurOptionnel } from './utilisateur
 class Vitrine {
   @Public()
   @AuthentificationOptionnelle()
-  liste(@UtilisateurOptionnel() utilisateur?: AuthUser) {
+  lister(@UtilisateurOptionnel() utilisateur?: AuthUser) {
     return utilisateur;
   }
 }
 
 class VitrineSimple {
   @Public()
-  liste() {
+  lister() {
     return null;
   }
 }
 
-function context(handler: any = Vitrine.prototype.liste, classe: any = Vitrine): ExecutionContext {
+function context(handler: any = Vitrine.prototype.lister, classe: any = Vitrine): ExecutionContext {
   const request: any = { method: 'GET', url: '/api/documents', headers: {}, query: {} };
   return {
     getHandler: () => handler,
@@ -75,7 +75,7 @@ describe('authentification optionnelle', () => {
   });
 
   it('ne touche pas aux routes publiques sans authentification optionnelle', async () => {
-    const ctx = context(VitrineSimple.prototype.liste, VitrineSimple);
+    const ctx = context(VitrineSimple.prototype.lister, VitrineSimple);
     const passport = jest.spyOn(parent, 'canActivate');
     expect(await garde.canActivate(ctx)).toBe(true);
     expect(passport).not.toHaveBeenCalled();
@@ -87,7 +87,7 @@ describe('authentification optionnelle', () => {
     const ctx = {
       switchToHttp: () => ({ getRequest: () => request }),
     } as any;
-    const argumentsRoute: any = Reflect.getMetadata('__routeArguments__', Vitrine, 'liste');
+    const argumentsRoute: any = Reflect.getMetadata('__routeArguments__', Vitrine, 'lister');
     expect(argumentsRoute).toBeDefined();
     const parametre = Object.values(argumentsRoute).find((entree: any) => entree.index === 0) as any;
     expect(parametre).toBeDefined();
@@ -98,6 +98,6 @@ describe('authentification optionnelle', () => {
   });
 
   it('expose le décorateur de route', () => {
-    expect(Reflect.getMetadata('utilisateurOptionnel', Vitrine.prototype.liste)).toBe(true);
+    expect(Reflect.getMetadata('utilisateurOptionnel', Vitrine.prototype.lister)).toBe(true);
   });
 });

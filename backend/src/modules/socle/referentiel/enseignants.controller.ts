@@ -14,25 +14,25 @@ import { EnseignantsService } from './enseignants.service';
 export class EnseignantsController {
   constructor(private readonly service: EnseignantsService) {}
 
-  @Get() findAll(@Query() query: EnseignantQueryDto, @CurrentUser() user: AuthUser) {
+  @Get() lister(@Query() query: EnseignantQueryDto, @CurrentUser() user: AuthUser) {
     return this.service.listePour(query, user);
   }
-  @Get(':id') findOne(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+  @Get(':id') lire(@Param('id') id: string, @CurrentUser() user: AuthUser) {
     return this.service.detailPour(id, user);
   }
   @Roles(Role.ADMIN, Role.SCOLARITE, Role.CHEF_DEPARTEMENT)
   @Post()
-  create(@Body() dto: CreateEnseignantDto, @CurrentUser() user: AuthUser) {
+  creer(@Body() dto: CreateEnseignantDto, @CurrentUser() user: AuthUser) {
     return this.service.creerPour(dto, user);
   }
   @Roles(Role.ADMIN, Role.SCOLARITE, Role.CHEF_DEPARTEMENT)
   @Put(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateEnseignantDto, @CurrentUser() user: AuthUser) {
+  modifier(@Param('id') id: string, @Body() dto: UpdateEnseignantDto, @CurrentUser() user: AuthUser) {
     return this.service.modifierPour(id, dto, user);
   }
   @Roles(Role.ADMIN)
   @Delete(':id')
-  remove(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+  supprimer(@Param('id') id: string, @CurrentUser() user: AuthUser) {
     return this.service.supprimer(id, user);
   }
 }
