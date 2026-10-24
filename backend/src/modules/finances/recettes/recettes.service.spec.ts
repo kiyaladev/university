@@ -405,16 +405,17 @@ describe('indicateurs du tableau des recettes', () => {
 describe('numéro de recette', () => {
   const service = (prisma: any) => new RecettesService(prisma);
 
-  const dossier = (numero: string) => ({
-    numero,
-    type: TypeRecette.AUTRE,
-    libelle: 'Location de salle',
-    montant: 100,
-    devise: 'GNF',
-    date: '2026-10-01',
-  }) as any;
+  const dossier = (numero: string) =>
+    ({
+      numero,
+      type: TypeRecette.AUTRE,
+      libelle: 'Location de salle',
+      montant: 100,
+      devise: 'GNF',
+      date: '2026-10-01',
+    }) as any;
 
-  it("accepte le préfixe « RECX- », réservé aux recettes", async () => {
+  it('accepte le préfixe « RECX- », réservé aux recettes', async () => {
     const prisma = {
       $transaction: jest.fn((run: (tx: any) => unknown) =>
         run({

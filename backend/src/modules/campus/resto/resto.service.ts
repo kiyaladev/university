@@ -46,7 +46,15 @@ import {
 } from '@nestjs/common';
 import { t } from '../../../common/i18n';
 import { journaliser } from '../../../common/audit';
-import { ModePaiement, OperateurPaiement, Prisma, Role, StatutConsommation, StatutPaiement, type Etudiant } from '@prisma/client';
+import {
+  ModePaiement,
+  OperateurPaiement,
+  Prisma,
+  Role,
+  StatutConsommation,
+  StatutPaiement,
+  type Etudiant,
+} from '@prisma/client';
 import { randomBytes } from 'node:crypto';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { AuthUser } from '../../../common/decorators';
