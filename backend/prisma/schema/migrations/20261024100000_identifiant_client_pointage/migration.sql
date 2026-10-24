@@ -1,0 +1,11 @@
+-- Identifiant client du pointage.
+--
+-- Un pointage saisi hors ligne peut être renvoyé après une réponse perdue. Sans
+-- trace de l'identifiant client, ce renvoi se heurte au registre des preuves
+-- consommées et se fait refuser (409) : le contrôleur ne sait plus si son
+-- pointage est passé ou non, et la file le réessaie indéfiniment.
+--
+-- L'identifiant client (UUID créé sur l'appareil) permet de reconnaître le
+-- renvoi du même pointage : le contrôle existant est renvoyé tel quel, et la
+-- preuve consommée n'est pas rejouée.
+ALTER TABLE "Controle" ADD COLUMN "idClient" TEXT;

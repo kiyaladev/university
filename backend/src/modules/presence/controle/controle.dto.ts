@@ -81,6 +81,15 @@ export class PointageDto {
   /** Pointage saisi hors connexion puis synchronisé. */
   @IsOptional() @IsBoolean() horsLigne?: boolean;
   @IsOptional() @IsDateString() horodatage?: string;
+
+  /**
+   * Identifiant client du pointage (UUID créé sur l'appareil).
+   *
+   * Un pointage hors ligne peut être renvoyé après une réponse perdue : le
+   * même identifiant prouve qu'il s'agit du même pointage, et le renvoi est
+   * idempotent au lieu d'être refusé comme un rejeu de preuve.
+   */
+  @IsOptional() @IsUUID() idClient?: string;
 }
 
 export class UpdatePointageDto extends PartialType(PointageDto) {}

@@ -11,7 +11,7 @@ import { PrismaService } from '../../../prisma/prisma.service';
 import { AuthUser } from '../../../common/decorators';
 import { distanceMetres, dureeMinutes, toDateOnly, toMinutes } from '../../../common/utils';
 import { ParametresService } from '../../socle/parametres/parametres.service';
-import { PresencePreuvesService } from '../presence-preuves/presence-preuves.service';
+import { PresencePreuvesService, CODE_PREUVE_DEJA_UTILISEE } from '../presence-preuves/presence-preuves.service';
 import { ControleQueryDto, PointageDto, SyncPointagesDto, UpdatePointageDto } from './controle.dto';
 import { t } from '../../../common/i18n';
 import { exigerAnneeOuverte } from '../../../common/annee';
@@ -75,6 +75,33 @@ export interface PointageConsigne {
   enseignantRemplacantId: string | null;
   horsLigne: boolean;
   horodatage: Date;
+}
+
+/**
+ * Données du pointage qui ne dépendent pas de l'attestation de l'enseignant.
+ * Elles sont établies avant la transaction : l'attestation, elle, est vérifiée
+ * dans la transaction, avec la consommation de la preuve.
+ */
+interface BasePointage {
+  seance: any;
+  statut: StatutPresence;
+  presente: boolean;
+  duree: number;
+  methode: MethodeVerification;
+  qrValide: boolean;
+  latitude: number | null;
+  longitude: number | null;
+  distance: number | null;
+  preuveFournie: boolean;
+}
+
+/**
+ * Le contrôle relu, sans son identifiant client : celui-ci sert à reconnaître
+ * le renvoi du même pointage, il ne sort pas de l'API.
+ */
+function sansIdClient<T extends { idClient?: string | null }>(controle: T): Omit<T, 'idClient'> {
+  const { idClient: _idClient, ...reste } = controle;
+  return reste;
 }
 
 function retirerTexteLibreAudit(valeur: unknown): unknown {
@@ -273,7 +300,7 @@ export class ControleService {
       take: pagination.take,
     };
     const requete = this.peutVoirDetails(user)
-      ? this.prisma.controle.findMany({ ...options, include: CONTROLE_INCLUDE })
+      ? this.prisma.controle.findMany({ ...options, include: CONTROLE_INCLUDE, omit: { idClient: true } })
       : this.prisma.controle.findMany({ ...options, select: CONTROLE_SELECT_RESTREINT });
     const [data, total] = await Promise.all([requete, this.prisma.controle.count({ where })]);
 
@@ -292,7 +319,7 @@ export class ControleService {
             : {}),
     };
     const controle = this.peutVoirDetails(user)
-      ? await this.prisma.controle.findFirst({ where, include: CONTROLE_INCLUDE })
+      ? await this.prisma.controle.findFirst({ where, include: CONTROLE_INCLUDE, omit: { idClient: true } })
       : await this.prisma.controle.findFirst({ where, select: CONTROLE_SELECT_RESTREINT });
     if (!controle) throw new NotFoundException(t('controle.controle_introuvable'));
     return controle;
@@ -451,43 +478,12 @@ export class ControleService {
     const present = statut !== StatutPresence.ABSENT && statut !== StatutPresence.EXCUSE;
 
     // --- Preuve 3 : l'enseignant atteste sa présence devant le contrôleur,
-    // sur l'appareil de celui-ci (signature, code personnel ou empreinte)
+    // sur l'appareil de celui-ci (signature, code personnel ou empreinte).
+    // La preuve n'est PAS vérifiée ici : une preuve biométrique est consommée
+    // quand elle est acceptée, et un pointage refusé ne doit pas la
+    // consommer. La vérification part donc dans la transaction du pointage
+    // (voir `pointer`).
     const preuveFournie = !!(dto.signatureBase64 || dto.codePinEnseignant || dto.empreinte);
-    const attestation = present
-      ? preuveFournie
-        ? await this.attestation.verifierPreuves(seance.affectation.enseignantId, {
-            signatureBase64: dto.signatureBase64,
-            codePinEnseignant: dto.codePinEnseignant,
-            empreinte: dto.empreinte,
-          })
-        : avant
-          ? // Correction : l'enseignant avait déjà attested sa présence, cette
-            // attestation reste valable. La redemander l'aurait impossible.
-            { mode: avant.attestation, valide: avant.attestationValide, score: avant.empreinteScore }
-          : await this.attestation.verifierPreuves(seance.affectation.enseignantId, {
-              signatureBase64: undefined,
-              codePinEnseignant: undefined,
-              empreinte: undefined,
-            })
-      : { mode: AttestationMode.AUCUNE, valide: false };
-
-    // Les contrôles de saisie valent pour un pointage : une correction porte
-    // sur des valeurs déjà constatées, elle ne rejoue pas la saisie.
-    if (present && !avant && !attestation.valide && (await this.parametres.booleen('ATTESTATION_OBLIGATOIRE', true))) {
-      throw new BadRequestException(t('controle.l_enseignant_doit_attester_sa_presence_devant_vous_signature'));
-    }
-
-    if (present && !avant && !dto.signatureBase64 && (await this.parametres.booleen('SIGNATURE_OBLIGATOIRE', false))) {
-      throw new BadRequestException(t('controle.la_signature_manuscrite_de_l_enseignant_est_obligatoire'));
-    }
-    if (
-      present &&
-      !avant &&
-      dto.effectifPresent == null &&
-      (await this.parametres.booleen('EFFECTIF_OBLIGATOIRE', true))
-    ) {
-      throw new BadRequestException(t('controle.le_nombre_d_etudiants_presents_est_obligatoire'));
-    }
 
     // --- Durée effective : réelle si connue, sinon durée planifiée
     let duree = dureeMinutes(dto.heureArrivee, dto.heureFinReelle);
@@ -511,47 +507,167 @@ export class ControleService {
       seance,
       statut,
       presente: present,
-      donnees: {
-        seanceId: seance.id,
-        controleurId: user.id,
-        statut,
-        attestation: attestation.mode,
-        attestationValide: attestation.valide,
-        // Correction sans nouvelle preuve : l'attestation reste datée de son
-        // enregistrement, pas du jour de la correction.
-        attestationLe: attestation.valide ? (preuveFournie ? new Date() : (avant?.attestationLe ?? new Date())) : null,
-        empreinteScore: attestation.score ?? null,
-        heureArrivee: dto.heureArrivee ?? null,
-        heureFinReelle: dto.heureFinReelle ?? null,
-        dureeMinutes: duree,
-        effectifPresent: dto.effectifPresent ?? null,
-        thematiqueTraitee: dto.thematiqueTraitee ?? null,
-        observation: dto.observation ?? null,
-        methode,
-        latitude,
-        longitude,
-        distanceMetres: distance,
-        signatureBase64: dto.signatureBase64 ?? avant?.signatureBase64 ?? null,
-        qrSalleValide: qrValide,
-        enseignantRemplacantId: dto.enseignantRemplacantId ?? null,
-        horsLigne: dto.horsLigne ?? false,
-        horodatage: dto.horodatage ? new Date(dto.horodatage) : (avant?.horodatage ?? new Date()),
-      },
+      duree,
+      methode,
+      qrValide,
+      latitude,
+      longitude,
+      distance,
+      preuveFournie,
     };
+  }
+
+  /**
+   * Assemble les données du contrôle une fois l'attestation connue.
+   *
+   * L'attestation est le seul élément qui dépende de la vérification des
+   * preuves : elle est calculée dans la transaction du pointage, avec les
+   * autres.
+   */
+  private assemblerDonnees(
+    dto: PointageDto,
+    user: AuthUser,
+    avant: PointageConsigne | undefined,
+    base: BasePointage,
+    attestation: { mode: AttestationMode; valide: boolean; score?: number | null },
+  ) {
+    return {
+      seanceId: base.seance.id,
+      controleurId: user.id,
+      statut: base.statut,
+      attestation: attestation.mode,
+      attestationValide: attestation.valide,
+      // Correction sans nouvelle preuve : l'attestation reste datée de son
+      // enregistrement, pas du jour de la correction.
+      attestationLe: attestation.valide
+        ? base.preuveFournie
+          ? new Date()
+          : (avant?.attestationLe ?? new Date())
+        : null,
+      empreinteScore: attestation.score ?? null,
+      heureArrivee: dto.heureArrivee ?? null,
+      heureFinReelle: dto.heureFinReelle ?? null,
+      dureeMinutes: base.duree,
+      effectifPresent: dto.effectifPresent ?? null,
+      thematiqueTraitee: dto.thematiqueTraitee ?? null,
+      observation: dto.observation ?? null,
+      methode: base.methode,
+      latitude: base.latitude,
+      longitude: base.longitude,
+      distanceMetres: base.distance,
+      signatureBase64: dto.signatureBase64 ?? avant?.signatureBase64 ?? null,
+      qrSalleValide: base.qrValide,
+      enseignantRemplacantId: dto.enseignantRemplacantId ?? null,
+      horsLigne: dto.horsLigne ?? false,
+      horodatage: dto.horodatage ? new Date(dto.horodatage) : (avant?.horodatage ?? new Date()),
+    };
+  }
+
+  /**
+   * Le pointage a-t-il déjà été consigné sous cet identifiant client ?
+   *
+   * C'est ce qui distingue le renvoi d'un pointage hors ligne (la réponse
+   * s'est perdue) d'une nouvelle saisie : le contrôle existe déjà et porte le
+   * même identifiant client. Le renvoi est alors idempotent — le contrôle
+   * existant est renvoyé tel quel — au lieu d'être refusé comme un rejeu de
+   * preuve.
+   */
+  async dejaConsigne(seanceId: string, idClient?: string) {
+    if (!idClient) return false;
+    const controle = await this.prisma.controle.findUnique({ where: { seanceId }, select: { idClient: true } });
+    return controle?.idClient === idClient;
   }
 
   /** Enregistre (ou corrige) le pointage d'une séance. */
   async pointer(dto: PointageDto, user: AuthUser, ip?: string, avant?: PointageConsigne) {
-    const { seance, donnees, presente } = await this.construireDonnees(dto, user, avant);
+    const base = await this.construireDonnees(dto, user, avant);
 
     return this.prisma.$transaction(async (tx) => {
-      await exigerAnneeOuverte(tx, seance.anneeId);
-      const existant = await tx.controle.findUnique({ where: { seanceId: seance.id } });
+      await exigerAnneeOuverte(tx, base.seance.anneeId);
+      const lu = await tx.controle.findUnique({
+        where: { seanceId: base.seance.id },
+        select: { ...CONTROLE_SELECT_RESTREINT, idClient: true },
+      });
+      // L'identifiant client ne sort pas du service : il sert seulement à
+      // reconnaître le renvoi du même pointage.
+      const idClientConsigne = lu?.idClient ?? null;
+      const existant = lu ? sansIdClient(lu) : null;
       if (existant && ![Role.ADMIN, Role.DIRECTION].includes(user.role as any)) {
         if (existant.controleurId !== user.id) {
           throw new ForbiddenException(t('controle.cette_seance_a_deja_ete_controlee_par_un_autre_agent_seule_l'));
         }
       }
+
+      // Renvoi du même pointage : la réponse s'est perdue, le contrôleur
+      // renvoie ce qu'il a déjà envoyé. Le contrôle existe et porte le même
+      // identifiant client : c'est le même pointage, pas un rejeu. On le
+      // renvoie tel quel (200, idempotent) — la preuve qu'il a consommée n'est
+      // pas rejouée, et rien n'est réécrit.
+      if (!avant && dto.idClient && idClientConsigne === dto.idClient && existant) {
+        return existant;
+      }
+
+      // --- Preuve 3 : l'enseignant atteste sa présence devant le contrôleur.
+      // La vérification et la consommation de la preuve partent dans la
+      // transaction du pointage : un pointage refusé ne consomme pas la
+      // preuve, un pointage écrit la consomme.
+      const attestation = base.presente
+        ? base.preuveFournie
+          ? await this.attestation.verifierPreuves(
+              base.seance.affectation.enseignantId,
+              {
+                signatureBase64: dto.signatureBase64,
+                codePinEnseignant: dto.codePinEnseignant,
+                empreinte: dto.empreinte,
+              },
+              tx,
+            )
+          : avant
+            ? // Correction : l'enseignant avait déjà attested sa présence, cette
+              // attestation reste valable. La redemander l'aurait impossible.
+              { mode: avant.attestation, valide: avant.attestationValide, score: avant.empreinteScore }
+            : await this.attestation.verifierPreuves(
+                base.seance.affectation.enseignantId,
+                {
+                  signatureBase64: undefined,
+                  codePinEnseignant: undefined,
+                  empreinte: undefined,
+                },
+                tx,
+              )
+        : { mode: AttestationMode.AUCUNE, valide: false };
+
+      // Les contrôles de saisie valent pour un pointage : une correction porte
+      // sur des valeurs déjà constatées, elle ne rejoue pas la saisie. Ils
+      // sont vérifiés après la preuve : un pointage refusé ici annule la
+      // consommation, qui fait partie de la même transaction.
+      if (
+        base.presente &&
+        !avant &&
+        !attestation.valide &&
+        (await this.parametres.booleen('ATTESTATION_OBLIGATOIRE', true))
+      ) {
+        throw new BadRequestException(t('controle.l_enseignant_doit_attester_sa_presence_devant_vous_signature'));
+      }
+
+      if (
+        base.presente &&
+        !avant &&
+        !dto.signatureBase64 &&
+        (await this.parametres.booleen('SIGNATURE_OBLIGATOIRE', false))
+      ) {
+        throw new BadRequestException(t('controle.la_signature_manuscrite_de_l_enseignant_est_obligatoire'));
+      }
+      if (
+        base.presente &&
+        !avant &&
+        dto.effectifPresent == null &&
+        (await this.parametres.booleen('EFFECTIF_OBLIGATOIRE', true))
+      ) {
+        throw new BadRequestException(t('controle.le_nombre_d_etudiants_presents_est_obligatoire'));
+      }
+
+      const donnees = this.assemblerDonnees(dto, user, avant, base, attestation);
 
       // Pas d'upsert : deux premières saisies concurrentes liraient toutes deux
       // `existant === null` et la seconde écraserait la première, propriétaire
@@ -559,20 +675,30 @@ export class ControleService {
       // refusé comme toute correction par un autre agent.
       const controle = existant
         ? await tx.controle.update({
-            where: { seanceId: seance.id },
+            where: { seanceId: base.seance.id },
             data: { ...donnees, controleurId: existant.controleurId },
             select: CONTROLE_SELECT_RESTREINT,
           })
-        : await tx.controle.create({ data: donnees, select: CONTROLE_SELECT_RESTREINT }).catch((e: unknown) => {
-            if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
-              throw new ForbiddenException(t('controle.cette_seance_a_deja_ete_controlee_par_un_autre_agent_seule_l'));
-            }
-            throw e;
-          });
+        : await tx.controle
+            .create({
+              data: {
+                ...donnees,
+                // L'identifiant client n'est posé qu'à la création : une
+                // correction ne change pas le pointage d'origine.
+                ...(dto.idClient ? { idClient: dto.idClient } : {}),
+              },
+              select: CONTROLE_SELECT_RESTREINT,
+            })
+            .catch((e: unknown) => {
+              if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
+                throw new ForbiddenException(t('controle.cette_seance_a_deja_ete_controlee_par_un_autre_agent_seule_l'));
+              }
+              throw e;
+            });
 
       await tx.seance.update({
-        where: { id: seance.id },
-        data: { statut: presente ? StatutSeance.CONTROLE : StatutSeance.NON_TENUE },
+        where: { id: base.seance.id },
+        data: { statut: base.presente ? StatutSeance.CONTROLE : StatutSeance.NON_TENUE },
       });
 
       await journaliser(
@@ -582,7 +708,7 @@ export class ControleService {
         'Controle',
         controle.id,
         {
-          seanceId: seance.id,
+          seanceId: base.seance.id,
           avant: existant ? this.etatAudit(existant) : null,
           apres: this.etatAudit(controle),
         },
@@ -628,9 +754,14 @@ export class ControleService {
   /**
    * Synchronisation des pointages saisis hors connexion (couverture réseau
    * aléatoire dans les amphis). Les échecs individuels n'annulent pas le lot.
+   *
+   * Un pointage renvoyé après une réponse perdue est reconnu (identifiant
+   * client) et compté comme synchronisé : c'est le même pointage, pas un
+   * rejeu. Un échec définitif — une preuve déjà consommée — porte son code :
+   * la file du contrôleur le retire au lieu de le réessayer indéfiniment.
    */
   async synchroniser(dto: SyncPointagesDto, user: AuthUser, ip?: string) {
-    const resultats: Array<{ seanceId: string; ok: boolean; erreur?: string; id?: string }> = [];
+    const resultats: Array<{ seanceId: string; ok: boolean; erreur?: string; code?: string; id?: string }> = [];
 
     for (const p of dto.pointages) {
       try {
@@ -641,6 +772,7 @@ export class ControleService {
           seanceId: p.seanceId,
           ok: false,
           erreur: e?.response?.message ?? e?.message ?? 'Erreur inconnue',
+          ...(e?.code === CODE_PREUVE_DEJA_UTILISEE ? { code: e.code } : {}),
         });
       }
     }
@@ -654,7 +786,11 @@ export class ControleService {
   }
 
   async supprimer(id: string, user: AuthUser) {
-    const controle = await this.prisma.controle.findUnique({ where: { id }, include: CONTROLE_INCLUDE });
+    const controle = await this.prisma.controle.findUnique({
+      where: { id },
+      include: CONTROLE_INCLUDE,
+      omit: { idClient: true },
+    });
     if (!controle) throw new NotFoundException(t('controle.controle_introuvable'));
     return this.prisma.$transaction(async (tx) => {
       await exigerAnneeOuverte(tx, controle.seance.anneeId);

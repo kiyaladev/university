@@ -127,6 +127,19 @@ describe('Anti-rejeu — registre des preuves consommées', () => {
     expect(registre.size).toBe(2);
   });
 
+  it('accompagne le refus d’un code que la file hors ligne reconnaît', async () => {
+    const { service } = preparer();
+    const p = preuve({ horodatage: new Date().toISOString() });
+
+    await service.verifierPreuves('ens-1', { empreinte: p });
+
+    // Le message est traduit pour l'affichage ; le code, lui, permet à la
+    // file de savoir que l'échec est définitif.
+    await expect(service.verifierPreuves('ens-1', { empreinte: p })).rejects.toMatchObject({
+      code: 'PREUVE_DEJA_UTILISEE',
+    });
+  });
+
   it('n’inscrit rien quand la preuve est refusée', async () => {
     const { service, registre } = preparer();
     const h = new Date().toISOString();
