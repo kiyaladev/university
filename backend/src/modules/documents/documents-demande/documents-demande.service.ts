@@ -39,6 +39,7 @@ import { demandeDocumentHtml } from './documents-demande.impression';
 import { MobileMoneyService } from '../../scolarite/inscription/mobile-money.service';
 import { SERIES_NUMERO, avecNumeroUnique, millesimeSerie, prochainNumeroSerie } from '../../../common/numero';
 import { PaiementATransmettre, creerPaiementTx, transmettreMobileMoney } from '../../../common/finances/index';
+import { type EffetConfirmationPaiement, confirmerPaiement } from '../../../common/finances/confirmation';
 import { toMontant } from '../../../common/finances/montant';
 
 const STATUTS_PAIEMENT_REQUIS: StatutDemande[] = [
@@ -121,6 +122,17 @@ type PaiementAudit = {
   devise: string;
   mode: ModePaiement;
   statut: StatutPaiement;
+};
+
+/** Demande de document avec ses relations (étudiant, paiement, attestation…). */
+type DemandeAvecRelations = Prisma.DemandeDocumentGetPayload<{ include: typeof DEMANDE_INCLUDE }>;
+
+/** Ce que l'effet de confirmation prépare avant la transition. */
+type PreparationDemande = {
+  /** La demande avant la confirmation. */
+  demandeAvant: DemandeAudit & { id: string; paiementId: string | null };
+  /** Le paiement avant la transition, quand la confirmation reste à jouer. */
+  paiementAvant: (PaiementAudit & { id: string }) | null;
 };
 
 /** Grille tarifaire : montants et délai, seuls champs paramétrables. */
@@ -553,40 +565,87 @@ export class DocumentsDemandeService extends CrudService<
    * L'encaissement et le basculement de la demande sont un seul fait : les deux
    * écritures et leur journal sont validés ensemble, sinon un encaissement
    * sans basculement (ou l'inverse) resterait sans trace exploitable.
+   *
+   * La transaction et le verrou optimiste du paiement sont portés par le
+   * moteur commun ; le module garde son effet : passer la demande en
+   * traitement.
    */
   async confirmerPaiement(id: string, dto: { paiementId?: string }, user: AuthUser) {
-    return this.prisma.$transaction(async (tx) => {
-      const demandeAvant = await tx.demandeDocument.findUnique({ where: { id } });
-      if (!demandeAvant) throw new NotFoundException(t('documents-demande.demande_introuvable'));
-      if (demandeAvant.statut !== StatutDemande.EN_ATTENTE_PAIEMENT) {
-        throw new BadRequestException(t('documents-demande.demandeDejaTraitee'));
-      }
-      if (!demandeAvant.paiementId) {
-        throw new BadRequestException(t('documents-demande.aucunPaiementAssocie'));
-      }
-      if (dto.paiementId && dto.paiementId !== demandeAvant.paiementId) {
-        throw new BadRequestException(t('documents-demande.identifiant_de_paiement_incoherent'));
-      }
-
-      const paiementAvant = await tx.paiement.findUnique({ where: { id: demandeAvant.paiementId } });
-      const paiement = await tx.paiement.update({
-        where: { id: demandeAvant.paiementId },
-        data: { statut: StatutPaiement.REUSSI, completeLe: new Date() },
-      });
-      const demandeApres = await tx.demandeDocument.update({
-        where: { id },
-        data: { statut: StatutDemande.EN_TRAITEMENT, traiteParId: user.id },
-        include: includeDemandePour(user),
-      });
-      await journaliser(tx, user, 'DEMANDE_DOC_PAIEMENT_CONFIRME', 'Paiement', paiement.id, {
-        avant: this.instantaneDemande(demandeAvant),
-        apres: this.instantaneDemande(demandeApres),
-        paiementAvant: paiementAvant ? this.instantanePaiement(paiementAvant) : null,
-        paiementApres: this.instantanePaiement(paiement),
-        champsModifies: ['statut', 'traiteParId'],
-      });
-      return demandeApres;
+    return confirmerPaiement<DemandeAvecRelations, PreparationDemande>({
+      prisma: this.prisma,
+      user,
+      effet: this.effetConfirmationDemande(id, dto, user),
+      journal: {
+        action: 'DEMANDE_DOC_PAIEMENT_CONFIRME',
+        entite: 'Paiement',
+        entiteId: (preparation) => preparation.objet.paiementAvant?.id ?? preparation.objet.demandeAvant.id,
+        details: ({ preparation, resultat, ecrit }) => ({
+          avant: this.instantaneDemande(preparation.objet.demandeAvant),
+          apres: this.instantaneDemande(resultat.valeur),
+          paiementAvant: preparation.objet.paiementAvant
+            ? this.instantanePaiement(preparation.objet.paiementAvant)
+            : null,
+          paiementApres: preparation.objet.paiementAvant
+            ? this.instantanePaiement({ ...preparation.objet.paiementAvant, ...ecrit })
+            : null,
+          champsModifies: ['statut', 'traiteParId'],
+        }),
+      },
     });
+  }
+
+  /**
+   * Effet de confirmation d'un paiement de demande de document : le paiement
+   * passe REUSSI et la demande passe en traitement. Une demande déjà traitée
+   * est refusée : son effet n'est jamais rejoué.
+   */
+  private effetConfirmationDemande(
+    id: string,
+    dto: { paiementId?: string },
+    user: AuthUser,
+  ): EffetConfirmationPaiement<DemandeAvecRelations, PreparationDemande> {
+    return {
+      preparer: async ({ tx }) => {
+        const demandeAvant = await tx.demandeDocument.findUnique({ where: { id } });
+        if (!demandeAvant) throw new NotFoundException(t('documents-demande.demande_introuvable'));
+        // Demande déjà traitée : la confirmation est refusée, l'effet ne sera
+        // pas rejoué.
+        if (demandeAvant.statut !== StatutDemande.EN_ATTENTE_PAIEMENT) {
+          return { objet: { demandeAvant, paiementAvant: null }, confirme: true };
+        }
+        if (!demandeAvant.paiementId) {
+          throw new BadRequestException(t('documents-demande.aucunPaiementAssocie'));
+        }
+        if (dto.paiementId && dto.paiementId !== demandeAvant.paiementId) {
+          throw new BadRequestException(t('documents-demande.identifiant_de_paiement_incoherent'));
+        }
+        const paiementAvant = await tx.paiement.findUnique({ where: { id: demandeAvant.paiementId } });
+        if (!paiementAvant) throw new NotFoundException(t('common.notFoundRecord'));
+        return {
+          transition: {
+            modele: 'paiement',
+            id: demandeAvant.paiementId,
+            statutAttendu: paiementAvant.statut,
+            erreur: () => new BadRequestException(t('documents-demande.demandeDejaTraitee')),
+          },
+          objet: { demandeAvant, paiementAvant },
+          confirme: false,
+        };
+      },
+
+      dejaConfirme: async () => {
+        throw new BadRequestException(t('documents-demande.demandeDejaTraitee'));
+      },
+
+      appliquer: async ({ tx }) => {
+        const demandeApres = await tx.demandeDocument.update({
+          where: { id },
+          data: { statut: StatutDemande.EN_TRAITEMENT, traiteParId: user.id },
+          include: includeDemandePour(user),
+        });
+        return { valeur: demandeApres };
+      },
+    };
   }
 
   // ---------------------------------------------------------- traitement

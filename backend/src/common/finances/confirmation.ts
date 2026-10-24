@@ -65,6 +65,14 @@ export interface PreparationConfirmation<P = unknown> {
   confirme: boolean;
 }
 
+/** Champs écrits par la transition. */
+export type EcritureTransition = {
+  /** Nouveau statut de l'entité. */
+  statut: StatutPaiement;
+  /** Date de completion : portée par le paiement seul. */
+  completeLe?: Date | null;
+};
+
 /** Contexte remis à l'effet pendant la préparation. */
 export interface ContexteEffetPaiement {
   /** Transaction courante : l'effet s'y inscrit, il n'écrit rien ailleurs. */
@@ -80,7 +88,7 @@ export interface ContexteApplicationEffet<P = unknown> extends ContexteEffetPaie
   /** Ce que l'effet a préparé. */
   preparation: PreparationConfirmation<P>;
   /** Champs réellement écrits par la transition (`statut`, `completeLe`…). */
-  ecrit: Record<string, unknown>;
+  ecrit: EcritureTransition;
 }
 
 /** Ce que l'effet renvoie : la valeur de l'appelant et son complément d'audit. */
@@ -131,6 +139,7 @@ export interface JournalConfirmation<P = unknown, T = unknown> {
     preparation: PreparationConfirmation<P>;
     resultat: ResultatEffet<T>;
     statut: StatutPaiement;
+    ecrit: EcritureTransition;
   }) => unknown;
 }
 
@@ -160,7 +169,7 @@ export interface OptionsTransactionConfirmation {
  * Champs écrits par la transition : un paiement porte la date de
  * completion, une recharge non.
  */
-function donneesTransition(modele: ModeleConfirmation, statut: StatutPaiement): Record<string, unknown> {
+function donneesTransition(modele: ModeleConfirmation, statut: StatutPaiement): EcritureTransition {
   if (modele === 'paiement') {
     return { statut, completeLe: statut === StatutPaiement.REUSSI ? new Date() : null };
   }
@@ -176,7 +185,7 @@ async function appliquerTransition(
   tx: Prisma.TransactionClient,
   transition: TransitionOptimiste,
   statut: StatutPaiement,
-): Promise<Record<string, unknown>> {
+): Promise<EcritureTransition> {
   const modele = (transition.modele === 'paiement' ? tx.paiement : tx.recharge) as unknown as {
     updateMany: (args: {
       where: { id: string; statut: StatutPaiement };
@@ -211,7 +220,7 @@ export async function confirmerPaiement<T, P = unknown>(options: OptionsConfirma
       // Confirmation déjà appliquée : ni transition, ni journal, effet rejoué
       // jamais. La source décide si elle renvoie l'état courant ou refuse.
       if (preparation.confirme) {
-        return effet.dejaConfirme({ tx, user, statut, preparation, ecrit: {} });
+        return effet.dejaConfirme({ tx, user, statut, preparation, ecrit: { statut } });
       }
 
       const transition = preparation.transition;
@@ -226,7 +235,7 @@ export async function confirmerPaiement<T, P = unknown>(options: OptionsConfirma
         typeof journal.action === 'function' ? journal.action(statut) : journal.action,
         journal.entite,
         typeof journal.entiteId === 'function' ? journal.entiteId(preparation) : journal.entiteId,
-        journal.details({ preparation, resultat, statut }),
+        journal.details({ preparation, resultat, statut, ecrit }),
       );
 
       return resultat.valeur;
