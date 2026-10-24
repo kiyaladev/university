@@ -239,7 +239,7 @@ import {
   dateLisible,
   decalerJours,
 } from '@/shared/utils/libelles';
-import type { Courrier, ChipFiltre } from '@/types';
+import type { Courrier, ChipFiltre, FiltresPage } from '@/types';
 import { ouvrirImpression } from '@/shared/services/impression';
 import { pageApi, texteApi, useListePaginee } from '@/shared/composables/useListePaginee';
 import { useConfirmation } from '@/shared/composables/useConfirmation';
@@ -256,7 +256,7 @@ const dialogCreationOuvert = ref(false);
 const courrierSelectionne = ref<Courrier | null>(null);
 
 const onglet = ref<Onglet>('ENTRANT');
-const filtres = ref<Record<string, any>>({
+const filtres = ref<FiltresPage>({
   recherche: '',
   statut: null as string | null,
   dateDebut: decalerJours(aujourdhui(), -90),

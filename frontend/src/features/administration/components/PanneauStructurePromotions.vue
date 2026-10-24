@@ -124,14 +124,14 @@ import { type QTableColumn } from 'quasar';
 import BarreFiltres from '@/shared/components/BarreFiltres.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
 import { NIVEAUX } from '@/shared/utils/libelles';
-import type { ChipFiltre } from '@/types';
+import type { ChipFiltre, FiltresPage } from '@/types';
 import type { PromotionListee } from '@/features/administration/services/structure';
 
 /** Onglet « Promotions » de la structure académique. */
 const props = defineProps<{
   promotions: PromotionListee[];
   chargement: boolean;
-  filtre: Record<string, any>;
+  filtre: FiltresPage;
   chips: ChipFiltre[];
   optionsFilieres: { label: string; value: string }[];
   optionsAnnees: { label: string; value: string }[];
@@ -141,7 +141,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  'update:filtre': [filtre: Record<string, any>];
+  'update:filtre': [filtre: FiltresPage];
   nouvelle: [];
   modifier: [promotion: PromotionListee];
   supprimer: [promotion: PromotionListee];

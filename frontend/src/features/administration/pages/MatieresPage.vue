@@ -266,7 +266,7 @@ import EtatVide from '@/shared/components/EtatVide.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
 import { pageApi, texteApi, useListePaginee } from '@/shared/composables/useListePaginee';
 import { useConfirmation } from '@/shared/composables/useConfirmation';
-import type { Departement, Matiere, ChipFiltre } from '@/types';
+import type { Departement, Matiere, ChipFiltre, FiltresPage } from '@/types';
 
 const $q = useQuasar();
 const auth = useAuthStore();
@@ -281,7 +281,7 @@ const dialogOuvert = ref(false);
 const matiereEditee = ref<Matiere | null>(null);
 const enregistrement = ref(false);
 
-const filtres = ref<Record<string, any>>({ recherche: '', departementId: null });
+const filtres = ref<FiltresPage>({ recherche: '', departementId: null });
 const mat = reactive(
   useListePaginee<Matiere>({
     filtres,

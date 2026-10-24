@@ -141,7 +141,7 @@ import Graphique from '@/shared/components/Graphique.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
 import { pageApi, texteApi, useListePaginee } from '@/shared/composables/useListePaginee';
 import { LIBELLE_STATUT_NOTIFICATION, dateHeureLisible, dateLisible } from '@/shared/utils/libelles';
-import type { Notification, StatutNotification } from '@/types';
+import type { Notification, StatutNotification, FiltresPage } from '@/types';
 import { notificationsService } from '@/features/administration/services/notifications';
 
 /**
@@ -164,7 +164,7 @@ const $q = useQuasar();
 const { t } = useI18n();
 
 // ------------------------------------------------------------- historique
-const filtresHistorique = ref<Record<string, any>>({ recherche: '', statut: null, dateDebut: '', dateFin: '' });
+const filtresHistorique = ref<FiltresPage>({ recherche: '', statut: null, dateDebut: '', dateFin: '' });
 const hist = reactive(
   useListePaginee<Notification>({
     filtres: filtresHistorique,

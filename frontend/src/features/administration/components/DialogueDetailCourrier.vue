@@ -161,7 +161,7 @@ const peutCloturer = computed(
 
 function peutParapher(etape: CircuitCourrier) {
   if (courrier.value?.statut !== 'EN_CIRCUIT' || etape.statut !== 'EN_CIRCUIT') return false;
-  if (courrier.value.circuits.some((e) => e.ordre < etape.ordre && e.statut !== 'TRAITE')) return false;
+  if ((courrier.value.circuits ?? []).some((e) => e.ordre < etape.ordre && e.statut !== 'TRAITE')) return false;
   if (auth.peut('courrier.parapherTout')) return true;
   const roles: Record<string, string[]> = {
     SCOLARITE: ['Secrétariat', 'Secrétariat général', 'Scolarité', 'Archives'],

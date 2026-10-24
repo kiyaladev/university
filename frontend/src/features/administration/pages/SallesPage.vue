@@ -228,7 +228,7 @@ import { useConfirmation } from '@/shared/composables/useConfirmation';
 import CartesSalles from '@/features/administration/components/CartesSalles.vue';
 import TableauSalles from '@/features/administration/components/TableauSalles.vue';
 import { sallesService, type SalleSaisie } from '@/features/administration/services/salles';
-import type { Salle, ChipFiltre } from '@/types';
+import type { Salle, ChipFiltre, FiltresPage } from '@/types';
 import { ouvrirImpression } from '@/shared/services/impression';
 
 const $q = useQuasar();
@@ -245,7 +245,7 @@ const enregistrement = ref(false);
 
 const page = ref(1);
 const pageSize = ref(20);
-const filtres = ref<Record<string, any>>({ recherche: '', batiment: null, etat: null, repere: null });
+const filtres = ref<FiltresPage>({ recherche: '', batiment: null, etat: null, repere: null });
 
 /**
  * L'écran de gestion lit toujours le serveur (jetons QR, salles modifiées

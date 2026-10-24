@@ -246,7 +246,7 @@ import ChampDate from '@/shared/components/ChampDate.vue';
 import DialogueRecette from '../components/DialogueRecette.vue';
 import { recettesService, type KpisRecettes } from '../services/recettes';
 import { LIBELLE_TYPE_RECETTE, aujourdhui, dateLisible, decalerJours, montantLisible } from '@/shared/utils/libelles';
-import type { RecetteExterne, ChipFiltre } from '@/types';
+import type { RecetteExterne, ChipFiltre, FiltresPage } from '@/types';
 
 const $q = useQuasar();
 const auth = useAuthStore();
@@ -260,7 +260,7 @@ const dialogEncaissementOuvert = ref(false);
 const recetteEnEdition = ref<RecetteExterne | null>(null);
 const kpis = ref<KpisRecettes | null>(null);
 
-const filtres = ref<Record<string, any>>({
+const filtres = ref<FiltresPage>({
   recherche: '',
   type: null as string | null,
   paiementStatut: null as string | null,

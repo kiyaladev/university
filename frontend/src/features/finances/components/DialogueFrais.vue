@@ -72,7 +72,18 @@ const referentiels = useReferentielsStore();
 const annees = ref<Awaited<ReturnType<typeof referentiels.annees>>>([]);
 const promotions = ref<Awaited<ReturnType<typeof referentiels.promotions>>>([]);
 
-const form = ref<FraisSaisie>({ anneeId: '', promotionId: '', montant: 0, devise: DEVISE });
+/**
+ * Le formulaire des frais : la promotion est effacée quand l'année change,
+ * d'où une promotion vide (`null`) tant que l'agent n'en a pas choisi une.
+ */
+interface FormulaireFrais {
+  anneeId: string;
+  promotionId: string | null;
+  montant: number;
+  devise: string;
+}
+
+const form = ref<FormulaireFrais>({ anneeId: '', promotionId: '', montant: 0, devise: DEVISE });
 const envoi = ref(false);
 
 const optionsAnnees = computed(() => annees.value.map((a) => ({ value: a.id, label: a.libelle })));

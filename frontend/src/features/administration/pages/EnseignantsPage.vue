@@ -238,7 +238,7 @@ import {
   decalerJours,
   montantLisible,
 } from '@/shared/utils/libelles';
-import type { Departement, Enseignant, ChipFiltre } from '@/types';
+import type { Departement, Enseignant, ChipFiltre, FiltresPage } from '@/types';
 import { enseignantsService } from '@/features/administration/services/enseignants';
 
 const $q = useQuasar();
@@ -255,7 +255,7 @@ const dialogOuvert = ref(false);
 const enseignantEdite = ref<Enseignant | null>(null);
 
 // Filtres gardés dans l'URL : l'arrivée depuis « Utilisateurs » pré-recherche la fiche visée.
-const filtres = ref<Record<string, any>>({ recherche: '', departementId: null, statut: null });
+const filtres = ref<FiltresPage>({ recherche: '', departementId: null, statut: null });
 const ens = reactive(
   useListePaginee<Enseignant>({
     filtres,
