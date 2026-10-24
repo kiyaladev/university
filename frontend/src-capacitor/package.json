@@ -1,7 +1,7 @@
 {
-  "name": "university-capacitor",
+  "name": "university-frontend",
   "version": "1.0.0",
-  "description": "University — contrôle numérique de présence des enseignants",
+  "description": "University — plateforme de gestion universitaire : présences, scolarité, finances, campus et documents",
   "author": "University",
   "private": true,
   "dependencies": {

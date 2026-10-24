@@ -246,9 +246,8 @@ interface InviteInstallation {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
 }
 
-// Passer à `true` quand `university.apk` est publié dans /telechargement/
-// (scripts/apk.sh, docs/android.md) : sans fichier, le lien mènerait à une 404.
-const APK_PUBLIE = false;
+// `university.apk` est publié dans /telechargement/ (scripts/apk.sh, docs/android.md).
+const APK_PUBLIE = true;
 const proposerApk = computed(() => APK_PUBLIE && /android/i.test(navigator.userAgent) && !surAndroid());
 let invite: InviteInstallation | null = null;
 
