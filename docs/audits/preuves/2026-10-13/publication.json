@@ -1,7 +1,7 @@
 {
   "date": "2026-10-13T18:26:02.275770+00:00",
-  "etat": "candidat_verifie_publication_en_attente",
-  "publie": false,
+  "etat": "publie_interface_pwa",
+  "publie": true,
   "api": "https://university-api.naimba.com/api",
   "archive": "/var/backups/university/frontend/simplification-candidat-20261013T1825Z.tar.gz",
   "sha256Archive": "170851d29762168fd6b3bb86b4becb407c1be6dfb9a52d65ca49a1aad135b612",
@@ -374,5 +374,6 @@
     "10 comptes actifs conservent un mot de passe de démonstration.",
     "Destination SSH de sauvegarde hors serveur non configurée.",
     "9 migrations en attente : planifier leur application après sauvegarde distante et restauration vérifiées."
-  ]
+  ],
+  "deploiementRapport": "redeploiement-2026-10-14.json"
 }

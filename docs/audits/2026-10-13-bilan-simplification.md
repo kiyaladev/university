@@ -71,3 +71,13 @@ La compilation PWA de production utilise `https://university-api.naimba.com/api`
 L’inspection de production du 13 octobre refuse la publication : dix comptes actifs utilisent encore un mot de passe de démonstration, aucun administrateur réel n’est configuré, neuf migrations sont en attente et aucune destination SSH de sauvegarde hors serveur n’est renseignée. [Rapport en lecture seule](preuves/2026-10-13/preflight-publication.json).
 
 La [procédure du README](../../README.md#6-déploiement) demande de lever ces préconditions avant une mise à jour. Le site servi reste donc sur la version restaurée. Aucun compte, service, schéma de données ou processus API de production n’a été modifié pendant cette préparation.
+
+## Redéploiement du 14 octobre 2026
+
+Sur demande explicite de l’utilisateur, l’interface simplifiée a été publiée sur `https://university.naimba.com`. La compilation du commit `f66cfcd`, avec l’API publique de production, est identique aux 260 fichiers du candidat testé. Le remplacement du dossier servi est atomique ; 187 anciens fichiers d’assets restent disponibles pour les sessions déjà ouvertes.
+
+Les 260 fichiers ont été téléchargés en HTTPS et comparés par SHA-256. L’API répond `ok`. L’écran de connexion a été vérifié dans le navigateur à 375 et 1 440 pixels, sans erreur JavaScript, réponse HTTP en échec ni débordement horizontal.
+
+Une nouvelle copie de retour arrière est conservée dans `/var/backups/university/frontend/avant-redeploiement-20261013T222949Z.tar.gz`. Le backend, les migrations, les comptes et les services n’ont pas été modifiés ; les préconditions relevées avant publication restent à traiter séparément.
+
+[Rapport de redéploiement](preuves/2026-10-13/redeploiement-2026-10-14.json).

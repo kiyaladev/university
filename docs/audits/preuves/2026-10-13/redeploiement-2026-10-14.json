@@ -1,0 +1,36 @@
+{
+  "date": "2026-10-13T22:30:16.233808+00:00",
+  "publie": true,
+  "site": "https://university.naimba.com",
+  "api": "https://university-api.naimba.com/api",
+  "version": "f66cfcd",
+  "fichiersCandidat": 260,
+  "anciensAssetsConserves": 187,
+  "retourArriere": {
+    "archive": "/var/backups/university/frontend/avant-redeploiement-20261013T222949Z.tar.gz",
+    "sha256": "7e3b12b2eea6ed3a90ec0191145703c54bfca24b0855876dad1221bc05b32c5c"
+  },
+  "ancienDossier": "/opt/apps/university/frontend/dist/.pwa-redeploy-20261014",
+  "remplacement": "renameat2 RENAME_EXCHANGE",
+  "verificationHttps": {
+    "fichiersHttpsVerifies": 260,
+    "integrite": "SHA-256 conforme",
+    "api": "ok"
+  },
+  "verificationNavigateur": [
+    {
+      "width": 375,
+      "connexion": "visible",
+      "errors": [],
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "connexion": "visible",
+      "errors": [],
+      "overflow": false
+    }
+  ],
+  "autorisation": "Demande explicite de redéploiement par l’utilisateur le 14 octobre 2026.",
+  "perimetre": "Interface PWA uniquement ; backend, migrations et comptes inchangés."
+}
