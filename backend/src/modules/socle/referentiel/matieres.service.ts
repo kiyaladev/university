@@ -1,7 +1,7 @@
 /** Matières : catalogue et volumes horaires. */
 
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma, type Matiere } from '@prisma/client';
 import { CrudService, supprimerOuConflit } from '../../../common/crud.service';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { AuthUser } from '../../../common/decorators';
@@ -21,7 +21,7 @@ export class MatieresService extends CrudService<Prisma.MatiereGetPayload<{ incl
     });
   }
 
-  private instantaneAudit(matiere: any) {
+  private instantaneAudit(matiere: Matiere) {
     return {
       id: matiere.id,
       code: matiere.code,

@@ -2,6 +2,7 @@
 
 import { Injectable, NotFoundException } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
+import { Prisma } from '@prisma/client';
 import { CrudService, supprimerOuConflit } from '../../../common/crud.service';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { AuthUser } from '../../../common/decorators';
@@ -9,27 +10,36 @@ import { t } from '../../../common/i18n';
 import { journaliser } from '../../../common/audit';
 import { CreateUserDto, UpdateUserDto, UserQueryDto } from './users.dto';
 
+/** Colonnes exposées d'un compte : ni secret, ni verrouillage. */
+const USER_SELECT_PROFIL = {
+  id: true,
+  email: true,
+  nom: true,
+  prenom: true,
+  telephone: true,
+  role: true,
+  actif: true,
+  departementId: true,
+} as const;
+
+/** Compte lu avec son profil (colonnes de USER_SELECT_PROFIL). */
+type ProfilUtilisateur = Prisma.UserGetPayload<{ select: typeof USER_SELECT_PROFIL }>;
+
+/** Compte lu pour l'audit : le profil et la présence d'un mot de passe. */
+type UtilisateurAudit = ProfilUtilisateur & { password: string };
+
 @Injectable()
-export class UsersService extends CrudService {
+export class UsersService extends CrudService<ProfilUtilisateur> {
   constructor(prisma: PrismaService) {
     super(prisma, 'user', {
       searchFields: ['nom', 'prenom', 'email'],
       orderBy: [{ nom: 'asc' }, { prenom: 'asc' }],
-      select: {
-        id: true,
-        email: true,
-        nom: true,
-        prenom: true,
-        telephone: true,
-        role: true,
-        actif: true,
-        departementId: true,
-      },
+      select: USER_SELECT_PROFIL,
       label: 'Utilisateur',
     });
   }
 
-  private profilSecurise(u: any) {
+  private profilSecurise(u: ProfilUtilisateur) {
     return {
       id: u.id,
       email: u.email,
@@ -43,7 +53,7 @@ export class UsersService extends CrudService {
   }
 
   /** L'audit des comptes ne conserve ni identité, ni secret, ni verrouillage. */
-  private instantaneAudit(u: any) {
+  private instantaneAudit(u: UtilisateurAudit) {
     return {
       id: u.id,
       role: u.role,
@@ -66,7 +76,7 @@ export class UsersService extends CrudService {
       ...(query.role ? { role: query.role } : {}),
       ...(query.departementId ? { departementId: query.departementId } : {}),
     });
-    return { ...res, data: res.data.map((u: any) => this.profilSecurise(u)) };
+    return { ...res, data: res.data.map((u) => this.profilSecurise(u)) };
   }
 
   async creer(dto: CreateUserDto, acteur?: AuthUser) {
@@ -132,15 +142,6 @@ export class UsersService extends CrudService {
   }
 
   private selectProfil() {
-    return {
-      id: true,
-      email: true,
-      nom: true,
-      prenom: true,
-      telephone: true,
-      role: true,
-      actif: true,
-      departementId: true,
-    };
+    return USER_SELECT_PROFIL;
   }
 }

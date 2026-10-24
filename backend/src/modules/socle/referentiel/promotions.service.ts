@@ -1,7 +1,7 @@
 /** Promotions : cohortes d’étudiants. */
 
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma, type Promotion } from '@prisma/client';
 import { CrudService } from '../../../common/crud.service';
 import { exigerAnneeOuverte } from '../../../common/annee';
 import { PrismaService } from '../../../prisma/prisma.service';
@@ -10,13 +10,22 @@ import { t } from '../../../common/i18n';
 import { journaliser } from '../../../common/audit';
 import { CreatePromotionDto, UpdatePromotionDto } from './promotions.dto';
 
+/** Relations chargées avec une promotion : sa filière (et son département) et son année. */
+const PROMOTION_INCLUDE = { filiere: { include: { departement: true } }, annee: true } as const;
+
+/** Colonnes conservées par l'instantané d'audit d'une promotion. */
+type InstantanePromotion = Pick<Promotion, 'id' | 'nom' | 'niveau' | 'effectif' | 'filiereId' | 'anneeId'>;
+
+/** Charge utile d'une promotion lue avec ses relations (voir PROMOTION_INCLUDE). */
+type PromotionAvecRelations = Prisma.PromotionGetPayload<{ include: typeof PROMOTION_INCLUDE }>;
+
 @Injectable()
-export class PromotionsService extends CrudService {
+export class PromotionsService extends CrudService<PromotionAvecRelations> {
   constructor(prisma: PrismaService) {
     super(prisma, 'promotion', {
       searchFields: ['nom'],
       orderBy: [{ niveau: 'asc' }, { nom: 'asc' }],
-      include: { filiere: { include: { departement: true } }, annee: true },
+      include: PROMOTION_INCLUDE,
       label: 'Promotion',
     });
   }
@@ -27,7 +36,7 @@ export class PromotionsService extends CrudService {
         await exigerAnneeOuverte(tx, dto.anneeId);
         const promotion = await tx.promotion.create({
           data: dto,
-          include: { filiere: { include: { departement: true } }, annee: true },
+          include: PROMOTION_INCLUDE,
         });
         await journaliser(tx, user ?? null, 'PROMOTION_CREEE', 'Promotion', promotion.id, {
           avant: null,
@@ -42,9 +51,9 @@ export class PromotionsService extends CrudService {
   async modifier(id: string, dto: UpdatePromotionDto, user?: AuthUser) {
     return this.prisma.$transaction(
       async (tx) => {
-        const actuelle: any = await tx.promotion.findUnique({
+        const actuelle = await tx.promotion.findUnique({
           where: { id },
-          include: { filiere: { include: { departement: true } }, annee: true },
+          include: PROMOTION_INCLUDE,
         });
         if (!actuelle) throw new NotFoundException(t('common.notFound'));
         await exigerAnneeOuverte(tx, actuelle.anneeId);
@@ -74,7 +83,7 @@ export class PromotionsService extends CrudService {
         const apres = await tx.promotion.update({
           where: { id },
           data: dto,
-          include: { filiere: { include: { departement: true } }, annee: true },
+          include: PROMOTION_INCLUDE,
         });
         await journaliser(tx, user ?? null, 'PROMOTION_MODIFIEE', 'Promotion', id, {
           avant: this.instantaneAudit(actuelle),
@@ -90,9 +99,9 @@ export class PromotionsService extends CrudService {
   async supprimer(id: string, user?: AuthUser) {
     return this.prisma.$transaction(
       async (tx) => {
-        const actuelle: any = await tx.promotion.findUnique({
+        const actuelle = await tx.promotion.findUnique({
           where: { id },
-          include: { filiere: { include: { departement: true } }, annee: true },
+          include: PROMOTION_INCLUDE,
         });
         if (!actuelle) throw new NotFoundException(t('common.notFound'));
         await exigerAnneeOuverte(tx, actuelle.anneeId);
@@ -127,7 +136,7 @@ export class PromotionsService extends CrudService {
     );
   }
 
-  private instantaneAudit(promotion: any) {
+  private instantaneAudit(promotion: InstantanePromotion) {
     return {
       id: promotion.id,
       nom: promotion.nom,

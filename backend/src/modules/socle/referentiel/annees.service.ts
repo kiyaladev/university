@@ -1,7 +1,7 @@
 /** Années académiques : ouverture, clôture et périodes. */
 
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma, type AnneeAcademique } from '@prisma/client';
 import { CrudService, supprimerOuConflit } from '../../../common/crud.service';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { AuthUser } from '../../../common/decorators';
@@ -10,8 +10,11 @@ import { t } from '../../../common/i18n';
 import { journaliser } from '../../../common/audit';
 import { CreateAnneeDto, UpdateAnneeDto } from './annees.dto';
 
+/** Colonnes conservées par l'instantané d'audit d'une année académique. */
+type InstantaneAnnee = Pick<AnneeAcademique, 'id' | 'libelle' | 'dateDebut' | 'dateFin' | 'active' | 'cloturee'>;
+
 @Injectable()
-export class AnneesService extends CrudService {
+export class AnneesService extends CrudService<AnneeAcademique> {
   constructor(prisma: PrismaService) {
     super(prisma, 'anneeAcademique', {
       searchFields: ['libelle'],
@@ -40,7 +43,7 @@ export class AnneesService extends CrudService {
   }
 
   /** Une seule année peut être active à la fois. */
-  private instantane(annee: any) {
+  private instantane(annee: InstantaneAnnee) {
     return {
       id: annee.id,
       libelle: annee.libelle,

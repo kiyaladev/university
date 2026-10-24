@@ -1,7 +1,7 @@
 /** Filières : regroupement de promotions. */
 
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma, type Filiere } from '@prisma/client';
 import { CrudService, supprimerOuConflit } from '../../../common/crud.service';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { AuthUser } from '../../../common/decorators';
@@ -9,25 +9,28 @@ import { t } from '../../../common/i18n';
 import { journaliser } from '../../../common/audit';
 import { CreateFiliereDto, UpdateFiliereDto } from './filieres.dto';
 
+/** Relation chargée avec une filière : son département de rattachement. */
+const FILIERE_INCLUDE = { departement: true } as const;
+
 @Injectable()
-export class FilieresService extends CrudService {
+export class FilieresService extends CrudService<Prisma.FiliereGetPayload<{ include: typeof FILIERE_INCLUDE }>> {
   constructor(prisma: PrismaService) {
     super(prisma, 'filiere', {
       searchFields: ['code', 'nom'],
       orderBy: { nom: 'asc' },
-      include: { departement: true },
+      include: FILIERE_INCLUDE,
       label: 'Filière',
     });
   }
 
-  private instantaneAudit(filiere: any) {
+  private instantaneAudit(filiere: Filiere) {
     return { id: filiere.id, code: filiere.code, nom: filiere.nom, departementId: filiere.departementId };
   }
 
   async creer(dto: CreateFiliereDto, user?: AuthUser) {
     return this.prisma.$transaction(
       async (tx) => {
-        const filiere = await tx.filiere.create({ data: dto, include: this.options.include });
+        const filiere = await tx.filiere.create({ data: dto, include: FILIERE_INCLUDE });
         await journaliser(tx, user ?? null, 'FILIERE_CREEE', 'Filiere', filiere.id, {
           avant: null,
           apres: this.instantaneAudit(filiere),
@@ -44,7 +47,7 @@ export class FilieresService extends CrudService {
       async (tx) => {
         const avant = await tx.filiere.findUnique({ where: { id } });
         if (!avant) throw new NotFoundException(t('common.crud.itemNotFound', { label: 'Filière' }));
-        const apres = await tx.filiere.update({ where: { id }, data: dto, include: this.options.include });
+        const apres = await tx.filiere.update({ where: { id }, data: dto, include: FILIERE_INCLUDE });
         await journaliser(tx, user ?? null, 'FILIERE_MODIFIEE', 'Filiere', id, {
           avant: this.instantaneAudit(avant),
           apres: this.instantaneAudit(apres),
