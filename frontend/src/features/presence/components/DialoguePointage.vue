@@ -208,6 +208,7 @@ import { dureeLisible, maintenantHHmm, LIBELLE_STATUT_PRESENCE } from '@/shared/
 import type { Enseignant, Pointage, Seance, StatutPresence } from '@/types';
 import LecteurQr from '@/shared/components/LecteurQr.vue';
 import AttestationEnseignant from './AttestationEnseignant.vue';
+import { messageErreurApi } from '@/shared/utils/erreur-http';
 
 const props = defineProps<{ modelValue: boolean; seance: Seance | null }>();
 const emit = defineEmits<{ 'update:modelValue': [boolean]; enregistre: [] }>();
@@ -218,13 +219,15 @@ const { t } = useI18n();
 const pointages = usePointagesStore();
 
 const statuts = computed(() =>
-  [
-    { value: 'PRESENT', icone: 'check_circle', champ: 'present' },
-    { value: 'RETARD', icone: 'schedule', champ: 'retard' },
-    { value: 'ABSENT', icone: 'cancel', champ: 'absent' },
-    { value: 'REMPLACE', icone: 'swap_horiz', champ: 'remplace' },
-    { value: 'DEPART_ANTICIPE', icone: 'logout', champ: 'depart' },
-  ].map((statut) => ({ ...statut, label: LIBELLE_STATUT_PRESENCE[statut.value] })),
+  (
+    [
+      { value: 'PRESENT', icone: 'check_circle', champ: 'present' },
+      { value: 'RETARD', icone: 'schedule', champ: 'retard' },
+      { value: 'ABSENT', icone: 'cancel', champ: 'absent' },
+      { value: 'REMPLACE', icone: 'swap_horiz', champ: 'remplace' },
+      { value: 'DEPART_ANTICIPE', icone: 'logout', champ: 'depart' },
+    ] satisfies Array<{ value: StatutPresence; icone: string; champ: string }>
+  ).map((statut) => ({ ...statut, label: LIBELLE_STATUT_PRESENCE[statut.value] })),
 );
 
 const vide = (): Pointage & { statut: StatutPresence } => ({
@@ -391,13 +394,13 @@ async function enregistrer() {
     }
     emit('enregistre');
     fermer(false);
-  } catch (e: any) {
+  } catch (e: unknown) {
     // Requête silencieuse : l'erreur métier (4xx) relancée par le store, ou
     // l'échec local de mise en file, n'est notifiée qu'ici.
-    const motif = e?.response?.data?.message;
+    const motif = messageErreurApi(e);
     $q.notify({
       type: 'negative',
-      message: (Array.isArray(motif) ? motif.join(' · ') : motif) ?? e?.message ?? t('pointage.saveFailed'),
+      message: motif ?? (e instanceof Error ? e.message : undefined) ?? t('pointage.saveFailed'),
     });
   } finally {
     enregistrement.value = false;

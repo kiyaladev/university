@@ -155,7 +155,7 @@ const props = defineProps<{
 const $q = useQuasar();
 const { t } = useI18n();
 
-const sallesVisitees = computed(() => (props.rapport?.lignes ?? []).filter((l) => l.controlees > 0).length);
+const sallesVisitees = computed(() => (props.rapport?.lignes ?? []).filter((l) => (l.controlees ?? 0) > 0).length);
 
 const chiffres = computed<ChiffreReleve[]>(() => {
   const total = props.rapport?.total;

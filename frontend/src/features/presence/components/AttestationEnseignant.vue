@@ -146,6 +146,7 @@ import { etatLecteur, verifierEmpreinte } from '@/shared/services/empreinte';
 /** En dessous, inutile d'envoyer : le serveur refuserait de toute façon. */
 const SEUIL_INDICATIF = 40;
 import type { MoyensAttestation, Pointage, Seance } from '@/types';
+import { messageErreurApi } from '@/shared/utils/erreur-http';
 
 const pointages = usePointagesStore();
 const { t, te } = useI18n();
@@ -229,8 +230,9 @@ async function lireEmpreinte() {
         ...(lecture.appareilId ? { appareilId: lecture.appareilId } : {}),
       },
     });
-  } catch (e: any) {
-    erreurEmpreinte.value = e?.response?.data?.message ?? e?.message ?? t('pointage.attestation.unavailable');
+  } catch (e: unknown) {
+    erreurEmpreinte.value =
+      messageErreurApi(e) ?? (e instanceof Error ? e.message : undefined) ?? t('pointage.attestation.unavailable');
   } finally {
     lectureEnCours.value = false;
   }

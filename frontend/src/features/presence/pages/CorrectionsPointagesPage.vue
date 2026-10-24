@@ -85,7 +85,7 @@
           <q-badge
             :color="couleurStatut(p.row.statut)"
             :icon="ICONE_STATUT_PRESENCE[p.row.statut]"
-            :label="LIBELLE_STATUT_PRESENCE[p.row.statut]"
+            :label="libelleDepuis(LIBELLE_STATUT_PRESENCE, p.row.statut)"
           />
         </q-td>
       </template>
@@ -158,7 +158,13 @@ import BarreFiltres from '@/shared/components/BarreFiltres.vue';
 import BarrePagination from '@/shared/components/BarrePagination.vue';
 import { useListePaginee } from '@/shared/composables/useListePaginee';
 import { useConfirmation } from '@/shared/composables/useConfirmation';
-import { ICONE_STATUT_PRESENCE, LIBELLE_STATUT_PRESENCE, dateLisible, optionsDepuis } from '@/shared/utils/libelles';
+import {
+  ICONE_STATUT_PRESENCE,
+  LIBELLE_STATUT_PRESENCE,
+  dateLisible,
+  libelleDepuis,
+  optionsDepuis,
+} from '@/shared/utils/libelles';
 import DialogueCorrectionPointage from '../components/DialogueCorrectionPointage.vue';
 import { peutCorriger, pointagesService, type ParametresPointages } from '../services/pointages';
 import type { Controle, ChipFiltre } from '@/types';

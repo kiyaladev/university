@@ -207,7 +207,7 @@ const configEvolution = computed<ChartConfiguration>(() => ({
     datasets: [
       {
         label: t('dashboard.charts.datasets.sessionsHeld'),
-        data: (props.rapport?.evolution ?? []).map((e) => e.assurees),
+        data: (props.rapport?.evolution ?? []).map((e) => e.assurees ?? null),
         borderColor: VERT,
         backgroundColor: 'rgba(3, 161, 14, 0.12)',
         borderWidth: 3,
@@ -217,7 +217,7 @@ const configEvolution = computed<ChartConfiguration>(() => ({
       },
       {
         label: t('common.fields.absences'),
-        data: (props.rapport?.evolution ?? []).map((e) => e.absences),
+        data: (props.rapport?.evolution ?? []).map((e) => e.absences ?? null),
         borderColor: ROUGE,
         borderWidth: 3,
         tension: 0,
@@ -225,7 +225,7 @@ const configEvolution = computed<ChartConfiguration>(() => ({
       },
       {
         label: t('dashboard.charts.datasets.delays'),
-        data: (props.rapport?.evolution ?? []).map((e) => e.retards),
+        data: (props.rapport?.evolution ?? []).map((e) => e.retards ?? null),
         borderColor: JAUNE,
         borderWidth: 3,
         tension: 0,

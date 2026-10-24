@@ -113,6 +113,7 @@ import { TYPES_COURS } from '@/shared/utils/libelles';
 import ChampDate from '@/shared/components/ChampDate.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
 import type { Affectation, Creneau, Salle } from '@/types';
+import { messageErreurApi } from '@/shared/utils/erreur-http';
 
 const ouvert = defineModel<boolean>({ required: true });
 const props = defineProps<{ creneau?: Creneau | null; salles: Salle[] }>();
@@ -219,9 +220,9 @@ async function enregistrer() {
     $q.notify({ type: 'positive', message: t('emploiDuTemps.slotDialog.saved') });
     emit('enregistre');
     ouvert.value = false;
-  } catch (e: any) {
+  } catch (e: unknown) {
     // Les conflits d'emploi du temps sont renvoyés en 400 par l'API.
-    erreur.value = e.response?.data?.message ?? t('emploiDuTemps.slotDialog.saveFailed');
+    erreur.value = messageErreurApi(e) ?? t('emploiDuTemps.slotDialog.saveFailed');
   } finally {
     enregistrement.value = false;
   }
