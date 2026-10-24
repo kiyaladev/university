@@ -109,18 +109,33 @@ preuve acceptée y est inscrite.
 - **Purge** : une tâche planifiée (toutes les 10 minutes) efface les entrées
   dont la fenêtre est passée. Le registre ne garde que ce qui peut encore être
   rejoué.
-- **Écriture** : l’inscription de la consommation part dans la transaction du
-  pointage (`verifierPreuves(…, tx)`), pour que la preuve consommée et le
-  contrôle écrit forment un seul fait.
+- **Écriture** : la vérification de la preuve et l’inscription de sa
+  consommation partent dans la transaction du pointage
+  (`verifierPreuves(…, tx)`), pour que la preuve consommée et le contrôle
+  écrit forment un seul fait. Un pointage refusé — attestation obligatoire
+  non fournie, effectif manquant — **ne consomme pas** la preuve : elle reste
+  disponible pour une nouvelle tentative.
 - **Compatibilité** : une passerelle ancienne, qui ne signe pas de nonce,
   continue de fonctionner — l’empreinte de la signature identifie alors la
   preuve.
+
+**Renvoi d’un pointage hors ligne.** Un pointage saisi sans réseau peut être
+renvoyé après une réponse perdue. Chaque pointage porte un **identifiant
+client** (UUID créé sur l’appareil) : celui qui renvoie le même pointage
+reconnaît son contrôle et reçoit le contrôle existant (**200**, idempotent) au
+lieu d’être refusé comme un rejeu de preuve. Un vrai rejeu — une autre
+séance, un autre pointage — reste **409**. La file hors ligne du contrôleur
+retire de la file un pointage refusé pour une preuve déjà utilisée : le
+refuser encore ne/aboutirait à rien.
 
 **Nonce de tentative.** La passerelle reçoit déjà un `tentativeId` (elle
 refuse 409 une tentative déjà traitée). Pour que ce nonce serve aussi côté
 API, il doit être **signé** : la charge de vérification porte alors le nonce
 en fin de charge, ou juste avant l’horodatage — l’API accepte les deux formes,
-et ne retient le nonce que si la signature le couvre.
+et ne retient le nonce que si la signature le couvre. La passerelle signe le
+nonce **en fin de charge** et le rend dans sa réponse : le client doit le
+transmettre à l’API, faute de quoi la charge signée ne correspond à aucune
+forme acceptée.
 
 ```
 vérification avec nonce = HMAC_SHA256(clé appareil, "verification|<appareilId>|<enseignantId>|<empreinte>|<score>|<horodatage>|<tentativeId>")
@@ -174,12 +189,14 @@ ligne pour une empreinte seule (aujourd’hui refusée après 5 minutes de coupu
 
 Deux points sideurs, signalés à l'API :
 
-1. **Nonce signé par la passerelle.** L’API tient désormais le registre des
-   preuves consommées (voir « Anti-rejeu côté API »), et refuse 409 une preuve
-   déjà consommée. Reste à faire côté passerelle : signer le `tentativeId`
-   dans la charge de vérification, pour que le nonce — et non l’empreinte de la
-   signature — identifie la preuve. Tant que la passerelle ne le signe pas,
-   l’API s’appuie sur l’empreinte de la signature, ce qui convient déjà.
+1. **Nonce signé par la passerelle.** *Fait.* La passerelle signe désormais le
+   `tentativeId` dans la charge de vérification (en fin de charge) et rend le
+   nonce dans sa réponse : le nonce — et non l’empreinte de la signature —
+   identifie la preuve côté API. Un client qui transmet un `tentativeId` à la
+   passerelle doit le transmettre aussi à l’API, sinon la charge signée ne
+   correspond à aucune forme acceptée. Une passerelle qui ne signe pas de
+   nonce reste acceptée : l’API s’appuie alors sur l’empreinte de la
+   signature.
 2. **Horloge.** La tolérance de 60 secondes est le filet de sécurité d’un
    poste désynchronisé. Un poste de contrôle hors ligne accumule une dérive
    que rien ne rattrape aujourd’hui.

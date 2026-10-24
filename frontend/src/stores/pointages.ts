@@ -10,10 +10,26 @@ import { api } from '../boot/axios';
 import { useSeancesStore } from './seances';
 import { lireToken, proprietaireDepuisToken } from '@/shared/services/session';
 import { CLE_FILE_POINTAGES, clePour } from '@/shared/services/cles-stockage';
-import { OPTIONS_POINTAGES, ecrireFileHorsLigne, lireFileHorsLigne } from '@/shared/services/file-hors-ligne';
+import {
+  OPTIONS_POINTAGES,
+  echecDefinitif,
+  ecrireFileHorsLigne,
+  idClient,
+  lireFileHorsLigne,
+  type EchecSynchronisation,
+} from '@/shared/services/file-hors-ligne';
 import type { Pointage } from '../types';
 
 const CLE_FILE = CLE_FILE_POINTAGES;
+
+/**
+ * Pointage en file : l'identifiant client est créé sur l'appareil.
+ *
+ * Un pointage hors ligne peut être renvoyé après une réponse perdue. Le même
+ * identifiant prouve à l'API qu'il s'agit du même pointage : le renvoi est
+ * alors idempotent, au lieu d'être refusé comme un rejeu de preuve.
+ */
+export type PointageFile = Pointage & { idClient?: string };
 
 function proprietaire(): string {
   return proprietaireDepuisToken(lireToken());
@@ -31,15 +47,15 @@ function lireErreurs(owner: string): Record<string, string> {
   }
 }
 
-async function lireFile(owner: string): Promise<Pointage[]> {
+async function lireFile(owner: string): Promise<PointageFile[]> {
   if (!owner) return [];
-  return lireFileHorsLigne<Pointage>(CLE_FILE, owner, [], OPTIONS_POINTAGES);
+  return lireFileHorsLigne<PointageFile>(CLE_FILE, owner, [], OPTIONS_POINTAGES);
 }
 
 export const usePointagesStore = defineStore('pointages', {
   state: () => ({
     proprietaire: proprietaire(),
-    file: [],
+    file: [] as PointageFile[],
     erreurs: lireErreurs(proprietaire()),
     ancienneFile: 0,
     fileChargee: false,
@@ -120,25 +136,29 @@ export const usePointagesStore = defineStore('pointages', {
      * Envoie le pointage ; en cas d'échec réseau il est mis en file d'attente.
      * Renvoie `true` si le serveur a accepté immédiatement.
      */
-    async envoyer(pointage: Pointage): Promise<boolean> {
+    async envoyer(pointage: PointageFile): Promise<boolean> {
+      // L'identifiant client est posé AVANT le premier envoi : si la réponse
+      // se perd, le renvoi hors ligne portera le même identifiant et l'API
+      // reconnaîtra le même pointage au lieu de le refuser comme un rejeu.
+      const prepare: PointageFile = { ...pointage, idClient: pointage.idClient ?? idClient() };
       if (!this.enLigne) {
-        await this.mettreEnFile(pointage);
+        await this.mettreEnFile(prepare);
         return false;
       }
       try {
         // Silencieux : un échec réseau ou 5xx part dans la file (message « mis
         // en file ») ; une erreur métier est relancée et notifiée par l'appelant.
-        await api.post('/controles', pointage, { silencieux: true });
+        await api.post('/controles', prepare, { silencieux: true });
         return true;
       } catch (e: any) {
         // Une erreur métier (400/403) ne doit pas être rejouée indéfiniment.
         if (e.response?.status && e.response.status < 500) throw e;
-        await this.mettreEnFile(pointage);
+        await this.mettreEnFile(prepare);
         return false;
       }
     },
 
-    async mettreEnFile(pointage: Pointage) {
+    async mettreEnFile(pointage: PointageFile) {
       await this.chargerProprietaire();
       delete this.erreurs[pointage.seanceId];
       // Le code personnel est un secret réutilisable : il ne doit jamais être
@@ -152,7 +172,7 @@ export const usePointagesStore = defineStore('pointages', {
       // pointage. Accompagné d'une signature, seule celle-ci est conservée ;
       // seul, il part en file avec un avertissement.
       const { codePinEnseignant, ...conservable } = pointage;
-      const sansSecret: Pointage = { ...conservable };
+      const sansSecret: PointageFile = { ...conservable };
       if (sansSecret.empreinte && sansSecret.signatureBase64) delete sansSecret.empreinte;
       const perdu = Boolean(codePinEnseignant) && !sansSecret.signatureBase64;
       const empreinteSeule = Boolean(sansSecret.empreinte) && !sansSecret.signatureBase64;
@@ -161,6 +181,9 @@ export const usePointagesStore = defineStore('pointages', {
         ...this.file.filter((p) => p.seanceId !== pointage.seanceId),
         {
           ...sansSecret,
+          // L'identifiant client suit le pointage : le renvoi doit porter le
+          // même, sinon l'API ne peut pas reconnaître le pointage renvoyé.
+          idClient: sansSecret.idClient ?? idClient(),
           horsLigne: true,
           horodatage: pointage.horodatage ?? new Date().toISOString(),
         },
@@ -197,20 +220,28 @@ export const usePointagesStore = defineStore('pointages', {
         await useSeancesStore().synchroniser();
         await this.chargerProprietaire();
         if (owner !== this.proprietaire || !this.file.length) return;
-        const envoyes = JSON.parse(JSON.stringify(this.file)) as Pointage[];
+        const envoyes = JSON.parse(JSON.stringify(this.file)) as PointageFile[];
         // Silencieux : la file reste intacte et le catch prévient une seule fois.
         const { data } = await api.post('/controles/sync', { pointages: envoyes }, { silencieux: true });
-        const echecs = new Set((data.echecs ?? []).map((e: any) => e.seanceId));
+        const echecs = (data.echecs ?? []) as EchecSynchronisation[];
+        // Un échec définitif (preuve déjà consommée) ne aboutira jamais : le
+        // pointage est retiré de la file au lieu d'être réessayé sans fin.
+        const definitifs = new Set(echecs.filter(echecDefinitif).map((e) => e.seanceId));
+        const enEchec = new Set(echecs.map((e) => e.seanceId));
         const acceptes = new Map(
-          envoyes.filter((p) => !echecs.has(p.seanceId)).map((p) => [p.seanceId, JSON.stringify(p)]),
+          envoyes.filter((p) => !enEchec.has(p.seanceId)).map((p) => [p.seanceId, JSON.stringify(p)]),
         );
         // Une modification ajoutée pendant l'envoi doit rester à synchroniser.
         // Un changement de compte ne doit jamais déplacer la file vers ce compte.
         await this.chargerProprietaire();
         const file = owner === this.proprietaire ? this.file : await lireFile(owner);
-        const restants = file.filter((p) => acceptes.get(p.seanceId) !== JSON.stringify(p));
+        const restants = file.filter(
+          (p) => !definitifs.has(p.seanceId) && acceptes.get(p.seanceId) !== JSON.stringify(p),
+        );
         await ecrireFileHorsLigne(CLE_FILE, owner, restants);
-        const erreurs = Object.fromEntries((data.echecs ?? []).map((e: any) => [e.seanceId, e.erreur]));
+        const erreurs = Object.fromEntries(
+          echecs.filter((e) => !definitifs.has(e.seanceId)).map((e) => [e.seanceId, e.erreur ?? '']),
+        );
         localStorage.setItem(`${cleFile(owner)}_erreurs`, JSON.stringify(erreurs));
         if (owner !== this.proprietaire) return data;
         this.file = restants;
@@ -222,8 +253,21 @@ export const usePointagesStore = defineStore('pointages', {
           Notify.create({
             type: data.synchronises ? 'positive' : 'warning',
             message: i18n.global.t('filePointages.synced', { synced: data.synchronises, total: data.recus }),
-            caption: data.echecs?.length ? i18n.global.t('filePointages.failed', { n: data.echecs.length }) : undefined,
+            // Les échecs définitifs ne sont plus en file : ils ne sont pas
+            // comptés comme des échecs en attente.
+            caption:
+              echecs.length - definitifs.size
+                ? i18n.global.t('filePointages.failed', { n: echecs.length - definitifs.size })
+                : undefined,
             icon: 'cloud_done',
+          });
+        if (definitifs.size)
+          Notify.create({
+            type: 'warning',
+            message: i18n.global.t('filePointages.proofUsed', { n: definitifs.size }),
+            caption: i18n.global.t('filePointages.proofUsedHelp'),
+            icon: 'fingerprint',
+            timeout: 8000,
           });
         return data;
       } catch (error: any) {

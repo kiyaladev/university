@@ -1,6 +1,7 @@
-import { Body, Controller, Delete, Get, Ip, Param, Post, Put, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Ip, Param, Post, Put, Query, Res } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
+import type { Response } from 'express';
 import { AuthUser, CurrentUser, Roles } from '../../../common/decorators';
 import { ControleService } from './controle.service';
 import { AuditQueryDto, ControleQueryDto, PointageDto, SyncPointagesDto, UpdatePointageDto } from './controle.dto';
@@ -35,11 +36,24 @@ export class ControleController {
     return this.service.lire(id, user);
   }
 
-  /** Pointage d'une séance en salle. */
+  /**
+   * Pointage d'une séance en salle.
+   *
+   * Un pointage hors ligne renvoyé après une réponse perdue est renvoyé tel
+   * quel : c'est le même pointage, la réponse est 200 et non une erreur.
+   */
   @Roles(...CONTROLEURS)
   @Post()
-  pointer(@Body() dto: PointageDto, @CurrentUser() user: AuthUser, @Ip() ip: string) {
-    return this.service.pointer(dto, user, ip);
+  async pointer(
+    @Body() dto: PointageDto,
+    @CurrentUser() user: AuthUser,
+    @Ip() ip: string,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const dejaConsigne = await this.service.dejaConsigne(dto.seanceId, dto.idClient);
+    const controle = await this.service.pointer(dto, user, ip);
+    if (dejaConsigne) res.status(200);
+    return controle;
   }
 
   /** Envoi groupé des pointages saisis hors connexion. */

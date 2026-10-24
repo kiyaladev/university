@@ -172,8 +172,15 @@ model Controle {
 
   horodatage DateTime @default(now()) // date/heure réelle du contrôle
   horsLigne  Boolean  @default(false) // saisi hors connexion puis synchronisé
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+
+  /// Identifiant client du pointage (UUID créé sur l'appareil). Un pointage
+  /// hors ligne peut être renvoyé après une réponse perdue : le même
+  /// identifiant prouve qu'il s'agit du même pointage, et le renvoi devient
+  /// idempotent au lieu d'être refusé comme un rejeu de preuve.
+  idClient String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([statut])
   @@index([horodatage])

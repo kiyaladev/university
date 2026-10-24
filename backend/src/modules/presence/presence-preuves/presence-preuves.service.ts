@@ -41,6 +41,28 @@ const FRAICHEUR_EMPREINTE_MS = 5 * 60 * 1000;
  */
 const TOLERANCE_HORLOGE_MS = 60 * 1000;
 
+/**
+ * Code du conflit « preuve déjà consommée ». La file hors ligne du contrôleur
+ * le reconnaît : un tel échec est définitif, le pointage ne sera jamais
+ * accepté en le renvoyant encore.
+ */
+export const CODE_PREUVE_DEJA_UTILISEE = 'PREUVE_DEJA_UTILISEE';
+
+/**
+ * Conflit « preuve déjà consommée ».
+ *
+ * Le code accompagne l'erreur : le message, traduit, ne sert qu'à l'affichage,
+ * le code sert aux programmes (file hors ligne) qui doivent savoir que
+ * l'échec est définitif.
+ */
+export class PreuveDejaUtiliseeException extends ConflictException {
+  readonly code = CODE_PREUVE_DEJA_UTILISEE;
+
+  constructor() {
+    super(t('attestation.preuve_deja_utilisee'));
+  }
+}
+
 export interface PreuvesAttestation {
   signatureBase64?: string;
   codePinEnseignant?: string;
@@ -332,7 +354,7 @@ export class PresencePreuvesService {
       // Deux envois concurrents de la même preuve : la base tranche, l'API
       // refuse le second (409).
       if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
-        throw new ConflictException(t('attestation.preuve_deja_utilisee'));
+        throw new PreuveDejaUtiliseeException();
       }
       throw e;
     }
@@ -545,7 +567,8 @@ export class PresencePreuvesService {
    * Une preuve biométrique est consommée : acceptée une fois, elle est refusée
    * ensuite (409), même rejouée à l'identique pendant la fenêtre
    * d'acceptation. `tx` permet à l'appelant d'inscrire la consommation dans
-   * la transaction du pointage.
+   * la transaction du pointage : la vérification elle-même y part, un pointage
+   * refusé ne consomme donc pas la preuve.
    */
   async verifierPreuves(
     enseignantId: string,

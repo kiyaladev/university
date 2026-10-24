@@ -1,7 +1,8 @@
 /** Règles de pointage : déduction du statut, durée effective, preuves. */
-import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { Prisma, Role, StatutPresence, StatutSeance } from '@prisma/client';
 import { ControleService } from './controle.service';
+import { PreuveDejaUtiliseeException } from '../presence-preuves/presence-preuves.service';
 import { AuthUser } from '../../../common/decorators';
 
 const CONTROLEUR: AuthUser = {
@@ -75,7 +76,7 @@ function preparer(options: { parametres?: Record<string, unknown>; seance?: any 
 
   // L'attestation de l'enseignant est testée séparément (attestation.service.spec).
   const attestation = {
-    verifierPreuves: jest.fn(async (_ens: string, preuves: any) => {
+    verifierPreuves: jest.fn(async (_ens: string, preuves: any, _tx?: unknown) => {
       if (preuves.empreinte) return { mode: 'EMPREINTE', valide: true, score: preuves.empreinte.score };
       if (preuves.codePinEnseignant) return { mode: 'CODE_PIN', valide: true };
       if (preuves.signatureBase64) return { mode: 'SIGNATURE', valide: true };
@@ -948,5 +949,166 @@ describe('ControleService — correction d’un pointage', () => {
     await expect(service.modifier('c1', { observation: 'X' }, { ...CONTROLEUR, id: 'user-9' })).rejects.toBeInstanceOf(
       ForbiddenException,
     );
+  });
+});
+
+describe('ControleService — preuve biométrique et transaction du pointage', () => {
+  const EMPREINTE = {
+    score: 88,
+    horodatage: '2026-10-24T08:00:00.000Z',
+    signature: 'signature-de-la-passerelle',
+    appareilId: 'appareil-1',
+  };
+
+  /**
+   * Service avec une transaction simulée : ce qui est écrit pendant la
+   * transaction n'est conservé que si elle aboutit. C'est ce qui permet de
+   * vérifier qu'un pointage refusé ne consomme pas la preuve.
+   */
+  function preparerTransaction(options: { parametres?: Record<string, unknown> } = {}) {
+    const base = preparer(options);
+    const consommations: any[] = [];
+    const prisma = base.prisma;
+    prisma.$transaction = jest.fn(async (operation: (tx: any) => unknown) => {
+      const ecritures: any[] = [];
+      const tx = {
+        ...prisma,
+        preuveConsommee: {
+          create: jest.fn(async ({ data }: any) => {
+            ecritures.push(data);
+            return data;
+          }),
+        },
+      };
+      const resultat = await operation(tx);
+      consommations.push(...ecritures);
+      return resultat;
+    });
+    // L'attestation simule la consommation d'une preuve biométrique : elle
+    // s'inscrit dans la transaction du pointage, comme en production.
+    base.attestation.verifierPreuves.mockImplementation(
+      async (_ens: string, preuves: any, tx?: any) => {
+        if (preuves.empreinte) {
+          await tx?.preuveConsommee?.create?.({ data: { cle: `preuve:${preuves.empreinte.signature}` } });
+          return { mode: 'EMPREINTE', valide: true, score: preuves.empreinte.score };
+        }
+        if (preuves.codePinEnseignant) return { mode: 'CODE_PIN', valide: true };
+        if (preuves.signatureBase64) return { mode: 'SIGNATURE', valide: true };
+        return { mode: 'AUCUNE', valide: false };
+      },
+    );
+    return { ...base, consommations };
+  }
+
+  it('consomme la preuve dans la transaction du pointage', async () => {
+    const { service, attestation, consommations } = preparerTransaction();
+
+    await service.pointer({ seanceId: 'seance-1', heureArrivee: '08:05', empreinte: EMPREINTE }, CONTROLEUR);
+
+    // La vérification reçoit la transaction : la consommation fait partie de
+    // l'écriture du contrôle.
+    expect(attestation.verifierPreuves).toHaveBeenCalledWith(
+      'ens-1',
+      expect.objectContaining({ empreinte: EMPREINTE }),
+      expect.anything(),
+    );
+    expect(consommations).toHaveLength(1);
+  });
+
+  it('ne consomme pas la preuve quand le pointage est refusé', async () => {
+    // Le comptage des étudiants est exigé : le pointage est refusé après la
+    // vérification de la preuve. La consommation est annulée avec la
+    // transaction : la preuve reste disponible pour une nouvelle tentative.
+    const { service, consommations } = preparerTransaction({ parametres: { EFFECTIF_OBLIGATOIRE: true } });
+
+    await expect(
+      service.pointer({ seanceId: 'seance-1', heureArrivee: '08:05', empreinte: EMPREINTE }, CONTROLEUR),
+    ).rejects.toBeInstanceOf(BadRequestException);
+
+    expect(consommations).toHaveLength(0);
+  });
+
+  it('conserve l’identifiant client du pointage', async () => {
+    const { service, prisma } = preparer();
+
+    await service.pointer({ seanceId: 'seance-1', heureArrivee: '08:05', idClient: 'uuid-client' }, CONTROLEUR);
+
+    expect(prisma.controle.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ idClient: 'uuid-client' }) }),
+    );
+  });
+});
+
+describe('ControleService — renvoi d’un pointage hors ligne', () => {
+  const EMPREINTE = {
+    score: 88,
+    horodatage: '2026-10-24T08:00:00.000Z',
+    signature: 'signature-de-la-passerelle',
+    appareilId: 'appareil-1',
+  };
+
+  const EXISTANT = {
+    id: 'c1',
+    seanceId: 'seance-1',
+    controleurId: 'user-1',
+    statut: StatutPresence.PRESENT,
+    heureArrivee: '08:05',
+    heureFinReelle: null,
+    dureeMinutes: 120,
+    effectifPresent: 20,
+    thematiqueTraitee: null,
+    methode: 'MANUEL',
+    horsLigne: true,
+    horodatage: new Date('2026-10-24T08:05:00.000Z'),
+    idClient: 'uuid-client',
+  };
+
+  it('renvoie le contrôle existant quand le même pointage est renvoyé', async () => {
+    const { service, prisma, attestation } = preparer();
+    prisma.controle.findUnique.mockResolvedValue(EXISTANT);
+
+    const controle: any = await service.pointer(
+      { seanceId: 'seance-1', heureArrivee: '08:05', idClient: 'uuid-client', empreinte: EMPREINTE },
+      CONTROLEUR,
+    );
+
+    // Le contrôle est renvoyé tel quel : ni réécrit, ni preuve rejouée.
+    expect(controle.id).toBe('c1');
+    expect(attestation.verifierPreuves).not.toHaveBeenCalled();
+    expect(prisma.controle.create).not.toHaveBeenCalled();
+    expect(prisma.controle.update).not.toHaveBeenCalled();
+  });
+
+  it('refuse un vrai rejeu : un autre pointage pour la même preuve', async () => {
+    const { service, prisma, attestation } = preparer();
+    // Le contrôle existe, mais pour un autre pointage (autre identifiant client).
+    prisma.controle.findUnique.mockResolvedValue({ ...EXISTANT, idClient: 'uuid-autre' });
+    attestation.verifierPreuves.mockRejectedValue(new PreuveDejaUtiliseeException());
+
+    await expect(
+      service.pointer({ seanceId: 'seance-1', heureArrivee: '08:05', idClient: 'uuid-client', empreinte: EMPREINTE }, CONTROLEUR),
+    ).rejects.toBeInstanceOf(ConflictException);
+  });
+
+  it('compte le renvoi du même pointage comme synchronisé', async () => {
+    const { service, prisma } = preparer();
+    prisma.controle.findUnique.mockResolvedValue(EXISTANT);
+
+    const res = await service.synchroniser(
+      { pointages: [{ seanceId: 'seance-1', heureArrivee: '08:05', idClient: 'uuid-client', empreinte: EMPREINTE }] },
+      CONTROLEUR,
+    );
+
+    expect(res.synchronises).toBe(1);
+    expect(res.echecs).toHaveLength(0);
+  });
+
+  it('signale le conflit « preuve déjà utilisée » dans la synchronisation', async () => {
+    const { service, attestation } = preparer();
+    attestation.verifierPreuves.mockRejectedValue(new PreuveDejaUtiliseeException());
+
+    const res = await service.synchroniser({ pointages: [{ seanceId: 'seance-1', heureArrivee: '08:05' }] }, CONTROLEUR);
+
+    expect(res.echecs[0]).toMatchObject({ seanceId: 'seance-1', ok: false, code: 'PREUVE_DEJA_UTILISEE' });
   });
 });

@@ -15,6 +15,35 @@ import { CLE_FILE_POINTAGES, CLE_FILE_SEANCES, clePour } from './cles-stockage';
 import { ecrireFileChiffree, lireFileChiffree } from './file-chiffree';
 
 /**
+ * Code du conflit « preuve déjà consommée », renvoyé par l'API quand un
+ * pointage est refusé parce que sa preuve d'empreinte a déjà été utilisée.
+ */
+export const CODE_PREUVE_DEJA_UTILISEE = 'PREUVE_DEJA_UTILISEE';
+
+/** Échec d'un envoi hors ligne, tel que l'API le rapporte pour un pointage. */
+export interface EchecSynchronisation {
+  seanceId: string;
+  ok?: boolean;
+  /** Message traduit, pour l'affichage. */
+  erreur?: string;
+  /** Code d'erreur stable, quand l'API en renvoie un. */
+  code?: string;
+}
+
+/**
+ * L'échec est-il définitif ?
+ *
+ * Un pointage refusé parce que sa preuve a déjà été utilisée ne sera jamais
+ * accepté : le renvoyer encore ne/aboutit à rien et la preuve reste consommée.
+ * Il faut donc le retirer de la file, pas le réessayer à chaque
+ * synchronisation. Les autres échecs (réseau, contrôle déjà fait par un autre
+ * agent) restent en file : ils peuvent encore aboutir.
+ */
+export function echecDefinitif(echec: EchecSynchronisation): boolean {
+  return echec.code === CODE_PREUVE_DEJA_UTILISEE;
+}
+
+/**
  * Au-delà de ce délai, une entrée n'a plus de chance d'être acceptée et n'a
  * plus à rester sur l'appareil : un téléphone de contrôleur perdu ne doit pas
  * être un stock de preuves d'attestation.

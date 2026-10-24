@@ -40,7 +40,15 @@ export function chargeEnrolement(params: {
     : `enrolement|${params.enseignantId}|${params.template}|${params.horodatage}`;
 }
 
-/** Charge signée d'une vérification d'empreinte. */
+/**
+ * Charge signée d'une vérification d'empreinte.
+ *
+ * Le nonce de la tentative (`tentativeId`) est signé quand le client en
+ * fournit un : l'API accepte le nonce en fin de charge (comme juste avant
+ * l'horodatage) et s'en sert alors pour identifier la preuve, plutôt que
+ * l'empreinte de la signature. Une passerelle qui ne signe pas de nonce
+ * reste acceptée par l'API.
+ */
 export function chargeVerification(params: {
   appareilId?: string | null;
   enseignantId: string;
@@ -48,10 +56,14 @@ export function chargeVerification(params: {
   gabarit: string;
   score: number;
   horodatage: string;
+  tentativeId?: string | null;
 }): string {
-  return params.appareilId
-    ? `verification|${params.appareilId}|${params.enseignantId}|${params.gabarit}|${params.score}|${params.horodatage}`
-    : `verification|${params.enseignantId}|${params.gabarit}|${params.score}|${params.horodatage}`;
+  const base = params.appareilId
+    ? `verification|${params.appareilId}|${params.enseignantId}|${params.gabarit}|${params.score}`
+    : `verification|${params.enseignantId}|${params.gabarit}|${params.score}`;
+  return params.tentativeId
+    ? `${base}|${params.horodatage}|${params.tentativeId}`
+    : `${base}|${params.horodatage}`;
 }
 
 /** Signe une charge : hexadécimal minuscule, comme l'API l'attend. */
