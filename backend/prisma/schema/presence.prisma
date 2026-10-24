@@ -225,6 +225,35 @@ model Appareil {
   @@index([actif])
 }
 
+/// Une preuve biométrique déjà consommée.
+///
+/// Une lecture d'empreinte signée par la passerelle est un authentificateur :
+/// rejouée telle quelle pendant la fenêtre d'acceptation (cinq minutes), elle
+/// ferait passer un pointage sans nouvelle lecture du doigt. Chaque preuve
+/// acceptée est donc inscrite ici, et une preuve déjà consommée est refusée.
+model PreuveConsommee {
+  id String @id @default(uuid())
+
+  /// Ce qui identifie la preuve : « nonce:<tentativeId> » quand la charge
+  /// signée porte le nonce de la tentative, sinon « signature:<empreinte> ».
+  /// Ce n'est pas un secret : c'est un identifiant de preuve, pas une clé.
+  cle String @unique
+
+  /// Qui a produit la preuve, et sur quel poste. Ce n'est pas de la biométrie :
+  /// aucun gabarit, aucune image et aucune signature ne sont conservés.
+  enseignantId String
+  appareilId   String?
+  score        Int?
+
+  /// Fin de la fenêtre pendant laquelle la preuve aurait pu être rejouée :
+  /// au-delà, l'entrée n'a plus d'intérêt et est purgée.
+  expireLe DateTime
+
+  createdAt DateTime @default(now())
+
+  @@index([expireLe])
+}
+
 // ------------------ Tirage & Distribution Sécurisée des Épreuves -----
 
 enum StadeTirage {

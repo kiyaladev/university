@@ -9,9 +9,16 @@
  *   CODE_PIN  code personnel composé sur l'écran du contrôleur
  *   SIGNATURE signature manuscrite tracée sur l'écran du contrôleur
  */
-import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { AttestationMode, Role } from '@prisma/client';
+import { AttestationMode, Prisma, Role } from '@prisma/client';
 import { createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../../../prisma/prisma.service';
@@ -28,6 +35,12 @@ import { estChefDeDepartement } from '../../../common/perimetre';
 /** Fenêtre d'acceptation d'un résultat signé par la passerelle biométrique. */
 const FRAICHEUR_EMPREINTE_MS = 5 * 60 * 1000;
 
+/**
+ * Tolérance d'horloge : un poste désynchronisé avance un peu, on ne refuse pas
+ * une lecture à cause de quelques secondes.
+ */
+const TOLERANCE_HORLOGE_MS = 60 * 1000;
+
 export interface PreuvesAttestation {
   signatureBase64?: string;
   codePinEnseignant?: string;
@@ -39,6 +52,9 @@ export interface ResultatAttestation {
   valide: boolean;
   score?: number;
 }
+
+/** Écriture du registre des preuves consommées. */
+type ClientPreuves = Pick<Prisma.TransactionClient, 'preuveConsommee'>;
 
 @Injectable()
 export class PresencePreuvesService {
@@ -213,6 +229,22 @@ export class PresencePreuvesService {
     return appareil.secret;
   }
 
+  /** La signature attendue pour une charge donnée, comparée à temps constant. */
+  private signatureValide(charge: string, signature: string, secret: string): boolean {
+    const attendue = createHmac('sha256', secret).update(charge).digest('hex');
+    const a = Buffer.from(attendue);
+    const b = Buffer.from(signature ?? '');
+    return a.length === b.length && timingSafeEqual(a, b);
+  }
+
+  /** Une charge signée hors de la fenêtre d'acceptation n'est plus recevable. */
+  private verifierFraicheur(horodatage: string) {
+    const age = Date.now() - new Date(horodatage).getTime();
+    if (!Number.isFinite(age) || age < -TOLERANCE_HORLOGE_MS || age > FRAICHEUR_EMPREINTE_MS) {
+      throw new BadRequestException(t('attestation.resultat_biometrique_perime_recommencez_la_lecture'));
+    }
+  }
+
   /** La passerelle signe ses résultats : sans cette signature, un client pourrait
    *  prétendre qu'une empreinte a été reconnue. */
   private verifierSignaturePasserelle(
@@ -221,17 +253,103 @@ export class PresencePreuvesService {
     horodatage: string,
     secret = this.secretBiometrie,
   ) {
-    const attendue = createHmac('sha256', secret).update(charge).digest('hex');
-    const a = Buffer.from(attendue);
-    const b = Buffer.from(signature ?? '');
-    if (a.length !== b.length || !timingSafeEqual(a, b)) {
+    if (!this.signatureValide(charge, signature, secret)) {
       throw new BadRequestException(t('attestation.signature_de_la_passerelle_biometrique_invalide'));
     }
+    this.verifierFraicheur(horodatage);
+  }
 
-    const age = Date.now() - new Date(horodatage).getTime();
-    if (!Number.isFinite(age) || age < -60_000 || age > FRAICHEUR_EMPREINTE_MS) {
-      throw new BadRequestException(t('attestation.resultat_biometrique_perime_recommencez_la_lecture'));
+  /**
+   * Charges signées acceptées pour une vérification.
+   *
+   * La passerelle signe `verification|…|<horodatage>`. Une passerelle plus
+   * récente signe en plus le nonce de la tentative (`tentativeId`) : le nonce
+   * est alors ce qui identifie la preuve, et deux envois de la même tentative
+   * se rejoignent même si la signature diffère. Le nonce est accepté en fin de
+   * charge ou juste avant l'horodatage : les deux formes sont signées, donc
+   * aucune n'ouvre une porte.
+   */
+  private chargesVerification(params: {
+    appareilId?: string;
+    enseignantId: string;
+    gabarit: string;
+    score: number;
+    horodatage: string;
+    tentativeId?: string;
+  }): Array<{ charge: string; porteNonce: boolean }> {
+    const base = params.appareilId
+      ? `verification|${params.appareilId}|${params.enseignantId}|${params.gabarit}|${params.score}`
+      : `verification|${params.enseignantId}|${params.gabarit}|${params.score}`;
+    const formes: Array<{ charge: string; porteNonce: boolean }> = [];
+    if (params.tentativeId) {
+      formes.push({ charge: `${base}|${params.horodatage}|${params.tentativeId}`, porteNonce: true });
+      formes.push({ charge: `${base}|${params.tentativeId}|${params.horodatage}`, porteNonce: true });
     }
+    formes.push({ charge: `${base}|${params.horodatage}`, porteNonce: false });
+    return formes;
+  }
+
+  /**
+   * Clé de consommation d'une preuve : ce qui l'identifie dans le registre.
+   *
+   * - « nonce:<tentativeId> » quand la signature couvre le nonce de la
+   *   tentative : c'est le cas voulu, la tentative est alors l'unité de preuve ;
+   * - « signature:<empreinte> » sinon : la signature couvre toute la charge
+   *   (appareil, enseignant, gabarit, score, horodatage), donc deux lectures
+   *   distinctes ont deux empreintes distinctes.
+   */
+  private cleDeConsommation(signature: string, tentativeId?: string, porteNonce = false): string {
+    if (porteNonce && tentativeId) return `nonce:${tentativeId}`;
+    return `signature:${createHash('sha256')
+      .update(signature ?? '')
+      .digest('hex')}`;
+  }
+
+  /**
+   * Consomme la preuve : elle est inscrite au registre et ne peut plus servir.
+   *
+   * L'inscription part dans la transaction du pointage quand l'appelant en
+   * fournit une — la preuve consommée et le contrôle écrit forment alors un
+   * seul fait, et un pointage avorté ne laisse pas de preuve consommée.
+   */
+  private async consommerPreuve(
+    tx: Prisma.TransactionClient | undefined,
+    consommation: { cle: string; enseignantId: string; appareilId: string | null; score: number },
+  ) {
+    const client = (tx ?? this.prisma) as ClientPreuves;
+    const expireLe = new Date(Date.now() + FRAICHEUR_EMPREINTE_MS + TOLERANCE_HORLOGE_MS);
+    try {
+      await client.preuveConsommee.create({
+        data: {
+          cle: consommation.cle,
+          enseignantId: consommation.enseignantId,
+          appareilId: consommation.appareilId,
+          score: consommation.score,
+          expireLe,
+        },
+      });
+    } catch (e) {
+      // Deux envois concurrents de la même preuve : la base tranche, l'API
+      // refuse le second (409).
+      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
+        throw new ConflictException(t('attestation.preuve_deja_utilisee'));
+      }
+      throw e;
+    }
+  }
+
+  /**
+   * Purge du registre : une preuve consommée n'a plus d'intérêt une fois sa
+   * fenêtre d'acceptation passée. Le registre ne garde que les preuves encore
+   * susceptibles d'être rejouées.
+   */
+  @Cron(CronExpression.EVERY_10_MINUTES)
+  async purgerPreuvesConsommees() {
+    const { count } = await this.prisma.preuveConsommee.deleteMany({
+      where: { expireLe: { lt: new Date() } },
+    });
+    if (count) this.journal.log(`${count} preuve(s) consommée(s) purgée(s)`);
+    return { purges: count };
   }
 
   async enrolerEmpreinte(enseignantId: string, dto: EnrolerEmpreinteDto, user: AuthUser) {
@@ -423,11 +541,20 @@ export class PresencePreuvesService {
   /**
    * Valide l'attestation fournie lors d'un pointage. Retient la modalité la plus
    * forte parmi celles présentées.
+   *
+   * Une preuve biométrique est consommée : acceptée une fois, elle est refusée
+   * ensuite (409), même rejouée à l'identique pendant la fenêtre
+   * d'acceptation. `tx` permet à l'appelant d'inscrire la consommation dans
+   * la transaction du pointage.
    */
-  async verifierPreuves(enseignantId: string, preuves: PreuvesAttestation): Promise<ResultatAttestation> {
+  async verifierPreuves(
+    enseignantId: string,
+    preuves: PreuvesAttestation,
+    tx?: Prisma.TransactionClient,
+  ): Promise<ResultatAttestation> {
     // 1. Empreinte lue par la passerelle
     if (preuves.empreinte) {
-      const { score, horodatage, signature } = preuves.empreinte;
+      const { score, horodatage, signature, tentativeId } = preuves.empreinte;
 
       // La signature couvre le gabarit comparé : le client ne peut donc pas
       // faire comparer le doigt à un gabarit de son choix.
@@ -441,15 +568,37 @@ export class PresencePreuvesService {
       // ne peut pas être rejoué au nom d'un autre.
       const { appareilId } = preuves.empreinte;
       const secret = await this.secretDeSignature(appareilId);
-      const charge = appareilId
-        ? `verification|${appareilId}|${enseignantId}|${gabarit}|${score}|${horodatage}`
-        : `verification|${enseignantId}|${gabarit}|${score}|${horodatage}`;
 
-      this.verifierSignaturePasserelle(charge, signature, horodatage, secret);
+      // La passerelle signe le nonce de la tentative quand elle le reçoit ;
+      // une passerelle plus ancienne signe sans. Le nonce n'est retenu que si
+      // la signature le couvre.
+      const candidates = this.chargesVerification({
+        appareilId,
+        enseignantId,
+        gabarit,
+        score,
+        horodatage,
+        tentativeId,
+      });
+      const acceptee = candidates.find((c) => this.signatureValide(c.charge, signature, secret));
+      if (!acceptee) {
+        throw new BadRequestException(t('attestation.signature_de_la_passerelle_biometrique_invalide'));
+      }
+      this.verifierFraicheur(horodatage);
+
       const seuil = await this.parametres.nombre('EMPREINTE_SCORE_MIN', 60);
       if (score < seuil) {
         throw new BadRequestException(t('attestation.empreinte_non_reconnue', { score, seuil }));
       }
+
+      // La preuve est consommée : rejouée, elle sera refusée.
+      await this.consommerPreuve(tx, {
+        cle: this.cleDeConsommation(signature, tentativeId, acceptee.porteNonce),
+        enseignantId,
+        appareilId: appareilId ?? null,
+        score,
+      });
+
       return { mode: AttestationMode.EMPREINTE, valide: true, score };
     }
 
