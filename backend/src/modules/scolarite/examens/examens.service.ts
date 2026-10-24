@@ -14,7 +14,7 @@
  * n'est pas incrémenté et un audit `EXAMEN_SCAN_REJETE` est inscrit.
  */
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma, Role, StatutExamen } from '@prisma/client';
+import { Examen, Prisma, Role, StatutExamen } from '@prisma/client';
 import { t } from '../../../common/i18n';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { AuthUser } from '../../../common/decorators';
@@ -33,6 +33,14 @@ const EXAMEN_INCLUDE = {
   surveillant: { select: { id: true, nom: true, prenom: true } },
   _count: { select: { scans: true, tirages: true } },
 } satisfies Prisma.ExamenInclude;
+
+/**
+ * Colonnes lues pour l'instantané d'audit d'un examen.
+ */
+type ExamenAudit = Pick<
+  Examen,
+  'id' | 'codeExamen' | 'intitule' | 'statut' | 'anneeId' | 'promotionId' | 'nbInscrits' | 'nbPresents'
+>;
 
 const SCAN_INCLUDE = {
   inscription: {
@@ -56,6 +64,21 @@ const SCAN_INCLUDE = {
 
 const MOTIF_REJET_CARTE_AUTRE = 'Carte autre';
 
+/** Examen complet (relations comprises), tel que renvoyé par les lectures du module. */
+type ExamenComplet = Prisma.ExamenGetPayload<{ include: typeof EXAMEN_INCLUDE }>;
+
+/** Scan d'entrée de salle, avec l'étudiant, le scanneur et l'examen. */
+type ScanComplet = Prisma.ScanExamenGetPayload<{ include: typeof SCAN_INCLUDE }>;
+
+/**
+ * Client transactionnel autorisant le SQL brut. Le verrou `FOR UPDATE` passe
+ * par `$queryRaw`, absent de certaines doublures de test : le repli lit alors
+ * la ligne avec le delegate Prisma.
+ */
+type DepotSqlBrut = {
+  $queryRaw?: Prisma.TransactionClient['$queryRaw'];
+};
+
 @Injectable()
 export class ExamensService {
   constructor(private prisma: PrismaService) {}
@@ -71,7 +94,7 @@ export class ExamensService {
 
   // ------------------------------------------------------- lecture
 
-  async lister(query: ExamenQueryDto, user: AuthUser): Promise<Paginated<any>> {
+  async lister(query: ExamenQueryDto, user: AuthUser): Promise<Paginated<ExamenComplet>> {
     const pagination = paginer(query);
 
     const where: Prisma.ExamenWhereInput = {
@@ -170,7 +193,7 @@ export class ExamensService {
   async changerStatut(id: string, statut: StatutExamen, user: AuthUser) {
     await this.trouver(id);
     return this.prisma.$transaction(async (tx) => {
-      const examen: any = await tx.examen.findUnique({ where: { id }, include: EXAMEN_INCLUDE });
+      const examen = await tx.examen.findUnique({ where: { id }, include: EXAMEN_INCLUDE });
       if (!examen) throw new NotFoundException(t('examens.examen_introuvable'));
       await exigerAnneeOuverte(tx, examen.anneeId);
       // Les transitions de démarrage et de clôture ont chacune leur endpoint,
@@ -186,10 +209,10 @@ export class ExamensService {
       if (transition.count !== 1) {
         throw new BadRequestException(t('examens.transition_statut_invalide'));
       }
-      const maj: any = await tx.examen.findUnique({ where: { id }, include: EXAMEN_INCLUDE });
+      const maj = await tx.examen.findUnique({ where: { id }, include: EXAMEN_INCLUDE });
       await journaliser(tx, user, 'EXAMEN_STATUT', 'Examen', id, {
         avant: this.instantaneAudit(examen),
-        apres: this.instantaneAudit(maj),
+        apres: this.instantaneAudit(maj as ExamenAudit),
       });
       return maj;
     });
@@ -206,7 +229,7 @@ export class ExamensService {
   async demarrer(id: string, user: AuthUser) {
     await this.trouver(id, user);
     return this.prisma.$transaction(async (tx) => {
-      const examen: any = await tx.examen.findUnique({ where: { id }, include: EXAMEN_INCLUDE });
+      const examen = await tx.examen.findUnique({ where: { id }, include: EXAMEN_INCLUDE });
       if (!examen) throw new NotFoundException(t('examens.examen_introuvable'));
       await exigerAnneeOuverte(tx, examen.anneeId);
       if (examen.statut === StatutExamen.ANNULE) {
@@ -225,10 +248,10 @@ export class ExamensService {
       if (transition.count !== 1) {
         throw new BadRequestException(t('examens.examen_deja_termine'));
       }
-      const maj: any = await tx.examen.findUnique({ where: { id }, include: EXAMEN_INCLUDE });
+      const maj = await tx.examen.findUnique({ where: { id }, include: EXAMEN_INCLUDE });
       await journaliser(tx, user, 'EXAMEN_DEMARRE', 'Examen', id, {
         avant: this.instantaneAudit(examen),
-        apres: this.instantaneAudit(maj),
+        apres: this.instantaneAudit(maj as ExamenAudit),
       });
       return maj;
     });
@@ -238,7 +261,7 @@ export class ExamensService {
   async terminer(id: string, user: AuthUser) {
     await this.trouver(id);
     return this.prisma.$transaction(async (tx) => {
-      const examen: any = await tx.examen.findUnique({ where: { id }, include: EXAMEN_INCLUDE });
+      const examen = await tx.examen.findUnique({ where: { id }, include: EXAMEN_INCLUDE });
       if (!examen) throw new NotFoundException(t('examens.examen_introuvable'));
       await exigerAnneeOuverte(tx, examen.anneeId);
       if (examen.statut !== StatutExamen.EN_COURS) {
@@ -251,16 +274,16 @@ export class ExamensService {
       if (transition.count !== 1) {
         throw new BadRequestException(t('examens.seul_un_examen_en_cours_peut_etre_termine'));
       }
-      const maj: any = await tx.examen.findUnique({ where: { id }, include: EXAMEN_INCLUDE });
+      const maj = await tx.examen.findUnique({ where: { id }, include: EXAMEN_INCLUDE });
       await journaliser(tx, user, 'EXAMEN_TERMINE', 'Examen', id, {
         avant: this.instantaneAudit(examen),
-        apres: this.instantaneAudit(maj),
+        apres: this.instantaneAudit(maj as ExamenAudit),
       });
       return maj;
     });
   }
 
-  private instantaneAudit(examen: any) {
+  private instantaneAudit(examen: ExamenAudit) {
     return {
       id: examen.id,
       codeExamen: examen.codeExamen,
@@ -275,7 +298,7 @@ export class ExamensService {
 
   // ------------------------------------------------ scans anti-fantômes
 
-  async listeScans(id: string, query: QueryDto, user: AuthUser): Promise<Paginated<any>> {
+  async listeScans(id: string, query: QueryDto, user: AuthUser): Promise<Paginated<ScanComplet>> {
     await this.trouver(id, user);
     const pagination = paginer(query);
     const where = { examenId: id };
@@ -399,10 +422,13 @@ export class ExamensService {
     // Garder le même ordre de verrouillage que les autres mutations : année,
     // puis examen, pour éviter un interblocage pendant la clôture d'année.
     await exigerAnneeOuverte(tx, anneeId);
+    // Le SQL brut n'est pas garanti (client de test, double) : sans lui, on
+    // retombe sur la lecture Prisma. Même SQL, même verrou, même résultat.
+    const brut = tx as DepotSqlBrut;
     const examen =
-      typeof (tx as any).$queryRaw === 'function'
+      typeof brut.$queryRaw === 'function'
         ? ((
-            await (tx as any).$queryRaw`
+            await brut.$queryRaw<{ anneeId: string; statut: StatutExamen; surveillantId: string | null }>`
           SELECT "anneeId", "statut", "surveillantId"
           FROM "Examen" WHERE "id" = ${examenId} FOR UPDATE
         `

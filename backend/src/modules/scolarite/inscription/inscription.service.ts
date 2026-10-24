@@ -9,7 +9,7 @@
  * Le numéro "INS-2026-00042" est l'identifiant de tous les autres modules.
  */
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma, Role, StatutInscription, StatutPaiement } from '@prisma/client';
+import { Inscription, Prisma, Role, StatutInscription, StatutPaiement } from '@prisma/client';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { AuthUser } from '../../../common/decorators';
 import { journaliser } from '../../../common/audit';
@@ -68,8 +68,15 @@ const LIBELLE_STATUT_INSCRIPTION: Record<string, string> = {
   ANNULE: 'Annulé',
 };
 
-/** Instantanés limités aux données de gestion, sans coordonnées ou motif libre. */
-function instantaneInscription(inscription: any) {
+/**
+ * Instantanés limités aux données de gestion, sans coordonnées ni motif libre.
+ */
+type InscriptionAudit = Pick<
+  Inscription,
+  'id' | 'numero' | 'etudiantId' | 'anneeId' | 'promotionId' | 'statut' | 'montantFrais'
+>;
+
+function instantaneInscription(inscription: InscriptionAudit | null) {
   if (!inscription) return null;
   return {
     id: inscription.id,
@@ -150,7 +157,10 @@ export class InscriptionService {
     }));
   }
 
-  async listeInscriptions(query: InscriptionQueryDto, user?: AuthUser): Promise<Paginated<any>> {
+  async listeInscriptions(
+    query: InscriptionQueryDto,
+    user?: AuthUser,
+  ): Promise<Paginated<Prisma.InscriptionGetPayload<{ include: typeof INSCRIPTION_INCLUDE }>>> {
     if (user?.role === Role.ETUDIANT) query = { ...query, etudiantId: user.etudiantId ?? '__aucun__' };
     const pagination = paginer(query);
 

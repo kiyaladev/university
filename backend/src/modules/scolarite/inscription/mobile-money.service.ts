@@ -58,12 +58,12 @@ export class MobileMoneyService {
         }),
         signal: AbortSignal.timeout(10_000),
       });
-    } catch (e: any) {
+    } catch (e: unknown) {
       this.logger.error(`Passerelle Mobile Money injoignable pour ${dto.reference}`);
       throw new HttpException(t('inscription.mobileMoneyUnavailable'), 502);
     }
 
-    const corps: any = await reponse.json().catch(() => ({}));
+    const corps: Record<string, unknown> = await reponse.json().catch(() => ({}));
     if (!reponse.ok) {
       this.logger.warn(`Passerelle Mobile Money a refusé ${dto.reference} : HTTP ${reponse.status}`);
       throw new HttpException(t('inscription.mobileMoneyRejected', { status: reponse.status }), 502);

@@ -92,7 +92,37 @@ export async function deviseDossier(
   return frais?.devise ?? 'GNF';
 }
 
-function instantanePaiement(paiement: any) {
+/**
+ * Colonnes lues pour l'instantané d'audit d'un paiement : la référence, le
+ * montant et son issue. Le lien vers l'inscription n'est lu que pour
+ * retrouver l'année.
+ */
+type PaiementAudit = {
+  id: string;
+  reference: string;
+  anneeId: string | null;
+  inscriptionId: string | null;
+  etudiantId: string | null;
+  montant: Prisma.Decimal;
+  devise: string;
+  mode: ModePaiement;
+  operateur: string | null;
+  statut: StatutPaiement;
+  completeLe: Date | null;
+  annuleLe: Date | null;
+  inscription?: { anneeId: string | null } | null;
+};
+
+/**
+ * Paiement renvoyé par la liste : la charge utile des relations est réduite à
+ * la source, calculée à partir des liens chargés.
+ */
+type PaiementAvecSource = Omit<
+  Prisma.PaiementGetPayload<{ include: typeof PAIEMENT_AVEC_SOURCE_INCLUDE }>,
+  'recharges' | 'rechargesRecette' | 'demandeDocument'
+> & { source: SourcePaiement };
+
+function instantanePaiement(paiement: PaiementAudit | null) {
   if (!paiement) return null;
   return {
     id: paiement.id,
@@ -120,7 +150,7 @@ export class PaiementsService {
   ) {}
 
   /** Tous les paiements, quel que soit leur portefeuille, avec leur `source`. */
-  async listePaiements(query: PaiementQueryDto): Promise<Paginated<any>> {
+  async listePaiements(query: PaiementQueryDto): Promise<Paginated<PaiementAvecSource>> {
     const pagination = paginer(query);
 
     const where: Prisma.PaiementWhereInput = {

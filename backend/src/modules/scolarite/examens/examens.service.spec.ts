@@ -177,7 +177,7 @@ describe('Annulation d’un examen (PUT /examens/:id/statut)', () => {
   it('annule un examen planifié et le journalise', async () => {
     const { db, service } = prepare(StatutExamen.PLANIFIE);
     const maj = await service.changerStatut('exam-1', StatutExamen.ANNULE, admin);
-    expect(maj.statut).toBe(StatutExamen.ANNULE);
+    expect(maj?.statut).toBe(StatutExamen.ANNULE);
     expect(db.examen.updateMany).toHaveBeenCalledWith({
       where: { id: 'exam-1', statut: StatutExamen.PLANIFIE },
       data: { statut: StatutExamen.ANNULE },
