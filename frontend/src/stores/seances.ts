@@ -4,13 +4,16 @@ import axios from 'axios';
 import { api } from '../boot/axios';
 import { i18n } from '../boot/i18n';
 import { lireToken, proprietaireDepuisToken } from '@/shared/services/session';
-import { CLE_AFFECTATIONS, CLE_FILE_SEANCES, CLE_SALLES, clePour } from '@/shared/services/cles-stockage';
+import { CLE_AFFECTATIONS, CLE_FILE_SEANCES, CLE_SALLES } from '@/shared/services/cles-stockage';
 import { extraireMessageErreur } from '@/shared/utils/erreur-http';
 import {
   OPTIONS_SEANCES,
+  cacheEnMemoire,
+  ecrireCacheHorsLigne,
   ecrireFileHorsLigne,
   fileEnMemoire,
   idClient,
+  lireCacheHorsLigne,
   lireFileHorsLigne,
 } from '@/shared/services/file-hors-ligne';
 import type { Affectation, Salle, Seance, TypeCours } from '../types';
@@ -41,24 +44,18 @@ function proprietaire(): string {
 
 function lireAffectations(owner: string): Affectation[] {
   if (!owner) return [];
-  try {
-    const cache = JSON.parse(localStorage.getItem(clePour(CLE_AFFECTATIONS, owner)) ?? 'null');
-    if (Date.now() - new Date(cache?.enregistreesLe ?? '').getTime() > AGE_AFFECTATIONS_MAX) return [];
-    return Array.isArray(cache?.data) ? cache.data : [];
-  } catch {
-    return [];
-  }
+  const cache = cacheEnMemoire<Affectation>(CLE_AFFECTATIONS, owner);
+  if (!cache) return [];
+  if (Date.now() - new Date(cache.enregistreesLe ?? '').getTime() > AGE_AFFECTATIONS_MAX) return [];
+  return Array.isArray(cache.data) ? cache.data : [];
 }
 
 function lireSalles(owner: string): Salle[] {
   if (!owner) return [];
-  try {
-    const cache = JSON.parse(localStorage.getItem(clePour(CLE_SALLES, owner)) ?? 'null');
-    if (Date.now() - new Date(cache?.enregistreesLe ?? '').getTime() > AGE_AFFECTATIONS_MAX) return [];
-    return Array.isArray(cache?.data) ? cache.data : [];
-  } catch {
-    return [];
-  }
+  const cache = cacheEnMemoire<Salle>(CLE_SALLES, owner);
+  if (!cache) return [];
+  if (Date.now() - new Date(cache.enregistreesLe ?? '').getTime() > AGE_AFFECTATIONS_MAX) return [];
+  return Array.isArray(cache.data) ? cache.data : [];
 }
 
 /**
@@ -83,6 +80,8 @@ export const useSeancesStore = defineStore('seancesHorsLigne', {
       // La file est chiffrée : elle a pu être déchiffrée avant le démarrage
       // de l'interface, sinon elle est relue à la première demande.
       file: fileEnMemoire<SeanceEnFile>(CLE_FILE_SEANCES, owner) ?? [],
+      // Les caches de tournée sont chiffrés eux aussi : ils ont pu être
+      // déchiffrés au démarrage, sinon ils sont relus à la première demande.
       affectationsCache: lireAffectations(owner),
       sallesCache: lireSalles(owner),
       erreurs: {} as Record<string, string>,
@@ -90,6 +89,7 @@ export const useSeancesStore = defineStore('seancesHorsLigne', {
       synchronisation: false,
       erreurReseauSignalee: false,
       fileChargee: false,
+      cachesCharges: false,
     };
   },
 
@@ -111,6 +111,7 @@ export const useSeancesStore = defineStore('seancesHorsLigne', {
       this.sallesCache = lireSalles(owner);
       this.erreurs = {};
       this.fileChargee = false;
+      this.cachesCharges = false;
     },
 
     /**
@@ -126,35 +127,72 @@ export const useSeancesStore = defineStore('seancesHorsLigne', {
       this.fileChargee = true;
     },
 
+    /**
+     * Relit les caches de tournée du compte courant : ils sont chiffrés
+     * comme les files. Leur copie déchiffrée est gardée en mémoire, les
+     * écrans les lisent de façon synchrone.
+     */
+    async chargerCaches() {
+      this.rafraichirProprietaire();
+      const owner = this.proprietaire;
+      if (!owner || this.cachesCharges) return;
+      try {
+        await Promise.all([
+          lireCacheHorsLigne<Affectation>(CLE_AFFECTATIONS, owner),
+          lireCacheHorsLigne<Salle>(CLE_SALLES, owner),
+        ]);
+      } catch {
+        // Un cache illisible est ignoré : la tournée sera rechargée en ligne.
+        return;
+      }
+      if (owner !== this.proprietaire) return;
+      this.affectationsCache = lireAffectations(owner);
+      this.sallesCache = lireSalles(owner);
+      this.cachesCharges = true;
+    },
+
     /** Point d'entrée explicite : la file est disponible une fois lisible. */
     async initialiser() {
       await this.chargerProprietaire();
+      await this.chargerCaches();
     },
 
-    enregistrerAffectations(affectations: Affectation[]) {
+    /**
+     * Écrit un cache de tournée : il est chiffré avant d'atteindre le
+     * stockage. Un échec d'écriture n'empêche pas l'écran de continuer : le
+     * cache sera reconstruit au prochain chargement en ligne.
+     */
+    async ecrireCache<T>(prefixe: string, owner: string, data: T[]) {
+      try {
+        await ecrireCacheHorsLigne<T>(prefixe, owner, {
+          enregistreesLe: new Date().toISOString(),
+          data,
+        });
+      } catch (error) {
+        console.warn('Cache de tournée : écriture chiffrée impossible', error);
+      }
+    },
+
+    /**
+     * Met en cache les affectations de la tournée : le cache est chiffré
+     * avant d'atteindre le stockage, comme les files.
+     */
+    async enregistrerAffectations(affectations: Affectation[]) {
       this.rafraichirProprietaire();
       if (!this.proprietaire) return;
       this.affectationsCache = affectations;
-      localStorage.setItem(
-        clePour(CLE_AFFECTATIONS, this.proprietaire),
-        JSON.stringify({
-          enregistreesLe: new Date().toISOString(),
-          data: affectations,
-        }),
-      );
+      await this.ecrireCache(CLE_AFFECTATIONS, this.proprietaire, affectations);
     },
 
-    enregistrerSalles(salles: Salle[]) {
+    /**
+     * Met en cache les salles de la tournée : le cache est chiffré avant
+     * d'atteindre le stockage, comme les files.
+     */
+    async enregistrerSalles(salles: Salle[]) {
       this.rafraichirProprietaire();
       if (!this.proprietaire) return;
       this.sallesCache = salles;
-      localStorage.setItem(
-        clePour(CLE_SALLES, this.proprietaire),
-        JSON.stringify({
-          enregistreesLe: new Date().toISOString(),
-          data: salles,
-        }),
-      );
+      await this.ecrireCache(CLE_SALLES, this.proprietaire, salles);
     },
 
     async persister() {

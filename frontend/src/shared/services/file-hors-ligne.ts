@@ -11,7 +11,13 @@
 import { i18n } from '@/boot/i18n';
 import { normaliserJetonsStatuts } from '@/shared/utils/statuts';
 import type { Pointage } from '@/types';
-import { CLE_FILE_POINTAGES, CLE_FILE_SEANCES, clePour } from './cles-stockage';
+import {
+  CLE_AFFECTATIONS,
+  CLE_FILE_POINTAGES,
+  CLE_FILE_SEANCES,
+  CLE_SALLES,
+  clePour,
+} from './cles-stockage';
 import { ecrireFileChiffree, lireFileChiffree } from './file-chiffree';
 
 /**
@@ -161,6 +167,61 @@ export async function ecrireFileHorsLigne<T>(prefixe: string, proprietaire: stri
 }
 
 /**
+ * Cache de données de référence (tournée préparée : affectations, salles).
+ * Il est stocké comme une file : chiffré, avec sa date d'enregistrement.
+ */
+export interface CacheDonnees<T> {
+  /** Date d'enregistrement du cache (ISO 8601). */
+  enregistreesLe: string;
+  /** Données mises en cache. */
+  data: T[];
+}
+
+/** Caches déjà déchiffrés : ils sont relus sans repasser par le chiffrement. */
+const cachesEnMemoire = new Map<string, unknown>();
+
+/** Cache déjà déchiffré en mémoire, s'il a été lu. */
+export function cacheEnMemoire<T>(prefixe: string, proprietaire: string): CacheDonnees<T> | undefined {
+  return cachesEnMemoire.get(clef(prefixe, proprietaire)) as CacheDonnees<T> | undefined;
+}
+
+/**
+ * Lit un cache chiffré : il est déchiffré, puis gardé en mémoire pour les
+ * lecteurs synchrones (les écrans lisent la tournée sans attendre). Un cache
+ * écrit en clair (version antérieure) est repris et chiffré : la version en
+ * clair disparaît alors du stockage.
+ */
+export async function lireCacheHorsLigne<T>(
+  prefixe: string,
+  proprietaire: string,
+): Promise<CacheDonnees<T> | undefined> {
+  if (!proprietaire) return undefined;
+  const enMemoire = cacheEnMemoire<T>(prefixe, proprietaire);
+  if (enMemoire) return enMemoire;
+  const lu = await lireFileChiffree<CacheDonnees<T> | null>(
+    clePour(prefixe, proprietaire),
+    proprietaire,
+    null,
+  );
+  if (!lu || !Array.isArray(lu.data)) return undefined;
+  cachesEnMemoire.set(clef(prefixe, proprietaire), lu);
+  return lu;
+}
+
+/**
+ * Écrit un cache chiffré : la copie déchiffrée reste en mémoire, pour que
+ * les écrans le lisent sans attendre le chiffrement.
+ */
+export async function ecrireCacheHorsLigne<T>(
+  prefixe: string,
+  proprietaire: string,
+  valeur: CacheDonnees<T>,
+): Promise<void> {
+  cachesEnMemoire.set(clef(prefixe, proprietaire), valeur);
+  await ecrireFileChiffree(clePour(prefixe, proprietaire), proprietaire, valeur);
+}
+
+/**
  * Déchiffre les files hors ligne du compte courant avant le démarrage de
  * l'interface : la tournée doit s'ouvrir avec ses séances en attente même
  * sans réseau.
@@ -169,4 +230,15 @@ export async function prechargerFilesHorsLigne(proprietaire: string): Promise<vo
   if (!proprietaire) return;
   await lireFileHorsLigne<Pointage>(CLE_FILE_POINTAGES, proprietaire, [], OPTIONS_POINTAGES);
   await lireFileHorsLigne<EntreeSeance>(CLE_FILE_SEANCES, proprietaire, [], OPTIONS_SEANCES);
+}
+
+/**
+ * Déchiffre les caches de tournée (affectations, salles) du compte courant :
+ * ils sont lus de façon synchrone par les écrans, la copie déchiffrée doit
+ * donc être prête avant l'affichage.
+ */
+export async function prechargerCachesHorsLigne(proprietaire: string): Promise<void> {
+  if (!proprietaire) return;
+  await lireCacheHorsLigne(CLE_AFFECTATIONS, proprietaire);
+  await lireCacheHorsLigne(CLE_SALLES, proprietaire);
 }

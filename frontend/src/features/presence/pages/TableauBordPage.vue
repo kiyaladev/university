@@ -194,8 +194,8 @@ async function preparerTournee() {
       referentiels.salles(true),
       affectationsService.toutes(),
     ]);
-    seancesHorsLigne.enregistrerAffectations(affectations.data ?? []);
-    seancesHorsLigne.enregistrerSalles(salles);
+    await seancesHorsLigne.enregistrerAffectations(affectations.data ?? []);
+    await seancesHorsLigne.enregistrerSalles(salles);
     const maintenant = new Date().toISOString();
     localStorage.setItem(clePreparation.value, JSON.stringify({ date, prepareeLe: maintenant }));
     tourneePrepareeLe.value = maintenant;

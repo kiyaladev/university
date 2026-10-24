@@ -14,7 +14,7 @@
 import { defineBoot } from '#q-app/wrappers';
 import { migrerCaches, migrerClesLocales } from '@/shared/services/cles-stockage';
 import { migrerBaseCrypto } from '@/shared/services/file-chiffree';
-import { prechargerFilesHorsLigne } from '@/shared/services/file-hors-ligne';
+import { prechargerCachesHorsLigne, prechargerFilesHorsLigne } from '@/shared/services/file-hors-ligne';
 import { lireToken, proprietaireDepuisToken } from '@/shared/services/session';
 
 export default defineBoot(async () => {
@@ -26,11 +26,21 @@ export default defineBoot(async () => {
   await migrerBaseCrypto();
   // Les caches du service worker ne portent aucune donnée unique.
   await migrerCaches();
+  const proprietaire = proprietaireDepuisToken(lireToken());
   try {
-    await prechargerFilesHorsLigne(proprietaireDepuisToken(lireToken()));
+    await prechargerFilesHorsLigne(proprietaire);
   } catch (error) {
     // Une file illisible ne doit pas empêcher l'application de démarrer :
     // elle sera signalée par le store qui la lit.
     console.warn('Stockage local : file hors ligne illisible', error);
+  }
+  try {
+    // Les caches de tournée (affectations, salles) sont chiffrés eux aussi :
+    // ils sont déchiffrés avant l'affichage, les écrans les lisent de façon
+    // synchrone. Un cache écrit en clair par une version antérieure est
+    // repris et chiffré ici.
+    await prechargerCachesHorsLigne(proprietaire);
+  } catch (error) {
+    console.warn('Stockage local : cache de tournée illisible', error);
   }
 });

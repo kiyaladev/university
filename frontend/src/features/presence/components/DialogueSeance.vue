@@ -102,7 +102,7 @@ async function filtrer(saisie: string, maj: (fn: () => void) => void) {
     try {
       const page = await affectationsService.toutes();
       affectations.value = page.data;
-      seancesHorsLigne.enregistrerAffectations(page.data ?? []);
+      await seancesHorsLigne.enregistrerAffectations(page.data ?? []);
     } catch {
       affectations.value = seancesHorsLigne.affectationsCache;
     }
@@ -142,7 +142,7 @@ async function enregistrer() {
         try {
           const chargees = await affectationsService.toutes();
           affectations.value = chargees.data ?? [];
-          seancesHorsLigne.enregistrerAffectations(affectations.value);
+          await seancesHorsLigne.enregistrerAffectations(affectations.value);
         } catch {
           /* Une saisie hors ligne continue avec le cache local. */
         }
