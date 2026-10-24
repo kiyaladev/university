@@ -12,7 +12,7 @@
  * il est clôturé manuellement (CLASSE), puis archivé (ARCHIVE).
  */
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma, Role, StatutCourrier } from '@prisma/client';
+import { CircuitCourrier, Prisma, Role, StatutCourrier, TypeCourrier } from '@prisma/client';
 import { t } from '../../../common/i18n';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { AuthUser } from '../../../common/decorators';
@@ -41,6 +41,26 @@ const COURRIER_INCLUDE = {
   enregistrePar: { select: { id: true, nom: true, prenom: true } },
   traitePar: { select: { id: true, nom: true, prenom: true } },
 } satisfies Prisma.CourrierInclude;
+
+/**
+ * Colonnes lues pour l'instantané d'audit d'un courrier : l'identification, la
+ * situation et l'avancement du circuit. Les contenus (pièce jointe, objet,
+ * destinataire, notes, paraphe) n'y figurent jamais, seulement leur présence.
+ */
+type CourrierAudit = {
+  id: string;
+  numero: string;
+  type: TypeCourrier;
+  statut: StatutCourrier;
+  dateReception: Date | null;
+  dateEnvoi: Date | null;
+  fichier: string | null;
+  paraphe: string | null;
+  enregistreParId: string | null;
+  departementId: string | null;
+  traiteParId: string | null;
+  circuits?: CircuitCourrier[];
+};
 
 /** Circuit par défaut : secrétariat (1) → chef département (2) → archives (3). */
 const CIRCUIT_PAR_DEFAUT = [
@@ -93,7 +113,7 @@ export class CourrierService {
    * du circuit. La présence d'un fichier ou d'un paraphe est notée par un
    * booléen, jamais par son contenu.
    */
-  private instantaneAudit(courrier: any) {
+  private instantaneAudit(courrier: CourrierAudit) {
     return {
       id: courrier.id,
       numero: courrier.numero,
@@ -107,8 +127,8 @@ export class CourrierService {
       departementId: courrier.departementId ?? null,
       traiteParId: courrier.traiteParId ?? null,
       circuit: [...(courrier.circuits ?? [])]
-        .sort((a: any, b: any) => a.ordre - b.ordre)
-        .map((etape: any) => ({
+        .sort((a, b) => a.ordre - b.ordre)
+        .map((etape) => ({
           id: etape.id,
           ordre: etape.ordre,
           roleValideur: etape.roleValideur ?? null,
@@ -135,7 +155,7 @@ export class CourrierService {
 
   // ------------------------------------------------------- lecture
 
-  async lister(query: CourrierQueryDto, user: AuthUser): Promise<Paginated<any>> {
+  async lister(query: CourrierQueryDto, user: AuthUser): Promise<Paginated<Prisma.CourrierGetPayload<{ include: typeof COURRIER_INCLUDE }>>> {
     const pagination = paginer(query);
 
     const scope = this.filtreVisible(user);

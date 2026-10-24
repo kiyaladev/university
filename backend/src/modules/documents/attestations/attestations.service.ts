@@ -15,7 +15,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { t } from '../../../common/i18n';
-import { Prisma, StatutAttestation, TypeAttestation } from '@prisma/client';
+import { Attestation, Prisma, StatutAttestation, TypeAttestation } from '@prisma/client';
 import { randomBytes } from 'node:crypto';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { chargerEtablissement } from '../../../common/impression/index';
@@ -135,7 +135,7 @@ export class AttestationsService {
     return `UP-DOC-${randomBytes(12).toString('base64url')}`;
   }
 
-  private instantaneAudit(attestation: any) {
+  private instantaneAudit(attestation: Attestation | null) {
     if (!attestation) return null;
     return {
       id: attestation.id,

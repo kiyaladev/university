@@ -15,7 +15,7 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { t } from '../../../common/i18n';
 import { journaliser } from '../../../common/audit';
-import { ModePaiement, Prisma, StatutPaiement } from '@prisma/client';
+import { ModePaiement, Prisma, RecetteExterne, StatutPaiement } from '@prisma/client';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { AuthUser } from '../../../common/decorators';
 import { Paginated } from '../../../common/dto';
@@ -40,7 +40,7 @@ export class RecettesService {
 
   // ------------------------------------------------------- lecture
 
-  async lister(query: RecetteQueryDto): Promise<Paginated<any>> {
+  async lister(query: RecetteQueryDto): Promise<Paginated<Prisma.RecetteExterneGetPayload<{ include: typeof RECETTE_INCLUDE }>>> {
     const pagination = paginer(query);
 
     const where: Prisma.RecetteExterneWhereInput = {
@@ -258,7 +258,7 @@ export class RecettesService {
     );
   }
 
-  private instantaneAudit(recette: any) {
+  private instantaneAudit(recette: RecetteExterne) {
     return {
       id: recette.id,
       numero: recette.numero,

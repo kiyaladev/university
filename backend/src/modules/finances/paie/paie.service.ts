@@ -83,7 +83,7 @@ export class PaieService {
 
   // ---------------------------------------------------------------- lecture
 
-  async lister(query: FeuilleQueryDto): Promise<Paginated<any>> {
+  async lister(query: FeuilleQueryDto): Promise<Paginated<Prisma.FeuillePaieGetPayload<{ include: typeof FEUILLE_INCLUDE }>>> {
     const pagination = paginer(query);
 
     const where: Prisma.FeuillePaieWhereInput = {
@@ -331,7 +331,7 @@ export class PaieService {
         },
         { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
       );
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2034') {
         throw new ConflictException(t('paie.ecriture_concurrente_reessayez'));
       }
