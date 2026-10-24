@@ -1,6 +1,7 @@
 /** Matières : catalogue et volumes horaires. */
 
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { CrudService, supprimerOuConflit } from '../../../common/crud.service';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { AuthUser } from '../../../common/decorators';
@@ -10,7 +11,7 @@ import { journaliser } from '../../../common/audit';
 import { CreateMatiereDto, UpdateMatiereDto } from './matieres.dto';
 
 @Injectable()
-export class MatieresService extends CrudService {
+export class MatieresService extends CrudService<Prisma.MatiereGetPayload<{ include: { departement: true } }>> {
   constructor(prisma: PrismaService) {
     super(prisma, 'matiere', {
       searchFields: ['code', 'intitule'],

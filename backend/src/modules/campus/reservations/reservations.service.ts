@@ -76,7 +76,9 @@ const SALLE_CALENDRIER_SELECT = {
 };
 
 @Injectable()
-export class ReservationsService extends CrudService {
+export class ReservationsService extends CrudService<
+  Prisma.ReservationSalleGetPayload<{ include: typeof RESERVATION_INCLUDE }>
+> {
   constructor(prisma: PrismaService) {
     super(prisma, 'reservationSalle', {
       orderBy: [{ dateJour: 'asc' }, { heureDebut: 'asc' }],

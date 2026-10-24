@@ -19,7 +19,9 @@ function service(orderBy?: Record<string, unknown> | Record<string, unknown>[], 
 describe('tri des listes génériques', () => {
   it('borne le mode all à 1 000 lignes et garde la pagination disponible', async () => {
     const s = service({ nom: 'asc' });
-    s['delegate'].count.mockResolvedValue(1400);
+    // Le delegate est typé par son contrat minimal : on passe par le mock
+    // pour lui donner un total.
+    (s['delegate'].count as unknown as jest.Mock).mockResolvedValue(1400);
 
     const resultat = await s.lister({ all: '1' });
 

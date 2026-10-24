@@ -277,7 +277,7 @@ export class EquipementsService extends CrudService {
 }
 
 @Injectable()
-export class TicketsService extends CrudService {
+export class TicketsService extends CrudService<Prisma.TicketSupportGetPayload<{ include: typeof TICKET_INCLUDE }>> {
   constructor(prisma: PrismaService) {
     super(prisma, 'ticketSupport', {
       orderBy: { createdAt: 'desc' },

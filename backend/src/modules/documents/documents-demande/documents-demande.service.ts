@@ -99,7 +99,9 @@ export const TYPE_ATTESTATION_PAR_DEMANDE: Partial<Record<TypeDemandeDocument, T
 };
 
 @Injectable()
-export class DocumentsDemandeService extends CrudService {
+export class DocumentsDemandeService extends CrudService<
+  Prisma.DemandeDocumentGetPayload<{ include: typeof DEMANDE_INCLUDE }>
+> {
   private readonly logger = new Logger(DocumentsDemandeService.name);
 
   constructor(
