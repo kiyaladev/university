@@ -57,7 +57,10 @@ export default defineConfig((ctx) => {
         node: 'node20',
       },
       typescript: {
-        strict: true,
+        // Le mode strict est porté par tsconfig.json : le préréglage `strict`
+        // de Quasar ajouterait exactOptionalPropertyTypes et
+        // noUncheckedIndexedAccess, que le code ne vise pas.
+        strict: false,
         vueShim: true,
       },
       vueRouterMode: 'hash',
