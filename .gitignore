@@ -1,5 +1,8 @@
 node_modules/
 dist/
+# Copies de retour arrière laissées après une publication (dist.avant-lot7…).
+dist.avant-*/
+pwa.avant-*/
 .quasar/
 *.log
 
