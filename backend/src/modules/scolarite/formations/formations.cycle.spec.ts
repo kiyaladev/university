@@ -395,6 +395,29 @@ describe('FormationsService — confirmation d’une place', () => {
     expect(tx.paiement.updateMany).not.toHaveBeenCalled();
     expect(tx.inscriptionFormation.updateMany).not.toHaveBeenCalled();
   });
+
+  it('ne journalise rien quand la place ne peut plus être confirmée', async () => {
+    const { tx, service } = preparerConfirmation();
+    // L'inscription a été annulée entre-temps : la mise à CONFIRME ne trouve
+    // plus sa ligne. L'effet échoue, la confirmation est abandonnée.
+    tx.inscriptionFormation.updateMany.mockResolvedValueOnce({ count: 0 });
+
+    await expect(service.confirmer('ins-1', USER)).rejects.toBeInstanceOf(ConflictException);
+
+    expect(tx.auditLog.create).not.toHaveBeenCalled();
+  });
+
+  it('refuse une confirmation concurrente dont le paiement a déjà été pris', async () => {
+    const { tx, service } = preparerConfirmation();
+    // Une autre confirmation a fait passer le paiement à RÉUSSI : le verrou
+    // optimiste ne trouve plus la ligne attendue.
+    tx.paiement.updateMany.mockResolvedValueOnce({ count: 0 });
+
+    await expect(service.confirmer('ins-1', USER)).rejects.toBeInstanceOf(ConflictException);
+
+    expect(tx.inscriptionFormation.updateMany).not.toHaveBeenCalled();
+    expect(tx.auditLog.create).not.toHaveBeenCalled();
+  });
 });
 
 describe('FormationsService — annulation d’une demande', () => {

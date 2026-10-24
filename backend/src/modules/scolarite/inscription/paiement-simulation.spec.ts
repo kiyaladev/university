@@ -29,6 +29,7 @@ function preparer(liens: Record<string, unknown>) {
     paiement: {
       findUnique: jest.fn().mockResolvedValue(paiement),
       updateMany: jest.fn(),
+      aggregate: jest.fn().mockResolvedValue({ _sum: { montant: 0 } }),
     },
     anneeAcademique: { findUnique: jest.fn().mockResolvedValue({ cloturee: false }) },
     inscription: { findUnique: jest.fn(), updateMany: jest.fn() },
@@ -101,5 +102,49 @@ describe('Confirmation pilote des paiements — garde-fou des autres portefeuill
       }),
     );
     expect(tx.auditLog.create).toHaveBeenCalledTimes(1);
+  });
+});
+
+/**
+ * Les garanties communes de la confirmation : idempotence, verrou optimiste
+ * et abandon quand l'effet métier échoue.
+ */
+describe('Confirmation pilote des paiements — garanties communes', () => {
+  const agent = { id: 'agent-1' } as any;
+
+  it('ne rejoue ni l’effet ni le journal quand le paiement est déjà confirmé', async () => {
+    const { tx, service } = preparer({ statut: StatutPaiement.REUSSI });
+
+    const resultat = await service.simulerPaiement('paiement-1', { statut: 'REUSSI' } as any, agent);
+
+    expect(resultat).toMatchObject({ statut: StatutPaiement.REUSSI });
+    expect(tx.paiement.updateMany).not.toHaveBeenCalled();
+    expect(tx.auditLog.create).not.toHaveBeenCalled();
+  });
+
+  it('refuse une confirmation concurrente dont le paiement a déjà été pris', async () => {
+    const { tx, service } = preparer({});
+    // L'autre confirmation a fait passer le paiement à RÉUSSI : le verrou
+    // optimiste ne trouve plus la ligne attendue.
+    tx.paiement.updateMany.mockResolvedValueOnce({ count: 0 });
+
+    await expect(service.simulerPaiement('paiement-1', { statut: 'REUSSI' } as any, agent)).rejects.toBeInstanceOf(
+      ConflictException,
+    );
+
+    expect(tx.auditLog.create).not.toHaveBeenCalled();
+  });
+
+  it('n’encaisse rien quand l’effet de solde du dossier échoue', async () => {
+    const { tx, service } = preparer({ inscriptionId: 'ins-1' });
+    tx.paiement.updateMany.mockResolvedValue({ count: 1 });
+    tx.paiement.aggregate.mockRejectedValue(new Error('cumul indisponible'));
+
+    await expect(service.simulerPaiement('paiement-1', { statut: 'REUSSI' } as any, agent)).rejects.toThrow(
+      'cumul indisponible',
+    );
+
+    // L'effet a échoué : la transaction est abandonnée, rien n'est journalisé.
+    expect(tx.auditLog.create).not.toHaveBeenCalled();
   });
 });

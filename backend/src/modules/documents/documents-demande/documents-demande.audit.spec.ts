@@ -196,6 +196,51 @@ describe('Demandes de documents — encaissement', () => {
     expect(audit).not.toHaveBeenCalled();
   });
 
+  it('refuse une demande déjà traitée sans encaisser ni tracer', async () => {
+    const { tx, prisma, audit } = transaction({
+      demandeDocument: {
+        findUnique: jest.fn().mockResolvedValue({ ...DEMANDE, statut: StatutDemande.EN_TRAITEMENT }),
+        update: jest.fn(),
+      },
+      paiement: { findUnique: jest.fn(), updateMany: jest.fn() },
+    });
+    const service = new DocumentsDemandeService(prisma as any);
+
+    await expect(service.confirmerPaiement('dem-1', {}, AGENT)).rejects.toThrow(BadRequestException);
+
+    expect(tx.paiement.updateMany).not.toHaveBeenCalled();
+    expect(tx.demandeDocument.update).not.toHaveBeenCalled();
+    expect(audit).not.toHaveBeenCalled();
+  });
+
+  it('abandonne la confirmation quand la demande ne peut plus passer en traitement', async () => {
+    const { prisma, audit } = transaction({
+      demandeDocument: {
+        findUnique: jest.fn().mockResolvedValue({ ...DEMANDE, paiementId: 'pay-1' }),
+        update: jest.fn().mockRejectedValue(new Error('demande verrouillee')),
+      },
+      paiement: {
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'pay-1',
+          reference: 'PAY-D-2026-00001',
+          montant: 25000,
+          devise: 'GNF',
+          mode: 'ESPECES',
+          statut: StatutPaiement.EN_ATTENTE,
+        }),
+        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+      },
+    });
+    const service = new DocumentsDemandeService(prisma as any);
+
+    await expect(service.confirmerPaiement('dem-1', { paiementId: 'pay-1' }, AGENT)).rejects.toThrow(
+      'demande verrouillee',
+    );
+
+    // L'effet a échoué : la transaction est abandonnée, rien n'est journalisé.
+    expect(audit).not.toHaveBeenCalled();
+  });
+
   it('rattache le paiement à la demande dans la transaction qui le crée', async () => {
     const paiement = {
       id: 'pay-1',

@@ -54,6 +54,61 @@ describe('écritures concurrentes du portefeuille resto', () => {
     expect(credit).not.toHaveBeenCalled();
   });
 
+  it('ne rejoue ni le crédit ni le journal quand la recharge est déjà encaissée', async () => {
+    const recharge = {
+      id: 'r-3',
+      statut: StatutPaiement.REUSSI,
+      paiementId: 'pay-3',
+      portefeuilleId: 'p-3',
+      montant: 100,
+    };
+    const credit = jest.fn();
+    const prisma: any = {
+      recharge: { findUnique: jest.fn().mockResolvedValue(recharge) },
+      $transaction: jest.fn(),
+    };
+    const service = new RestoService(prisma, {} as never);
+
+    await service.simulerRecharge('r-3', { statut: StatutPaiement.REUSSI }, { id: 'admin' } as AuthUser);
+
+    // La recharge est déjà encaissée : aucune transaction, aucun crédit.
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+    expect(credit).not.toHaveBeenCalled();
+  });
+
+  it('abandonne la confirmation quand le crédit du portefeuille échoue', async () => {
+    const recharge = {
+      id: 'r-5',
+      statut: StatutPaiement.EN_ATTENTE,
+      paiementId: 'pay-5',
+      portefeuilleId: 'p-5',
+      montant: 100,
+    };
+    const auditCreate = jest.fn();
+    const prisma: any = {
+      recharge: { findUnique: jest.fn().mockResolvedValue(recharge) },
+      $transaction: jest.fn((operation) =>
+        operation({
+          recharge: { updateMany: jest.fn().mockResolvedValue({ count: 1 }) },
+          portefeuilleResto: {
+            findUnique: jest.fn().mockResolvedValue({ solde: 100 }),
+            update: jest.fn().mockRejectedValue(new Error('portefeuille indisponible')),
+          },
+          paiement: { update: jest.fn() },
+          auditLog: { create: auditCreate },
+        }),
+      ),
+    };
+    const service = new RestoService(prisma, {} as never);
+
+    await expect(
+      service.simulerRecharge('r-5', { statut: StatutPaiement.REUSSI }, { id: 'admin' } as AuthUser),
+    ).rejects.toThrow('portefeuille indisponible');
+
+    // L'effet a échoué : la transaction est abandonnée, rien n'est journalisé.
+    expect(auditCreate).not.toHaveBeenCalled();
+  });
+
   it('journalise la confirmation et le solde dans la transaction de recharge, sans identité étudiante', async () => {
     const recharge = {
       id: 'r-2',
