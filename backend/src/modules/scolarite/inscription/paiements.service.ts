@@ -370,7 +370,7 @@ export class PaiementsService {  private readonly logger = new Logger(PaiementsS
    */
   private effetScolarite(id: string, reussi: boolean): EffetConfirmationPaiement<EffetScolarite, PreparationScolarite> {
     return {
-      async preparer({ tx }) {
+      preparer: async ({ tx }) => {
         const paiement = await tx.paiement.findUnique({ where: { id }, include: PAIEMENT_AVEC_SOURCE_INCLUDE });
         if (!paiement) throw new NotFoundException(t('inscription.paiement_introuvable'));
         // Les paiements des autres portefeuilles ont leur propre confirmation.
@@ -395,11 +395,11 @@ export class PaiementsService {  private readonly logger = new Logger(PaiementsS
         };
       },
 
-      async dejaConfirme({ preparation }) {
+      dejaConfirme: async ({ preparation }) => {
         return { paiement: preparation.objet.paiementAvant, inscription: null };
       },
 
-      async appliquer({ tx }) {
+      appliquer: async ({ tx }) => {
         const paiement = await tx.paiement.findUnique({ where: { id }, include: PAIEMENT_INCLUDE });
         if (!paiement) throw new NotFoundException(t('inscription.paiement_introuvable'));
 

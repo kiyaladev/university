@@ -38,6 +38,7 @@ import {
 import { ParametresService } from '../../socle/parametres/parametres.service';
 import { SERIES_NUMERO, avecNumeroUnique, millesimeSerie, prochainNumeroSerie } from '../../../common/numero';
 import { creerPaiementTx } from '../../../common/finances/index';
+import { type EffetConfirmationPaiement, confirmerPaiement } from '../../../common/finances/confirmation';
 import { toMontant } from '../../../common/finances/montant';
 import { t } from '../../../common/i18n';
 import {
@@ -93,6 +94,15 @@ const LIBELLE_STATUT_INSCRIPTION: Record<string, string> = {
   EN_ATTENTE: 'En attente de paiement',
   CONFIRME: 'Confirmé',
   ANNULE: 'Annulé',
+};
+
+/** Inscription à une formation, avec sa formation, son étudiant et son paiement. */
+type InscriptionFormation = Prisma.InscriptionFormationGetPayload<{ include: typeof INSCRIPTION_FORMATION_INCLUDE }>;
+
+/** Ce que l'effet de confirmation prépare avant la transition. */
+type PreparationFormation = {
+  /** L'inscription à la formation avant la confirmation. */
+  avant: InscriptionFormation;
 };
 
 @Injectable()
@@ -578,55 +588,105 @@ export class FormationsService {
    * Mobile Money au guichet) : le PAIEMENT passe REUSSI (statut, completeLe),
    * puis l'inscription passe CONFIRME puisque le paiement est réussi.
    * Refusée si la formation est déjà complète : la place a été prise ailleurs.
+   *
+   * La transaction et le verrou optimiste sont portés par le moteur commun ;
+   * ce module ne garde que son effet : sous le verrou de la formation,
+   * vérifier qu'il reste une place et confirmer l'inscription.
    */
   async confirmer(id: string, user: AuthUser) {
     const inscription = await this.trouverInscription(id);
-    return this.prisma.$transaction(async (tx) => {
-      const formation = await this.verrouillerFormation(tx, inscription.formationId);
-      const avant = await tx.inscriptionFormation.findUnique({
-        where: { id },
-        include: INSCRIPTION_FORMATION_INCLUDE,
-      });
-      if (!avant) throw new NotFoundException(t('formations.inscription_a_la_formation_introuvable'));
-      if (avant.statut === StatutInscriptionFormation.ANNULE) {
-        throw new BadRequestException(t('formations.cette_demande_est_annulee_elle_ne_peut_plus_etre_confirmee'));
-      }
-      if (avant.statut === StatutInscriptionFormation.CONFIRME) return avant;
-      if (formation.statut === StatutFormation.COMPLET) {
-        throw new ConflictException(t('formations.la_formation_est_close_cette_place_ne_peut_plus_etre_confirm'));
-      }
-      const confirmees = await tx.inscriptionFormation.count({
-        where: { formationId: formation.id, statut: StatutInscriptionFormation.CONFIRME },
-      });
-      if (formation.capacite != null && confirmees >= formation.capacite) {
-        throw new ConflictException(t('formations.la_formation_est_close_cette_place_ne_peut_plus_etre_confirm'));
-      }
-      const paiement = avant.paiement;
-      if (!paiement) {
-        throw new ConflictException(t('formations.aucun_paiement_n_est_lie_a_cette_demande_confirmez_impossibi'));
-      }
-      const paiementMaj = await tx.paiement.updateMany({
-        where: { id: paiement.id, statut: StatutPaiement.EN_ATTENTE },
-        data: { statut: StatutPaiement.REUSSI, completeLe: new Date() },
-      });
-      if (paiementMaj.count !== 1) {
-        throw new ConflictException(t('formations.aucun_paiement_n_est_lie_a_cette_demande_confirmez_impossibi'));
-      }
-      const inscriptionMaj = await tx.inscriptionFormation.updateMany({
-        where: { id, statut: avant.statut },
-        data: { statut: StatutInscriptionFormation.CONFIRME },
-      });
-      if (inscriptionMaj.count !== 1) {
-        throw new ConflictException(t('formations.cette_demande_est_annulee_elle_ne_peut_plus_etre_confirmee'));
-      }
-      const maj = await tx.inscriptionFormation.findUnique({ where: { id }, include: INSCRIPTION_FORMATION_INCLUDE });
-      if (!maj) throw new NotFoundException(t('formations.inscription_a_la_formation_introuvable'));
-      await journaliser(tx, user, 'FORMATION_CONFIRMEE', 'InscriptionFormation', id, {
-        avant: { statut: avant.statut, paiement: paiement.statut, formationId: avant.formationId },
-        apres: { statut: maj.statut, paiement: maj.paiement?.statut, formationId: maj.formationId },
-      });
-      return maj;
+    return confirmerPaiement<InscriptionFormation, PreparationFormation>({
+      prisma: this.prisma,
+      user,
+      effet: this.effetConfirmationFormation(id, inscription.formationId),
+      journal: {
+        action: 'FORMATION_CONFIRMEE',
+        entite: 'InscriptionFormation',
+        entiteId: id,
+        details: ({ preparation, resultat }) => ({
+          avant: {
+            statut: preparation.objet.avant.statut,
+            paiement: preparation.objet.avant.paiement?.statut ?? null,
+            formationId: preparation.objet.avant.formationId,
+          },
+          apres: {
+            statut: resultat.valeur.statut,
+            paiement: resultat.valeur.paiement?.statut ?? null,
+            formationId: resultat.valeur.formationId,
+          },
+        }),
+      },
     });
+  }
+
+  /**
+   * Effet de confirmation d'une place à une formation : sous le verrou de la
+   * formation (contrôle de capacité), le paiement passe REUSSI puis
+   * l'inscription passe CONFIRME. Une place déjà confirmée n'est rejouée ni
+   * rejouée : la confirmation est idempotente.
+   */
+  private effetConfirmationFormation(
+    id: string,
+    formationId: string,
+  ): EffetConfirmationPaiement<InscriptionFormation, PreparationFormation> {
+    return {
+      preparer: async ({ tx }) => {
+        const formation = await this.verrouillerFormation(tx, formationId);
+        const avant = await tx.inscriptionFormation.findUnique({
+          where: { id },
+          include: INSCRIPTION_FORMATION_INCLUDE,
+        });
+        if (!avant) throw new NotFoundException(t('formations.inscription_a_la_formation_introuvable'));
+        if (avant.statut === StatutInscriptionFormation.ANNULE) {
+          throw new BadRequestException(t('formations.cette_demande_est_annulee_elle_ne_peut_plus_etre_confirmee'));
+        }
+        // Place déjà confirmée : on renvoie l'état, l'effet n'est pas rejoué.
+        if (avant.statut === StatutInscriptionFormation.CONFIRME) {
+          return { objet: { avant }, confirme: true };
+        }
+        if (formation.statut === StatutFormation.COMPLET) {
+          throw new ConflictException(t('formations.la_formation_est_close_cette_place_ne_peut_plus_etre_confirm'));
+        }
+        const confirmees = await tx.inscriptionFormation.count({
+          where: { formationId: formation.id, statut: StatutInscriptionFormation.CONFIRME },
+        });
+        if (formation.capacite != null && confirmees >= formation.capacite) {
+          throw new ConflictException(t('formations.la_formation_est_close_cette_place_ne_peut_plus_etre_confirm'));
+        }
+        const paiement = avant.paiement;
+        if (!paiement) {
+          throw new ConflictException(t('formations.aucun_paiement_n_est_lie_a_cette_demande_confirmez_impossibi'));
+        }
+        return {
+          transition: {
+            modele: 'paiement',
+            id: paiement.id,
+            statutAttendu: StatutPaiement.EN_ATTENTE,
+            erreur: () =>
+              new ConflictException(t('formations.aucun_paiement_n_est_lie_a_cette_demande_confirmez_impossibi')),
+          },
+          objet: { avant },
+          confirme: false,
+        };
+      },
+
+      dejaConfirme: async ({ preparation }) => {
+        return preparation.objet.avant;
+      },
+
+      appliquer: async ({ tx, preparation }) => {
+        const inscriptionMaj = await tx.inscriptionFormation.updateMany({
+          where: { id, statut: preparation.objet.avant.statut },
+          data: { statut: StatutInscriptionFormation.CONFIRME },
+        });
+        if (inscriptionMaj.count !== 1) {
+          throw new ConflictException(t('formations.cette_demande_est_annulee_elle_ne_peut_plus_etre_confirmee'));
+        }
+        const maj = await tx.inscriptionFormation.findUnique({ where: { id }, include: INSCRIPTION_FORMATION_INCLUDE });
+        if (!maj) throw new NotFoundException(t('formations.inscription_a_la_formation_introuvable'));
+        return { valeur: maj };
+      },
+    };
   }
 
   /** Sérialise les confirmations d'une même formation pendant le contrôle de capacité. */

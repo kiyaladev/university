@@ -53,8 +53,12 @@ export interface TransitionOptimiste {
 
 /** Ce que l'effet a préparé, avant la transition. */
 export interface PreparationConfirmation<P = unknown> {
-  /** Transition à effectuer : le verrou optimiste de la confirmation. */
-  transition: TransitionOptimiste;
+  /**
+   * Transition à effectuer : le verrou optimiste de la confirmation.
+   * Absente quand la confirmation est déjà appliquée — l'effet n'est alors
+   * pas rejoué et rien n'est écrit.
+   */
+  transition?: TransitionOptimiste;
   /** Objet payé avant l'effet (dossier, place, demande, recharge). */
   objet: P;
   /** La confirmation a déjà été appliquée : l'effet ne doit pas être rejoué. */
@@ -210,7 +214,10 @@ export async function confirmerPaiement<T, P = unknown>(options: OptionsConfirma
         return effet.dejaConfirme({ tx, user, statut, preparation, ecrit: {} });
       }
 
-      const ecrit = await appliquerTransition(tx, preparation.transition, statut);
+      const transition = preparation.transition;
+      if (!transition) throw new Error('Confirmation de paiement : transition manquante.');
+
+      const ecrit = await appliquerTransition(tx, transition, statut);
       const resultat = await effet.appliquer({ tx, user, statut, preparation, ecrit });
 
       await journaliser(
