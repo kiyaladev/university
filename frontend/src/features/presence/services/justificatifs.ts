@@ -35,7 +35,7 @@ export interface DepotJustificatif {
 
 export const justificatifsService = {
   /** Justificatifs filtrés par statut, type, enseignant et période. */
-  liste: (params: ParametresJustificatifs = {}) => lister<Justificatif>('/justificatifs', { ...params }),
+  liste: (params: ParametresJustificatifs = {}) => lister<Justificatif>('/justificatifs', params),
 
   /** Dépose un justificatif pour une séance. */
   deposer: (corps: DepotJustificatif) => creer<Justificatif>('/justificatifs', corps),

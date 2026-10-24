@@ -100,6 +100,25 @@ describe('useConfirmation', () => {
     await expect(confirmerAvecSaisie({ titre: 'Rejeter', message: '…', libelleSaisie: 'Motif' })).resolves.toBeNull();
   });
 
+  it('confirmerAvecSaisie refuse une saisie trop courte', async () => {
+    const { confirmerAvecSaisie } = useConfirmation();
+    await confirmerAvecSaisie({ titre: 'Rejeter', message: '…', minLength: 3 });
+
+    const prompt = etat.dialogues[0]!.prompt as { isValid?: (saisie: string) => boolean };
+    expect(prompt.isValid?.('ab')).toBe(false);
+    expect(prompt.isValid?.('  a  ')).toBe(false);
+    expect(prompt.isValid?.('abc')).toBe(true);
+  });
+
+  it('confirmerAvecSaisie propose un champ multiligne à la demande', async () => {
+    const { confirmerAvecSaisie } = useConfirmation();
+    await confirmerAvecSaisie({ titre: 'Rejeter', message: '…' });
+    await confirmerAvecSaisie({ titre: 'Rejeter', message: '…', multiligne: true });
+
+    expect((etat.dialogues[0]!.prompt as { type: string }).type).toBe('text');
+    expect((etat.dialogues[1]!.prompt as { type: string }).type).toBe('textarea');
+  });
+
   it('supprimerAvecConfirmation supprime, notifie puis recharge', async () => {
     api.delete.mockResolvedValue({});
     const recharger = vi.fn();
@@ -108,7 +127,7 @@ describe('useConfirmation', () => {
     await expect(supprimerAvecConfirmation('/residences/r1', 'Cité A', recharger)).resolves.toBe(true);
 
     expect(etat.dialogues[0]!.message).toContain('Cité A');
-    expect(api.delete).toHaveBeenCalledWith('/residences/r1');
+    expect(api.delete).toHaveBeenCalledWith('/residences/r1', {});
     expect(etat.notify).toEqual([{ type: 'positive', message: 'common.messages.deleted' }]);
     expect(recharger).toHaveBeenCalledOnce();
   });

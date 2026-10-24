@@ -259,10 +259,7 @@ import PanneauStructureAnnees from '@/features/administration/components/Panneau
 import PanneauStructureDepartements from '@/features/administration/components/PanneauStructureDepartements.vue';
 import PanneauStructureFilieres from '@/features/administration/components/PanneauStructureFilieres.vue';
 import PanneauStructurePromotions from '@/features/administration/components/PanneauStructurePromotions.vue';
-import {
-  structureService,
-  type PromotionListee,
-} from '@/features/administration/services/structure';
+import { structureService, type PromotionListee } from '@/features/administration/services/structure';
 import type { AnneeAcademique, Departement, Filiere, Niveau, ChipFiltre } from '@/types';
 
 const $q = useQuasar();
@@ -473,7 +470,10 @@ async function envoyer(appelle: () => Promise<unknown>, messageOk: string) {
 async function enregistrerAnnee() {
   const edition = anneeEditee.value;
   const ok = await envoyer(
-    () => (edition ? structureService.modifierAnnee(edition.id, formAnnee.value) : structureService.creerAnnee(formAnnee.value)),
+    () =>
+      edition
+        ? structureService.modifierAnnee(edition.id, formAnnee.value)
+        : structureService.creerAnnee(formAnnee.value),
     t('structure.messages.anneeSaved'),
   );
   if (ok) {
@@ -486,9 +486,7 @@ async function enregistrerDepartement() {
   const payload = { ...formDepartement.value, faculte: formDepartement.value.faculte || undefined };
   const ok = await envoyer(
     () =>
-      edition
-        ? structureService.modifierDepartement(edition.id, payload)
-        : structureService.creerDepartement(payload),
+      edition ? structureService.modifierDepartement(edition.id, payload) : structureService.creerDepartement(payload),
     t('structure.messages.departementSaved'),
   );
   if (ok) {
@@ -500,7 +498,9 @@ async function enregistrerFiliere() {
   const edition = filiereEditee.value;
   const ok = await envoyer(
     () =>
-      edition ? structureService.modifierFiliere(edition.id, formFiliere.value) : structureService.creerFiliere(formFiliere.value),
+      edition
+        ? structureService.modifierFiliere(edition.id, formFiliere.value)
+        : structureService.creerFiliere(formFiliere.value),
     t('structure.messages.filiereSaved'),
   );
   if (ok) {

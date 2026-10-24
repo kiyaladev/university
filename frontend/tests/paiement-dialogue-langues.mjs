@@ -12,8 +12,8 @@ try {
   const page = await browser.newPage({ locale: 'fr-FR' });
   const errors = [];
   const apiFailures = [];
-  page.on('pageerror', error => errors.push(error.message));
-  page.on('response', response => {
+  page.on('pageerror', (error) => errors.push(error.message));
+  page.on('response', (response) => {
     if (response.url().includes('/api/') && response.status() >= 400) {
       apiFailures.push({ status: response.status(), path: new URL(response.url()).pathname });
     }
@@ -21,7 +21,7 @@ try {
   await page.goto(base + '/#/connexion', { waitUntil: 'networkidle' });
   await page.locator('input[type=email]').fill('admin@unipresence.gn');
   await page.locator('input[type=password]').fill('Passer@2026');
-  const loginResponse = page.waitForResponse(response => response.url().includes('/api/auth/login'));
+  const loginResponse = page.waitForResponse((response) => response.url().includes('/api/auth/login'));
   await page.locator('button[type=submit]').click();
   const login = await loginResponse;
   assert.ok(login.status() >= 200 && login.status() < 300, `Connexion QA refusée (${login.status()})`);
@@ -32,7 +32,8 @@ try {
   await dialog.getByText('À partir d’un dossier d’inscription', { exact: true }).waitFor();
   await dialog.getByText('À partir d’un dossier d’inscription', { exact: true }).click();
   const frText = await dialog.innerText();
-  for (const text of ['Dossier *', 'Règlement', 'Mode de paiement *', 'Montant (GNF) *']) assert.ok(frText.includes(text), `Libellé français absent : ${text}`);
+  for (const text of ['Dossier *', 'Règlement', 'Mode de paiement *', 'Montant (GNF) *'])
+    assert.ok(frText.includes(text), `Libellé français absent : ${text}`);
   await dialog.getByPlaceholder('Tapez n° de dossier ou nom d’étudiant…').waitFor();
   await dialog.getByRole('button', { name: 'Simuler une confirmation réussie', exact: true }).waitFor();
   await dialog.getByRole('button', { name: 'Enregistrer le paiement', exact: true }).waitFor();
@@ -43,7 +44,8 @@ try {
   await page.getByRole('button', { name: 'New payment', exact: true }).click();
   await dialog.getByText('From an enrollment file', { exact: true }).click();
   const enText = await dialog.innerText();
-  for (const text of ['From an enrollment file', 'Enrollment file *', 'Payment', 'Payment method *', 'Amount (GNF) *']) assert.ok(enText.includes(text), `English label missing: ${text}`);
+  for (const text of ['From an enrollment file', 'Enrollment file *', 'Payment', 'Payment method *', 'Amount (GNF) *'])
+    assert.ok(enText.includes(text), `English label missing: ${text}`);
   await dialog.getByPlaceholder('Enter file number or student name…').waitFor();
   await dialog.getByRole('button', { name: 'Simulate successful confirmation', exact: true }).waitFor();
   await dialog.getByRole('button', { name: 'Save payment', exact: true }).waitFor();

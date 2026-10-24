@@ -324,10 +324,7 @@ import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { useAuthStore } from '@/stores/auth';
-import {
-  utilisateursService,
-  type UtilisateurSaisie,
-} from '@/features/administration/services/utilisateurs';
+import { utilisateursService, type UtilisateurSaisie } from '@/features/administration/services/utilisateurs';
 import { useReferentielsStore } from '@/stores/referentiels';
 import BarreFiltres from '@/shared/components/BarreFiltres.vue';
 import EnTetePage from '@/shared/components/EnTetePage.vue';

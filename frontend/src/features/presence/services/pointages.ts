@@ -1,4 +1,5 @@
 import { lister, lire, modifier, supprimer } from '@/shared/services/http';
+import { PERMISSIONS } from '@/navigation/permissions';
 import type { Controle, StatutPresence } from '@/types';
 
 /**
@@ -47,15 +48,15 @@ export interface CorrectionPointage {
   enseignantRemplacantId?: string;
 }
 
-/** Rôles autorisés à corriger un pointage (`PUT /controles/:id`). */
-export const ROLES_CORRECTION_POINTAGES = ['CONTROLEUR', 'ADMIN', 'DIRECTION', 'CHEF_DEPARTEMENT'] as const;
+/** Rôles autorisés à corriger un pointage (`PUT /controles/:id`, droit `pointages.corriger`). */
+export const ROLES_CORRECTION_POINTAGES = PERMISSIONS['pointages.corriger'];
 
-/** Rôles autorisés à supprimer un pointage (`DELETE /controles/:id`). */
-export const ROLES_SUPPRESSION_POINTAGES = ['ADMIN', 'DIRECTION'] as const;
+/** Rôles autorisés à supprimer un pointage (`DELETE /controles/:id`, droit `pointages.supprimer`). */
+export const ROLES_SUPPRESSION_POINTAGES = PERMISSIONS['pointages.supprimer'];
 
 export const pointagesService = {
   /** Pointages filtrés par date, statut, méthode, enseignant, salle… */
-  liste: (params: ParametresPointages = {}) => lister<Controle>('/controles', { ...params }),
+  liste: (params: ParametresPointages = {}) => lister<Controle>('/controles', params),
 
   /** Pointage détaillé. */
   lire: (id: string) => lire<Controle>(`/controles/${id}`),
@@ -73,12 +74,19 @@ export const pointagesService = {
 
 /**
  * Un pointage est modifiable par l'agent qui l'a fait, et par l'administration
- * et la direction. L'API tranche de la même façon, et seuls les rôles autorisés
- * à corriger peuvent le faire.
+ * et la direction. L'API tranche de la même façon.
+ *
+ * `autorise` vient de la matrice des droits (`pointages.corriger`) ; `role` et
+ * `agentId` portent la règle du service : hors administration et direction,
+ * on ne corrige que son propre pointage.
  */
-export function peutCorriger(controle: Controle, roles: string[], agentId?: string | null): boolean {
-  const autorises = roles.filter((role) => (ROLES_CORRECTION_POINTAGES as readonly string[]).includes(role));
-  if (!autorises.length) return false;
-  if (autorises.includes('ADMIN') || autorises.includes('DIRECTION')) return true;
+export function peutCorriger(
+  controle: Controle,
+  autorise: boolean,
+  role?: string | null,
+  agentId?: string | null,
+): boolean {
+  if (!autorise) return false;
+  if (role === 'ADMIN' || role === 'DIRECTION') return true;
   return !!agentId && controle.controleurId === agentId;
 }

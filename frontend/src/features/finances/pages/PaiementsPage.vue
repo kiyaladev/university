@@ -197,12 +197,7 @@ import TableauPaiements from '../components/TableauPaiements.vue';
 import CartesPaiements from '../components/CartesPaiements.vue';
 import DialogueDetailPaiement from '../components/DialogueDetailPaiement.vue';
 import DialogueAnnulationPaiement from '../components/DialogueAnnulationPaiement.vue';
-import {
-  ROUTE_SOURCE,
-  listeInscriptions,
-  paiementsService,
-  routeModule,
-} from '../services/paiements';
+import { ROUTE_SOURCE, paiementsService, routeModule } from '../services/paiements';
 import {
   LIBELLE_MODE_PAIEMENT,
   LIBELLE_OPERATEUR_MM,
@@ -210,6 +205,7 @@ import {
   dateLisible,
   montantLisible,
 } from '@/shared/utils/libelles';
+import { elements } from '@/shared/utils/collections';
 import type { Etudiant, Inscription, ModePaiement, Paiement, StatutPaiement, ChipFiltre } from '@/types';
 
 const $q = useQuasar();
@@ -528,7 +524,7 @@ async function retirerCible() {
 async function appliquerDossierCible(id: string) {
   try {
     const reponse = await paiementsService.inscriptions();
-    dossierCible.value = listeInscriptions(reponse).find((i) => i.id === id) ?? null;
+    dossierCible.value = elements(reponse).find((i) => i.id === id) ?? null;
   } catch {
     dossierCible.value = null;
   }

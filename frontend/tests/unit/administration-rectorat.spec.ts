@@ -140,10 +140,7 @@ describe('features/administration/services/rectorat — évolution de la masse s
     // La première feuille n'a ni validation ni paiement : elle n'est pas comptée.
     expect(points.reduce((acc, p) => acc + p.total, 0)).toBe(0);
 
-    const points2 = evolutionMasseSalariale(
-      [feuille('f1', 100, '2026-01-10T00:00:00Z'), horsPeriode],
-      maintenant,
-    );
+    const points2 = evolutionMasseSalariale([feuille('f1', 100, '2026-01-10T00:00:00Z'), horsPeriode], maintenant);
     expect(points2.reduce((acc, p) => acc + p.total, 0)).toBe(100);
   });
 });

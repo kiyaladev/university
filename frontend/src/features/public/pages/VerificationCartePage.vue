@@ -124,10 +124,7 @@ import { useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { dateHeureLisible, dateLongueLisible } from '@/shared/utils/format';
 import LecteurQr from '@/shared/components/LecteurQr.vue';
-import {
-  verificationService,
-  type ResultatVerificationCarte,
-} from '@/features/public/services/verification';
+import { verificationService, type ResultatVerificationCarte } from '@/features/public/services/verification';
 
 /**
  * Page publique de vérification : atteinte par le QR imprimé sur la carte

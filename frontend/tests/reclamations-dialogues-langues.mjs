@@ -13,8 +13,8 @@ try {
   page.setDefaultTimeout(10000);
   const errors = [];
   const apiFailures = [];
-  page.on('pageerror', error => errors.push(error.message));
-  page.on('response', response => {
+  page.on('pageerror', (error) => errors.push(error.message));
+  page.on('response', (response) => {
     if (response.url().includes('/api/') && response.status() >= 400) {
       apiFailures.push({ status: response.status(), path: new URL(response.url()).pathname });
     }
@@ -22,7 +22,7 @@ try {
   await page.goto(base + '/#/connexion', { waitUntil: 'networkidle' });
   await page.locator('input[type=email]').fill('direction@unipresence.gn');
   await page.locator('input[type=password]').fill('Passer@2026');
-  const loginResponse = page.waitForResponse(response => response.url().includes('/api/auth/login'));
+  const loginResponse = page.waitForResponse((response) => response.url().includes('/api/auth/login'));
   await page.locator('button[type=submit]').click();
   const login = await loginResponse;
   assert.ok(login.status() >= 200 && login.status() < 300, `Connexion QA refusée (${login.status()})`);

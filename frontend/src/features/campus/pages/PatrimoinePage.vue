@@ -187,12 +187,7 @@ import PatrimoineEquipementsPanneau from '../components/PatrimoineEquipementsPan
 import PatrimoineCategoriesPanneau from '../components/PatrimoineCategoriesPanneau.vue';
 import PatrimoineReparationsPanneau from '../components/PatrimoineReparationsPanneau.vue';
 import PatrimoineDetailsDialogue from '../components/PatrimoineDetailsDialogue.vue';
-import type {
-  CategoriePatrimoine,
-  EquipementPatrimoine,
-  ReparationMateriel,
-  TableauBordPatrimoine,
-} from '@/types';
+import type { CategoriePatrimoine, EquipementPatrimoine, ReparationMateriel, TableauBordPatrimoine } from '@/types';
 
 const $q = useQuasar();
 const auth = useAuthStore();

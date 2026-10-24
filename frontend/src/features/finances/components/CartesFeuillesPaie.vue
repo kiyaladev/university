@@ -48,7 +48,14 @@
             />
           </template>
           <template v-if="peutPayer(f)">
-            <q-btn flat dense no-caps icon="payments" :label="$t('paie.actions.markPaid')" @click.stop="emit('payer', f)" />
+            <q-btn
+              flat
+              dense
+              no-caps
+              icon="payments"
+              :label="$t('paie.actions.markPaid')"
+              @click.stop="emit('payer', f)"
+            />
           </template>
           <q-btn
             v-if="peutImprimer"
@@ -109,12 +116,7 @@
 import PastilleStatut from '@/shared/components/PastilleStatut.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
 import { useAuthStore } from '@/stores/auth';
-import {
-  peutCalculerFeuille,
-  peutPayerFeuille,
-  peutSupprimerFeuille,
-  peutValiderFeuille,
-} from '../services/paie';
+import { peutCalculerFeuille, peutPayerFeuille, peutSupprimerFeuille, peutValiderFeuille } from '../services/paie';
 import { dateLisible, montantLisible } from '@/shared/utils/libelles';
 import type { FeuillePaie } from '@/types';
 

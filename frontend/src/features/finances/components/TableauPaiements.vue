@@ -174,12 +174,7 @@ import { type QTableColumn } from 'quasar';
 import PastilleStatut from '@/shared/components/PastilleStatut.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
 import { useAuthStore } from '@/stores/auth';
-import {
-  peutAnnulerPaiement,
-  peutSimulerPaiement,
-  routeModule,
-  sourceDe,
-} from '../services/paiements';
+import { peutAnnulerPaiement, peutSimulerPaiement, routeModule, sourceDe } from '../services/paiements';
 import { LIBELLE_MODE_PAIEMENT, LIBELLE_OPERATEUR_MM, dateHeureLisible, montantLisible } from '@/shared/utils/libelles';
 import type { Paiement } from '@/types';
 

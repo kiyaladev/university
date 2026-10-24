@@ -25,11 +25,7 @@ describe('features/public/services/portail', () => {
     const resultat = await portailService.demanderCode({ telephone: '622000000' });
 
     expect(resultat).toEqual({ message: 'ok' });
-    expect(api.post).toHaveBeenCalledWith(
-      '/portail/otp',
-      { telephone: '622000000' },
-      { silencieux: true },
-    );
+    expect(api.post).toHaveBeenCalledWith('/portail/otp', { telephone: '622000000' }, { silencieux: true });
   });
 
   it('laisse remonter l’erreur : la page l’affiche dans son bandeau', async () => {

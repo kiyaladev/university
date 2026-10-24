@@ -93,7 +93,7 @@ export function messageErreurElection(e: unknown, defaut: string): string {
  */
 export const electionsService = {
   liste: (params: ParametresListeElections, silencieux = false) =>
-    lister<Election>('/elections', { ...params }, { silencieux }),
+    lister<Election>('/elections', params, { silencieux }),
 
   actives: (silencieux = false) => lire<Election[]>('/elections/actives', undefined, { silencieux }),
 
@@ -118,8 +118,7 @@ export const electionsService = {
   voter: (payload: { electionId: string; bulletin: Array<{ candidatId: string }> }, silencieux = false) =>
     creer<{ scrutinId: string; nbVotes: number }>('/elections/vote', payload, { silencieux }),
 
-  transition: (id: string, action: 'ouvrir' | 'clore' | 'proclamer') =>
-    creer<Election>(`/elections/${id}/${action}`),
+  transition: (id: string, action: 'ouvrir' | 'clore' | 'proclamer') => creer<Election>(`/elections/${id}/${action}`),
 
   supprimerCandidat: (electionId: string, candidatId: string) =>
     supprimer(`/elections/${electionId}/candidats/${candidatId}`),

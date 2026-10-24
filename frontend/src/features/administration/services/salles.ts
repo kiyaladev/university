@@ -34,7 +34,7 @@ export interface SallesParams {
 
 export const sallesService = {
   /** Salles, paginées par le serveur. */
-  liste: (params: SallesParams = {}) => lister<Salle>('/salles', { ...params }),
+  liste: (params: SallesParams = {}) => lister<Salle>('/salles', params),
 
   /** Création d'une salle. */
   creer: (corps: SalleSaisie) => creer<Salle>('/salles', corps),

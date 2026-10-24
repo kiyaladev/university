@@ -125,12 +125,7 @@
     </template>
   </q-table>
 
-  <barre-pagination
-    v-model:page="hist.page"
-    v-model:page-size="hist.pageSize"
-    :total="hist.total"
-    :show-all="false"
-  />
+  <barre-pagination v-model:page="hist.page" v-model:page-size="hist.pageSize" :total="hist.total" :show-all="false" />
 </template>
 
 <script setup lang="ts">

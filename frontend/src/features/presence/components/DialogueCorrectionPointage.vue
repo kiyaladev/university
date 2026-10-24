@@ -48,12 +48,7 @@
         dense
         :label="$t('correctionsPointages.formDialog.headcount')"
       />
-      <q-input
-        v-model="form.thematiqueTraitee"
-        outlined
-        dense
-        :label="$t('correctionsPointages.formDialog.topic')"
-      />
+      <q-input v-model="form.thematiqueTraitee" outlined dense :label="$t('correctionsPointages.formDialog.topic')" />
       <champ-recherche
         v-model="form.enseignantRemplacantId"
         endpoint="/enseignants"
@@ -96,9 +91,7 @@ const $q = useQuasar();
 const form = ref<CorrectionPointage>({});
 const envoi = ref(false);
 
-const optionsStatut = computed(() =>
-  optionsDepuis(LIBELLE_STATUT_PRESENCE).filter((o) => o.value !== 'NON_CONTROLE'),
-);
+const optionsStatut = computed(() => optionsDepuis(LIBELLE_STATUT_PRESENCE).filter((o) => o.value !== 'NON_CONTROLE'));
 
 function libelleEnseignant(enseignant: { nom?: string; prenom?: string; matricule?: string }): string {
   const nom = `${enseignant?.prenom ?? ''} ${enseignant?.nom ?? ''}`.trim();

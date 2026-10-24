@@ -9,10 +9,7 @@ const api = vi.hoisted(() => ({
 
 vi.mock('../../src/boot/axios', () => ({ api }));
 
-import {
-  tarifsDemandeService,
-  tarifsDepuis,
-} from '../../src/features/administration/services/tarifs-demande';
+import { tarifsDemandeService, tarifsDepuis } from '../../src/features/administration/services/tarifs-demande';
 
 beforeEach(() => {
   api.get.mockReset();

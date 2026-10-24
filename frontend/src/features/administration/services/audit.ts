@@ -52,5 +52,5 @@ export function bornesAudit(filtres: FiltresAudit): { dateDebut?: string; dateFi
 
 export const auditService = {
   /** Journal paginé et filtré. */
-  liste: (params: ParametresAudit) => lister<AuditRow>('/controles/audit', { ...params }, { silencieux: true }),
+  liste: (params: ParametresAudit) => lister<AuditRow>('/controles/audit', params, { silencieux: true }),
 };

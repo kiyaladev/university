@@ -69,6 +69,5 @@ export const importsService = {
     creer<Apercu>('/imports/referentiels/previsualiser', corps, { timeout: 60_000 }),
 
   /** Écrit les lignes valides du fichier. */
-  appliquer: (corps: ContenuImport) =>
-    creer<Rapport>('/imports/referentiels/appliquer', corps, { timeout: 120_000 }),
+  appliquer: (corps: ContenuImport) => creer<Rapport>('/imports/referentiels/appliquer', corps, { timeout: 120_000 }),
 };

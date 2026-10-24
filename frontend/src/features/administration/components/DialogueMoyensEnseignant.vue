@@ -4,9 +4,7 @@
       <q-card-section>
         <div class="text-h6">{{ $t('enseignants.moyensDialog.title') }}</div>
         <div class="text-caption text-grey-7">
-          {{
-            $t('enseignants.moyensDialog.subtitle', { nom: enseignant?.nom, prenom: enseignant?.prenom })
-          }}
+          {{ $t('enseignants.moyensDialog.subtitle', { nom: enseignant?.nom, prenom: enseignant?.prenom }) }}
         </div>
       </q-card-section>
 

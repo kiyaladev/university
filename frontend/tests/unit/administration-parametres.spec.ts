@@ -9,10 +9,7 @@ const api = vi.hoisted(() => ({
 
 vi.mock('../../src/boot/axios', () => ({ api }));
 
-import {
-  parametresService,
-  referenceParametres,
-} from '../../src/features/administration/services/parametres';
+import { parametresService, referenceParametres } from '../../src/features/administration/services/parametres';
 
 beforeEach(() => {
   api.get.mockReset();

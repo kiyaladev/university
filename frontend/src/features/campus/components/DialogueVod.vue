@@ -82,9 +82,7 @@ async function soumettre() {
   };
   enregistrement.value = true;
   try {
-    const data = enEdition.value
-      ? await vodService.modifier(props.vod!.id, corps)
-      : await vodService.creer(corps);
+    const data = enEdition.value ? await vodService.modifier(props.vod!.id, corps) : await vodService.creer(corps);
     $q.notify({
       type: 'positive',
       message: t(enEdition.value ? 'vodPage.formDialog.updated' : 'vodPage.formDialog.created'),

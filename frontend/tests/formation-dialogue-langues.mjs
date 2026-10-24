@@ -13,8 +13,8 @@ try {
   page.setDefaultTimeout(10000);
   const errors = [];
   const apiFailures = [];
-  page.on('pageerror', error => errors.push(error.message));
-  page.on('response', response => {
+  page.on('pageerror', (error) => errors.push(error.message));
+  page.on('response', (response) => {
     if (response.url().includes('/api/') && response.status() >= 400) {
       apiFailures.push({ status: response.status(), path: new URL(response.url()).pathname });
     }
@@ -22,7 +22,7 @@ try {
   await page.goto(base + '/#/connexion', { waitUntil: 'networkidle' });
   await page.locator('input[type=email]').fill('direction@unipresence.gn');
   await page.locator('input[type=password]').fill('Passer@2026');
-  const loginResponse = page.waitForResponse(response => response.url().includes('/api/auth/login'));
+  const loginResponse = page.waitForResponse((response) => response.url().includes('/api/auth/login'));
   await page.locator('button[type=submit]').click();
   const login = await loginResponse;
   assert.ok(login.status() >= 200 && login.status() < 300, `Connexion QA refusée (${login.status()})`);
@@ -31,7 +31,15 @@ try {
   await page.getByRole('button', { name: 'Nouvelle formation', exact: true }).click();
   const dialog = page.locator('.q-dialog');
   const frText = await dialog.innerText();
-  for (const text of ['Nouvelle formation', 'Présentation', 'Titre de la formation *', 'Tarif', 'Prix (GNF) *', 'Déroulement', 'Capacité (places)']) {
+  for (const text of [
+    'Nouvelle formation',
+    'Présentation',
+    'Titre de la formation *',
+    'Tarif',
+    'Prix (GNF) *',
+    'Déroulement',
+    'Capacité (places)',
+  ]) {
     assert.ok(frText.includes(text), `Libellé français absent : ${text}`);
   }
   await dialog.getByRole('button', { name: 'Annuler', exact: true }).click();
@@ -40,7 +48,15 @@ try {
   await page.getByText('English', { exact: true }).click();
   await page.getByRole('button', { name: 'New course', exact: true }).click();
   const enText = await dialog.innerText();
-  for (const text of ['New course', 'Overview', 'Course title *', 'Price', 'Price (GNF) *', 'Schedule', 'Capacity (seats)']) {
+  for (const text of [
+    'New course',
+    'Overview',
+    'Course title *',
+    'Price',
+    'Price (GNF) *',
+    'Schedule',
+    'Capacity (seats)',
+  ]) {
     assert.ok(enText.includes(text), `English label missing: ${text}`);
   }
   assert.deepEqual(errors, []);

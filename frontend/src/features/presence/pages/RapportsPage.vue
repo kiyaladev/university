@@ -104,11 +104,7 @@
     <q-tab-panels v-model="onglet" animated class="bg-transparent q-mt-md">
       <!-- Assiduité -->
       <q-tab-panel name="assiduite" class="q-pa-none">
-        <onglet-assiduite
-          :rapport="assiduite"
-          :chargement="chargement"
-          @imprimer-fiche="imprimerFiche"
-        />
+        <onglet-assiduite :rapport="assiduite" :chargement="chargement" @imprimer-fiche="imprimerFiche" />
       </q-tab-panel>
 
       <!-- Volume horaire -->

@@ -1,4 +1,5 @@
 import { creer, lire, modifier, supprimer } from '@/shared/services/http';
+import { PERMISSIONS } from '@/navigation/permissions';
 
 /**
  * Moyens de preuve de présence des enseignants (`/attestation`).
@@ -57,11 +58,11 @@ export interface GabaritEmpreinte {
   doigt?: string | null;
 }
 
-/** Administration et direction : gestion des appareils de contrôle. */
-export const ROLES_GESTION_APPAREILS = ['ADMIN', 'DIRECTION'] as const;
+/** Administration et direction : gestion des appareils de contrôle (droit `attestation.appareils`). */
+export const ROLES_GESTION_APPAREILS = PERMISSIONS['attestation.appareils'];
 
-/** Rôles qui gèrent les moyens d'un enseignant. */
-export const ROLES_GESTION_MOYENS = ['ADMIN', 'SCOLARITE', 'CHEF_DEPARTEMENT', 'DIRECTION'] as const;
+/** Rôles qui gèrent les moyens d'un enseignant (droit `attestation.moyens`). */
+export const ROLES_GESTION_MOYENS = PERMISSIONS['attestation.moyens'];
 
 export const attestationService = {
   /** Appareils de contrôle enrôlés. */
@@ -72,10 +73,7 @@ export const attestationService = {
 
   /** Moyens d'attestation d'un enseignant, pour la séance en cours. */
   moyens: (enseignantId: string, seanceId?: string) =>
-    lire<MoyensAttestation>(
-      `/attestation/enseignants/${enseignantId}/moyens`,
-      seanceId ? { seanceId } : undefined,
-    ),
+    lire<MoyensAttestation>(`/attestation/enseignants/${enseignantId}/moyens`, seanceId ? { seanceId } : undefined),
 
   /**
    * Gabarit biométrique de l'enseignant, pour la comparaison en salle.
@@ -83,11 +81,9 @@ export const attestationService = {
    * Silencieux : l'écran de pointage affiche l'échec dans son propre bandeau.
    */
   gabarit: (enseignantId: string, seanceId?: string) =>
-    lire<GabaritEmpreinte>(
-      `/attestation/enseignants/${enseignantId}/gabarit`,
-      seanceId ? { seanceId } : undefined,
-      { silencieux: true },
-    ),
+    lire<GabaritEmpreinte>(`/attestation/enseignants/${enseignantId}/gabarit`, seanceId ? { seanceId } : undefined, {
+      silencieux: true,
+    }),
 
   /** Fixe le code personnel de l'enseignant (4 à 6 chiffres). */
   definirCodePin: (enseignantId: string, code: string) =>

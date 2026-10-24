@@ -142,13 +142,9 @@ import { type QTableColumn } from 'quasar';
 import PastilleStatut from '@/shared/components/PastilleStatut.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
 import { useAuthStore } from '@/stores/auth';
-import {
-  peutCalculerFeuille,
-  peutPayerFeuille,
-  peutSupprimerFeuille,
-  peutValiderFeuille,
-} from '../services/paie';
-import { dateLisible, montantLisible } from '@/shared/utils/libelles';import type { FeuillePaie } from '@/types';
+import { peutCalculerFeuille, peutPayerFeuille, peutSupprimerFeuille, peutValiderFeuille } from '../services/paie';
+import { dateLisible, montantLisible } from '@/shared/utils/libelles';
+import type { FeuillePaie } from '@/types';
 
 defineProps<{
   lignes: FeuillePaie[];

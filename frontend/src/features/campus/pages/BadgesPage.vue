@@ -126,16 +126,8 @@ function ouvrirRallonge(b: BadgeAcces) {
 
     <dialogue-badge v-model="dialogEdition" :badge="badgeEnEdition" @enregistre="liste.recharger()" />
 
-    <badge-dialogue-annulation
-      v-model="dialogAnnulation"
-      :badge="badgeAnnulation"
-      @enregistre="liste.recharger()"
-    />
+    <badge-dialogue-annulation v-model="dialogAnnulation" :badge="badgeAnnulation" @enregistre="liste.recharger()" />
 
-    <badge-dialogue-prolongation
-      v-model="dialogRallonge"
-      :badge="badgeRallonge"
-      @enregistre="liste.recharger()"
-    />
+    <badge-dialogue-prolongation v-model="dialogRallonge" :badge="badgeRallonge" @enregistre="liste.recharger()" />
   </q-page>
 </template>

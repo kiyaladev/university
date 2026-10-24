@@ -25,15 +25,13 @@ export interface ParametresFeuillesPaie {
 
 export const paieService = {
   /** Feuilles paginées. */
-  liste: (params: ParametresFeuillesPaie = {}) => lister<FeuillePaie>('/feuilles-paie', { ...params }),
+  liste: (params: ParametresFeuillesPaie = {}) => lister<FeuillePaie>('/feuilles-paie', params),
 
   /** Crée une feuille pour un mois et une année. */
-  creer: (corps: { mois: number | null; annee: number | null }) =>
-    creer<FeuillePaie>('/feuilles-paie', corps),
+  creer: (corps: { mois: number | null; annee: number | null }) => creer<FeuillePaie>('/feuilles-paie', corps),
 
   /** Action du cycle de vie : recalcul, validation ou paiement. */
-  action: (id: string, action: ActionFeuillePaie) =>
-    creer<FeuillePaie>(`/feuilles-paie/${id}/${action}`),
+  action: (id: string, action: ActionFeuillePaie) => creer<FeuillePaie>(`/feuilles-paie/${id}/${action}`),
 
   /** Supprime une feuille. */
   supprimer: (id: string) => supprimer(`/feuilles-paie/${id}`),

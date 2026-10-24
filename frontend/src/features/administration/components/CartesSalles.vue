@@ -89,12 +89,7 @@
         </q-card-actions>
       </q-card>
     </div>
-    <etat-vide
-      v-if="!salles.length && !chargement"
-      class="col-12"
-      icone="meeting_room"
-      :titre="titreVide"
-    >
+    <etat-vide v-if="!salles.length && !chargement" class="col-12" icone="meeting_room" :titre="titreVide">
       <template #action>
         <q-btn
           v-if="peutGerer && !filtresActifs"

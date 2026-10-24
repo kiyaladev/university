@@ -75,9 +75,7 @@ const promotions = ref<Awaited<ReturnType<typeof referentiels.promotions>>>([]);
 const form = ref<FraisSaisie>({ anneeId: '', promotionId: '', montant: 0, devise: DEVISE });
 const envoi = ref(false);
 
-const optionsAnnees = computed(() =>
-  annees.value.map((a) => ({ value: a.id, label: a.libelle })),
-);
+const optionsAnnees = computed(() => annees.value.map((a) => ({ value: a.id, label: a.libelle })));
 
 /** L'API n'accepte qu'une promotion de l'année choisie : on filtre sur elle. */
 const optionsPromotions = computed(() =>

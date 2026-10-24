@@ -15,7 +15,11 @@
             />
           </div>
           <div class="col-6">
-            <champ-date v-model="tournee.dateFin" :label="$t('common.actions.to')" @update:model-value="apercu = null" />
+            <champ-date
+              v-model="tournee.dateFin"
+              :label="$t('common.actions.to')"
+              @update:model-value="apercu = null"
+            />
           </div>
         </div>
         <q-select

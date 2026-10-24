@@ -1,4 +1,5 @@
 import { lire } from '@/shared/services/http';
+import { elements, type Collection } from '@/shared/utils/collections';
 import type { Departement } from '@/types';
 
 /**
@@ -15,14 +16,11 @@ export interface OptionSimple {
   value: string;
 }
 
-/** Le backend peut répondre `{ data: [...] }` comme un tableau nu. */
-type ReponseListe<T> = T[] | { data?: T[] };
-
 export const bibliothequePubliqueService = {
   /** Départements proposés par le filtre de la vitrine. */
   departements: async (): Promise<Departement[]> => {
-    const reponse = await lire<ReponseListe<Departement>>('/departements/public', {}, { silencieux: true });
-    return Array.isArray(reponse) ? reponse : (reponse.data ?? []);
+    const reponse = await lire<Collection<Departement>>('/departements/public', {}, { silencieux: true });
+    return elements(reponse);
   },
 };
 

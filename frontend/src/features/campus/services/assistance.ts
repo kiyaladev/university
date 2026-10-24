@@ -52,7 +52,7 @@ export interface StatsTickets {
 
 export const equipementsService = {
   /** Parc des équipements : l'API filtre mais ne pagine pas cette ressource. */
-  liste: (params: ParametresEquipements = {}) => lister<EquipementCampus>('/equipements', { ...params }),
+  liste: (params: ParametresEquipements = {}) => lister<EquipementCampus>('/equipements', params),
 
   creer: (corps: CorpsEquipement) => creer<EquipementCampus>('/equipements', corps),
 
@@ -66,7 +66,7 @@ export const equipementsService = {
 
 export const ticketsService = {
   /** Tickets de support : la liste est paginée côté serveur. */
-  liste: (params: ParametresTickets = {}) => lister<TicketSupport>('/tickets', { ...params }),
+  liste: (params: ParametresTickets = {}) => lister<TicketSupport>('/tickets', params),
 
   /** Ouvre un ticket d'incident. */
   creer: (corps: CorpsTicket) => creer<TicketSupport>('/tickets', corps),

@@ -45,7 +45,7 @@ export interface CreneauSaisi {
 
 export const creneauxService = {
   /** Emploi du temps d'une semaine, jour par jour. */
-  emploiDuTemps: (params: ParametresCreneaux = {}) => lire<JourEmploiDuTemps[]>('/creneaux/emploi-du-temps', { ...params }),
+  emploiDuTemps: (params: ParametresCreneaux = {}) => lire<JourEmploiDuTemps[]>('/creneaux/emploi-du-temps', params),
 
   /** Crée un créneau. */
   creer: (corps: CreneauSaisi) => creer<Creneau>('/creneaux', corps, { silencieux: true }),

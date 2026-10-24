@@ -23,7 +23,7 @@ export interface ParametresAffectations {
 
 export const affectationsService = {
   /** Affectations filtrées, avec leurs enseignants, matières et promotions. */
-  liste: (params: ParametresAffectations = {}) => lister<Affectation>('/affectations', { ...params }),
+  liste: (params: ParametresAffectations = {}) => lister<Affectation>('/affectations', params),
 
   /**
    * Toutes les affectations, en un seul appel.

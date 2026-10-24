@@ -10,7 +10,8 @@
         @click="emit('ouvrir', c)"
       >
         <span class="champ creneau-ligne__heure">
-          <span class="lettrage chiffres">{{ c.heureDebut }}</span>→
+          <span class="lettrage chiffres">{{ c.heureDebut }}</span
+          >→
           <span class="pochoir chiffres">{{ c.heureFin }}</span>
         </span>
         <span class="creneau-ligne__corps">

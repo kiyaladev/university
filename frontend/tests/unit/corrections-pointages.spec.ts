@@ -88,11 +88,12 @@ describe('features/presence/services/pointages', () => {
   });
 
   it('n’offre la correction qu’à l’agent concerné, à l’administration et à la direction', () => {
-    expect(peutCorriger(pointage, ['ADMIN'], 'u2')).toBe(true);
-    expect(peutCorriger(pointage, ['DIRECTION'], 'u2')).toBe(true);
-    expect(peutCorriger(pointage, ['CONTROLEUR'], 'u1')).toBe(true);
-    expect(peutCorriger(pointage, ['CONTROLEUR'], 'u2')).toBe(false);
-    expect(peutCorriger(pointage, ['SCOLARITE'], 'u1')).toBe(false);
+    expect(peutCorriger(pointage, true, 'ADMIN', 'u2')).toBe(true);
+    expect(peutCorriger(pointage, true, 'DIRECTION', 'u2')).toBe(true);
+    expect(peutCorriger(pointage, true, 'CONTROLEUR', 'u1')).toBe(true);
+    expect(peutCorriger(pointage, true, 'CONTROLEUR', 'u2')).toBe(false);
+    // Sans le droit `pointages.corriger`, personne ne corrige.
+    expect(peutCorriger(pointage, false, 'SCOLARITE', 'u1')).toBe(false);
   });
 
   it('aligne les rôles sur les @Roles de l’API', () => {

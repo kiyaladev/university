@@ -1,11 +1,5 @@
 import { creer, lire } from '@/shared/services/http';
-import type {
-  FeuillePaie,
-  Liste,
-  StatistiqueMesrs,
-  TableauBordPatrimoine,
-  TableauBordRectorat,
-} from '@/types';
+import type { FeuillePaie, Liste, StatistiqueMesrs, TableauBordPatrimoine, TableauBordRectorat } from '@/types';
 
 /**
  * Tableau de bord du rectorat (`/rectorat`) et bilans MESRS.
@@ -76,10 +70,7 @@ export function listeBilansMesrs(reponse: StatistiqueMesrs[] | Liste<Statistique
  * La fonction est pure : elle ne dépend ni de l'API ni de la langue active
  * (le libellé du mois est ajouté par l'écran).
  */
-export function evolutionMasseSalariale(
-  feuilles: FeuillePaie[],
-  maintenant: Date = new Date(),
-): PointMasseSalariale[] {
+export function evolutionMasseSalariale(feuilles: FeuillePaie[], maintenant: Date = new Date()): PointMasseSalariale[] {
   const mois: PointMasseSalariale[] = [];
   for (let i = MOIS_EVOLUTION_MASSE - 1; i >= 0; i--) {
     const d = new Date(maintenant.getFullYear(), maintenant.getMonth() - i, 1);
