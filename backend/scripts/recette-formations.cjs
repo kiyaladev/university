@@ -86,7 +86,9 @@ async function main() {
     include: { paiement: true },
   });
   assert.equal(paid.paiement.statut, 'REUSSI');
-  assert.equal(paid.paiement.montant, 5000);
+  // Le montant est stocké en `numeric(14,2)` : Prisma le relit comme un objet
+  // `Decimal` (que l'API sérialise en nombre). On compare donc au nombre.
+  assert.equal(Number(paid.paiement.montant), 5000);
   assert.equal((await request(null, 'GET', '/formations/publiques/' + formationId)).placesRestantes, 0);
   const certificate = await request(admin, 'GET', `/formations/${accepted.inscriptionId}/certificat`);
   assert.ok(certificate.includes(accepted.numero));

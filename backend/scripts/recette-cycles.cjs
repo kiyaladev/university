@@ -12,7 +12,18 @@ if (
   throw Error('API et base QA locales obligatoires');
 const db = new PrismaClient();
 const checks = [];
-const fixtures = { etudiants: [], paiements: [], demandes: [], reservations: [], reclamations: [] };
+const fixtures = {
+  etudiants: [],
+  inscriptions: [],
+  paiements: [],
+  demandes: [],
+  reservations: [],
+  reclamations: [],
+  evaluations: [],
+  deliberations: [],
+  seances: [],
+  affectations: [],
+};
 function check(name, value, expected) {
   assert.deepEqual(value, expected, name);
   checks.push({ name, result: 'OK' });
@@ -75,6 +86,7 @@ async function login(email, password = 'Passer@2026') {
       promotionId: fixtures.promotion.id,
       montantFrais: 1000,
     });
+    fixtures.inscriptions.push(inscription.id);
     check('Inscription initiale en attente de paiement', inscription.statut, 'EN_ATTENTE_PAIEMENT');
     await call(`/inscriptions/${inscription.id}/valider`, sco, 'PUT', {}, 400);
     const paiement = await call('/paiements', sco, 'POST', {
@@ -133,6 +145,7 @@ async function login(email, password = 'Passer@2026') {
       promotionId: fixtures.promotion.id,
       anneeId: fixtures.annee.id,
     });
+    fixtures.evaluations.push(evaluation.id);
     await call(`/evaluations/${evaluation.id}`, chef, 'GET', undefined, 404);
     await call(`/notes/evaluation/${evaluation.id}`, chef, 'GET', undefined, 404);
     await call(
@@ -161,6 +174,7 @@ async function login(email, password = 'Passer@2026') {
       session: 'NORMALE',
     });
     const delibId = delib.id;
+    fixtures.deliberations.push(delibId);
     const resultats = await call(`/deliberations/${delibId}`, sco);
     check('Moyenne délibérée', resultats.lignes[0].moyenne, 16);
     check('Décision du jury calculée', resultats.lignes[0].decision, 'ADMIS');
@@ -245,6 +259,7 @@ async function login(email, password = 'Passer@2026') {
         volumeHorairePrevu: 10,
       },
     });
+    fixtures.affectations.push(fixtures.affectation.id);
     fixtures.seance = await db.seance.create({
       data: {
         affectationId: fixtures.affectation.id,
@@ -257,6 +272,7 @@ async function login(email, password = 'Passer@2026') {
         type: 'CM',
       },
     });
+    fixtures.seances.push(fixtures.seance.id);
     await db.controle.create({
       data: {
         seanceId: fixtures.seance.id,
@@ -271,7 +287,10 @@ async function login(email, password = 'Passer@2026') {
     const calc = await call(`/feuilles-paie/${feuille.id}/calculer`, sco, 'POST', {});
     const ligne = calc.lignes.find((row) => row.enseignantId === teacher.id);
     check('Paie : deux heures de service fait', ligne.heuresReelles, 2);
-    check('Paie : montant calculé au taux du vacataire', ligne.montantNet, 2 * teacher.tauxHoraire);
+    // Le taux horaire est stocké en `numeric(14,2)` : Prisma le relit comme un
+    // objet `Decimal`, que l'API sérialise en nombre. On compare donc au
+    // nombre attendu.
+    check('Paie : montant calculé au taux du vacataire', ligne.montantNet, 2 * Number(teacher.tauxHoraire));
     const recalcul = await call(`/feuilles-paie/${feuille.id}/calculer`, sco, 'POST', {});
     check('Recalcul idempotent de la paie', recalcul.montantTotal, calc.montantTotal);
     await call(`/feuilles-paie/${feuille.id}/valider`, direction, 'POST', {});
@@ -286,11 +305,47 @@ async function login(email, password = 'Passer@2026') {
     );
     console.log(JSON.stringify({ checks: checks.length, result: 'OK' }));
   } finally {
+    // Nettoyage « enfants d'abord » : les relations sont en `Restrict`, la
+    // suppression d'un parent échoue tant qu'un enfant le référence. On
+    // supprime donc dans l'ordre inverse des créations, et l'on ne laisse
+    // rien derrière.
     await db.reclamation.deleteMany({ where: { id: { in: fixtures.reclamations } } });
     await db.reservationSalle.deleteMany({ where: { id: { in: fixtures.reservations } } });
     await db.demandeDocument.deleteMany({ where: { id: { in: fixtures.demandes } } });
+    // L'attestation est référencée par la demande (Restrict) : la demande est
+    // déjà supprimée, l'attestation peut l'être à son tour.
+    await db.attestation.deleteMany({ where: { inscriptionId: { in: fixtures.inscriptions } } });
     await db.paiement.deleteMany({ where: { id: { in: fixtures.paiements.filter(Boolean) } } });
     if (fixtures.feuille) await db.feuillePaie.delete({ where: { id: fixtures.feuille } });
+    await db.controle.deleteMany({ where: { seanceId: { in: fixtures.seances } } });
+    await db.seance.deleteMany({ where: { id: { in: fixtures.seances } } });
+    await db.affectation.deleteMany({ where: { id: { in: fixtures.affectations } } });
+    // Notes et lignes de délibération référencent les inscriptions (Restrict).
+    await db.note.deleteMany({ where: { inscriptionId: { in: fixtures.inscriptions } } });
+    await db.evaluation.deleteMany({ where: { id: { in: fixtures.evaluations } } });
+    await db.deliberation.deleteMany({ where: { id: { in: fixtures.deliberations } } });
+    await db.inscription.deleteMany({ where: { id: { in: fixtures.inscriptions } } });
+    await db.notification.deleteMany({ where: { etudiantId: { in: fixtures.etudiants } } });
+    await db.auditLog.deleteMany({
+      where: {
+        entiteId: {
+          in: [
+            ...fixtures.inscriptions,
+            ...fixtures.etudiants,
+            ...fixtures.demandes,
+            ...fixtures.reservations,
+            ...fixtures.reclamations,
+            ...fixtures.evaluations,
+            ...fixtures.deliberations,
+            ...fixtures.seances,
+            ...fixtures.affectations,
+            ...fixtures.paiements.filter(Boolean),
+            ...(fixtures.feuille ? [fixtures.feuille] : []),
+          ],
+        },
+      },
+    });
+    if (fixtures.promotion) await db.promotion.delete({ where: { id: fixtures.promotion.id } });
     if (fixtures.annee) await db.anneeAcademique.delete({ where: { id: fixtures.annee.id } });
     await db.user.deleteMany({ where: { etudiant: { id: { in: fixtures.etudiants } } } });
     await db.etudiant.deleteMany({ where: { id: { in: fixtures.etudiants } } });

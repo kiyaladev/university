@@ -122,7 +122,9 @@ async function main() {
     include: { paiement: true },
   });
   payments.push(persisted.paiementId);
-  assert.equal(persisted.paiement.montant, 1250);
+  // Le montant est stocké en `numeric(14,2)` : Prisma le relit comme un objet
+  // `Decimal` (que l'API sérialise en nombre). On compare donc au nombre.
+  assert.equal(Number(persisted.paiement.montant), 1250);
   assert.equal(persisted.paiement.devise, 'GNF');
   assert.equal(persisted.paiement.statut, 'REUSSI');
   assert.equal(persisted.paiement.mode, 'ESPECES');
@@ -140,7 +142,9 @@ async function main() {
     await request(admin, 'PUT', `/recettes/${cash.id}`, fields, 409);
   }
   await request(admin, 'PUT', `/recettes/${cash.id}`, { description: 'Correction documentaire privée' });
-  await request(admin, 'POST', `/paiements/${persisted.paiementId}/annuler`, { motif: 'Annulation de recette' }, 400);
+  // Un paiement encaissant une recette externe se gère depuis le registre des
+  // recettes : l'annulation directe est refusée par un conflit d'état (409).
+  await request(admin, 'POST', `/paiements/${persisted.paiementId}/annuler`, { motif: 'Annulation de recette' }, 409);
   const toCollect = await request(
     admin,
     'GET',
@@ -181,7 +185,7 @@ async function main() {
       noOrphanPayment: true,
       accountingFieldsFrozen: true,
       documentaryCorrectionAllowed: true,
-      cancellationOfSuccessfulPaymentRejected: true,
+      cancellationOfExternalReceiptPaymentRejected: true,
       paidAndUnpaidFiltersAgree: true,
       auditOmitsPrivateClientAndDescription: true,
     },

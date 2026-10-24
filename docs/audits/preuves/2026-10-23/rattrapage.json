@@ -1,0 +1,67 @@
+{
+  "date": "2026-10-23T15:33:00.196Z",
+  "passed": true,
+  "normalWithoutCatchupGrades": true,
+  "normalDecisions": [
+    "AJOURNE",
+    "ADMIS",
+    "DEFAILLANT",
+    "AJOURNE"
+  ],
+  "normalValidationStatuses": [
+    201,
+    400,
+    400,
+    400
+  ],
+  "singleValidationAudit": true,
+  "onlyNormalAdjournedSelected": true,
+  "unequalExamCoefficients": [
+    1,
+    3
+  ],
+  "unequalUeCredits": [
+    3,
+    1
+  ],
+  "catchupUeAverages": [
+    [
+      17,
+      8
+    ],
+    [
+      9.25,
+      7
+    ]
+  ],
+  "normalAndCatchupWeightedAverages": [
+    14.75,
+    8.69
+  ],
+  "decisions": [
+    "ADMIS",
+    "AJOURNE"
+  ],
+  "mentions": [
+    "Bien",
+    null
+  ],
+  "ranks": [
+    1,
+    2
+  ],
+  "successRate": 50,
+  "duplicateSessionRejected": true,
+  "recalculationAndClosedGradesFrozen": true,
+  "concurrentValidationAndCalculationStatuses": [
+    201,
+    400
+  ],
+  "protectedHtmlBulletin": true,
+  "roleRefusals": true,
+  "headDepartmentListDetailAndBulletinScope": true,
+  "physicalPrintingAndHumanRulesValidationPending": true,
+  "sessionSource": "AuthService.login avec mots de passe QA vérifiés, identités contrôlées par GET /auth/me",
+  "httpLoginRouteQualified": false,
+  "productionUntouched": true
+}
