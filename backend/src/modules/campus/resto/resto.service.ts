@@ -152,29 +152,6 @@ export class RestoService {
     });
   }
 
-  /** Détail complet d'un dossier étudiant (solution, recharges, consommations). */
-  async detailPortefeuille(etudiantId: string) {
-    const etudiant = await this.prisma.etudiant.findUnique({
-      where: { id: etudiantId },
-      select: { id: true, matricule: true, nom: true, prenom: true, telephone: true },
-    });
-    if (!etudiant) throw new NotFoundException(t('resto.etudiant_introuvable'));
-
-    const portefeuille = await this.prisma.portefeuilleResto.findUnique({
-      where: { etudiantId },
-      include: {
-        ...PORTEFEUILLE_INCLUDE,
-        recharges: {
-          take: 50,
-          orderBy: { rechargeLe: 'desc' },
-          include: { paiement: { select: { reference: true, mode: true } } },
-        },
-        consommations: { take: 50, orderBy: { consommeLe: 'desc' } },
-      },
-    });
-    return { etudiant, portefeuille };
-  }
-
   // -------------------------------------------------------------- rechargement
 
   /**
