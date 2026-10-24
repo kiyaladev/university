@@ -6,14 +6,36 @@ import { i18n } from '../boot/i18n';
  */
 import { defineStore } from 'pinia';
 import { Notify } from 'quasar';
+import axios from 'axios';
 import { api } from '../boot/axios';
 import { useSeancesStore } from './seances';
 import { lireToken, proprietaireDepuisToken } from '@/shared/services/session';
 import { CLE_FILE_POINTAGES, clePour } from '@/shared/services/cles-stockage';
 import { OPTIONS_POINTAGES, ecrireFileHorsLigne, lireFileHorsLigne } from '@/shared/services/file-hors-ligne';
+import { extraireMessageErreur } from '@/shared/utils/erreur-http';
 import type { Pointage } from '../types';
 
 const CLE_FILE = CLE_FILE_POINTAGES;
+
+/** État du store : la file est typée, sinon TypeScript en déduit `never[]`. */
+interface EtatPointages {
+  proprietaire: string;
+  file: Pointage[];
+  erreurs: Record<string, string | undefined>;
+  ancienneFile: number;
+  fileChargee: boolean;
+  erreurReseauSignalee: boolean;
+  enLigne: boolean;
+  synchronisation: boolean;
+  generationReseau: number;
+}
+
+/** Réponse de `POST /controles/sync` : chaque pointage est accepté ou rejeté. */
+interface ResultatSyncPointages {
+  recus?: number;
+  synchronises?: number;
+  echecs?: Array<{ seanceId: string; ok?: boolean; erreur?: string }>;
+}
 
 function proprietaire(): string {
   return proprietaireDepuisToken(lireToken());
@@ -23,7 +45,7 @@ function cleFile(owner: string): string {
   return clePour(CLE_FILE, owner);
 }
 
-function lireErreurs(owner: string): Record<string, string> {
+function lireErreurs(owner: string): Record<string, string | undefined> {
   try {
     return JSON.parse(localStorage.getItem(`${cleFile(owner)}_erreurs`) || '{}');
   } catch {
@@ -37,7 +59,7 @@ async function lireFile(owner: string): Promise<Pointage[]> {
 }
 
 export const usePointagesStore = defineStore('pointages', {
-  state: () => ({
+  state: (): EtatPointages => ({
     proprietaire: proprietaire(),
     file: [],
     erreurs: lireErreurs(proprietaire()),
@@ -130,9 +152,10 @@ export const usePointagesStore = defineStore('pointages', {
         // en file ») ; une erreur métier est relancée et notifiée par l'appelant.
         await api.post('/controles', pointage, { silencieux: true });
         return true;
-      } catch (e: any) {
+      } catch (e: unknown) {
         // Une erreur métier (400/403) ne doit pas être rejouée indéfiniment.
-        if (e.response?.status && e.response.status < 500) throw e;
+        const statut = axios.isAxiosError(e) ? e.response?.status : undefined;
+        if (statut !== undefined && statut < 500) throw e;
         await this.mettreEnFile(pointage);
         return false;
       }
@@ -199,8 +222,12 @@ export const usePointagesStore = defineStore('pointages', {
         if (owner !== this.proprietaire || !this.file.length) return;
         const envoyes = JSON.parse(JSON.stringify(this.file)) as Pointage[];
         // Silencieux : la file reste intacte et le catch prévient une seule fois.
-        const { data } = await api.post('/controles/sync', { pointages: envoyes }, { silencieux: true });
-        const echecs = new Set((data.echecs ?? []).map((e: any) => e.seanceId));
+        const { data } = await api.post<ResultatSyncPointages>(
+          '/controles/sync',
+          { pointages: envoyes },
+          { silencieux: true },
+        );
+        const echecs = new Set((data.echecs ?? []).map((e) => e.seanceId));
         const acceptes = new Map(
           envoyes.filter((p) => !echecs.has(p.seanceId)).map((p) => [p.seanceId, JSON.stringify(p)]),
         );
@@ -210,7 +237,7 @@ export const usePointagesStore = defineStore('pointages', {
         const file = owner === this.proprietaire ? this.file : await lireFile(owner);
         const restants = file.filter((p) => acceptes.get(p.seanceId) !== JSON.stringify(p));
         await ecrireFileHorsLigne(CLE_FILE, owner, restants);
-        const erreurs = Object.fromEntries((data.echecs ?? []).map((e: any) => [e.seanceId, e.erreur]));
+        const erreurs = Object.fromEntries((data.echecs ?? []).map((e) => [e.seanceId, e.erreur]));
         localStorage.setItem(`${cleFile(owner)}_erreurs`, JSON.stringify(erreurs));
         if (owner !== this.proprietaire) return data;
         this.file = restants;
@@ -226,12 +253,16 @@ export const usePointagesStore = defineStore('pointages', {
             icon: 'cloud_done',
           });
         return data;
-      } catch (error: any) {
+      } catch (error: unknown) {
         // La file reste intacte ; l'écouteur online n'émet pas de rejet non traité.
+        const reponse = axios.isAxiosError(error) ? error.response : undefined;
+        const messageErreur = extraireMessageErreur(reponse?.data);
         if (!this.erreurReseauSignalee)
           Notify.create({
             type: 'warning',
-            message: error.response?.data?.message || i18n.global.t('filePointages.unavailable'),
+            message: Array.isArray(messageErreur)
+              ? messageErreur.join(' · ')
+              : messageErreur || i18n.global.t('filePointages.unavailable'),
           });
         this.erreurReseauSignalee = true;
         return { indisponible: true };
