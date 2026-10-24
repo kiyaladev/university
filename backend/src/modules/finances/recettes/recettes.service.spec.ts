@@ -1,3 +1,4 @@
+import { BadRequestException } from '@nestjs/common';
 import { TypeRecette } from '@prisma/client';
 import { I18nContext } from 'nestjs-i18n';
 import { RecettesService } from './recettes.service';
@@ -397,6 +398,51 @@ describe('indicateurs du tableau des recettes', () => {
           devise: 'GNF',
         },
       }),
+    );
+  });
+});
+
+describe('numéro de recette', () => {
+  const service = (prisma: any) => new RecettesService(prisma);
+
+  const dossier = (numero: string) => ({
+    numero,
+    type: TypeRecette.AUTRE,
+    libelle: 'Location de salle',
+    montant: 100,
+    devise: 'GNF',
+    date: '2026-10-01',
+  }) as any;
+
+  it("accepte le préfixe « RECX- », réservé aux recettes", async () => {
+    const prisma = {
+      $transaction: jest.fn((run: (tx: any) => unknown) =>
+        run({
+          recetteExterne: { create: jest.fn().mockResolvedValue({ id: 'recette-1' }) },
+          auditLog: { create: jest.fn().mockResolvedValue({}) },
+        }),
+      ),
+    };
+
+    await service(prisma).creer(dossier('RECX-2026-00001'), { id: 'u1' } as never);
+
+    expect(prisma.$transaction).toHaveBeenCalled();
+  });
+
+  it('refuse le préfixe « REC- », réservé aux réclamations', async () => {
+    const prisma = { $transaction: jest.fn() };
+
+    await expect(service(prisma).creer(dossier('REC-2026-00001'), { id: 'u1' } as never)).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+  });
+
+  it('refuse un numéro qui ne suit pas le format', async () => {
+    const prisma = { $transaction: jest.fn() };
+
+    await expect(service(prisma).creer(dossier('RECX-2026-1'), { id: 'u1' } as never)).rejects.toBeInstanceOf(
+      BadRequestException,
     );
   });
 });

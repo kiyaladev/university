@@ -11,8 +11,8 @@ export default {
   formDialog: {
     editTitle: 'Edit revenue entry',
     newTitle: 'Issue a revenue entry',
-    numberHint: 'The number follows the REC-YYYY-NNNNN format and appears on the invoice or receipt.',
-    number: 'Number (REC-YYYY-XXXXX)',
+    numberHint: 'The number follows the RECX-YYYY-NNNNN format and appears on the invoice or receipt.',
+    number: 'Number (RECX-YYYY-XXXXX)',
     amount: 'Amount *',
     invoiceNumber: 'Invoice number',
     accountingLocked: 'This revenue item has been collected; its type, date, amount and currency are locked.',
