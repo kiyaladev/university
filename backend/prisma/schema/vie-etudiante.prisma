@@ -85,6 +85,7 @@ model ConsommationResto {
   valideur       User?              @relation("RepasValidePar", fields: [valideurId], references: [id], onDelete: SetNull)
   valideLe       DateTime?
   consommeLe     DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
 
   @@index([statut])
   @@index([portefeuilleId, consommeLe])

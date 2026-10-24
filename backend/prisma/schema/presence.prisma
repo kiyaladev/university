@@ -79,6 +79,7 @@ model Creneau {
 
   actif     Boolean  @default(true)
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   seances Seance[]
 
@@ -226,6 +227,7 @@ model Appareil {
   user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
   dernierUsage DateTime?
   revoqueLe    DateTime?
 

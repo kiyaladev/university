@@ -111,6 +111,8 @@ model DemandeDocument {
   // Colonne conservée « creeLe » en base : le champ Prisma suit la
   // convention `createdAt` du reste du modèle.
   createdAt     DateTime            @default(now()) @map("creeLe")
+  // Dernière modification de la demande (traitement, remise, rejet).
+  updatedAt     DateTime            @updatedAt
   remiseLe      DateTime?
   notes         String?
   // Attestation vérifiable par QR émise au passage « prête » (types
@@ -155,6 +157,7 @@ model CarteEtudiante {
   creeParId       String?
   creePar         User?             @relation("CarteCreePar", fields: [creeParId], references: [id], onDelete: SetNull)
   active          Boolean           @default(true)
+  updatedAt       DateTime          @updatedAt
 }
 
 // ------------------ Générateur de Badges (visiteur, intervenant) -
@@ -165,11 +168,19 @@ enum StatutBadge {
   ANNULE
 }
 
+/// Qualité de la personne à qui le badge est délivré.
+enum TypeBadge {
+  VISITEUR
+  INTERVENANT
+  TECHNICIEN
+  VIP // personnage officiel
+}
+
 model BadgeAcces {
   id             String      @id @default(uuid())
   numero         String      @unique // "BADGE-2026-00001"
   /// Visiteur, intervenant, technicien, personnage officielle
-  type           String // "VISITEUR", "INTERVENANT", "TECHNICIEN", "VIP"
+  type           TypeBadge
   nom            String
   prenom         String
   fonction       String?
