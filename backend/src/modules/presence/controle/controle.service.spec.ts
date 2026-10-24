@@ -614,7 +614,7 @@ describe('ControleService — journal de corrections', () => {
 
     const result = await service.audit({} as any);
 
-    expect(JSON.parse(result.data[0].details)).toEqual({
+    expect(JSON.parse(result.data[0].details as string)).toEqual({
       lotId: '00000000-0000-4000-8000-000000000001',
       canal: 'SMS',
       statutInitial: 'EN_ATTENTE',
@@ -684,14 +684,14 @@ describe('ControleService — journal de corrections', () => {
 
     const result = await service.audit({} as any);
 
-    expect(JSON.parse(result.data[0].details)).toEqual({
+    expect(JSON.parse(result.data[0].details as string)).toEqual({
       avant: { statut: 'ABSENT' },
       apres: { statut: 'EXCUSE' },
     });
     expect(result.data[1].details).toBe('QR régénéré');
     expect(result.data.slice(2, 7).every((ligne: any) => ligne.details === '[détails masqués]')).toBe(true);
-    expect(JSON.parse(result.data[7].details)).toEqual({ avant: { id: 'att-1' }, apres: { id: 'att-1' } });
-    expect(JSON.parse(result.data[8].details)).toEqual({ avant: { id: 'log-1' }, apres: { id: 'log-1' } });
+    expect(JSON.parse(result.data[7].details as string)).toEqual({ avant: { id: 'att-1' }, apres: { id: 'att-1' } });
+    expect(JSON.parse(result.data[8].details as string)).toEqual({ avant: { id: 'log-1' }, apres: { id: 'log-1' } });
     expect(JSON.stringify(result)).not.toMatch(
       /diagnostic privé|usage avant privé|usage après privé|donnée privée|UP-PAT-SECRET|référence scannée privée|198\.51\.100\.42/,
     );
@@ -739,7 +739,7 @@ describe('ControleService — journal de corrections', () => {
     const result = await service.audit({} as any);
 
     expect(result.data[0].details).toBe('[détails masqués]');
-    expect(JSON.parse(result.data[1].details)).toEqual({
+    expect(JSON.parse(result.data[1].details as string)).toEqual({
       avant: null,
       apres: { id: 'ticket-1', numero: 'TCK-2', statut: 'OUVERT', descriptionFournie: true },
     });
@@ -763,7 +763,7 @@ describe('ControleService — journal de corrections', () => {
     const result = await service.audit({} as any);
 
     expect(result.data[0].details).toBe('[détails masqués]');
-    expect(JSON.parse(result.data[1].details)).toEqual({
+    expect(JSON.parse(result.data[1].details as string)).toEqual({
       avant: null,
       apres: { id: 'rec-2', numero: 'REC-2026-00002', statut: 'OUVERT', sujetFourni: true },
     });
@@ -788,7 +788,7 @@ describe('ControleService — journal de corrections', () => {
     const result = await service.audit({} as any);
 
     expect(result.data[0].details).toBe('[détails masqués]');
-    expect(JSON.parse(result.data[1].details)).toEqual({
+    expect(JSON.parse(result.data[1].details as string)).toEqual({
       avant: { id: 'susp-1', statut: 'EN_ATTENTE', commentaireFourni: false },
       apres: { id: 'susp-1', statut: 'CONFIRME', commentaireFourni: true },
       champsModifies: ['statut'],

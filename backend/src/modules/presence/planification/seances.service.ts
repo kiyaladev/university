@@ -1,6 +1,6 @@
 import { BadRequestException, ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { Prisma, Role, StatutSeance } from '@prisma/client';
+import { Prisma, Role, Seance, StatutSeance, TypeCours } from '@prisma/client';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { CrudService, supprimerOuConflit } from '../../../common/crud.service';
 import { AuthUser } from '../../../common/decorators';
@@ -19,6 +19,7 @@ import { AnneeAcademiqueClotureeException, exigerAnneeOuverte } from '../../../c
 import { paginer, pagine } from '../../../common/pagination';
 import { journaliser } from '../../../common/audit';
 import { estChefDeDepartement } from '../../../common/perimetre';
+import { erreur } from '../../../common/erreur';
 
 /** Un créneau vaut-il à cette date ? Sans période, il vaut toute l'année. */
 function vaut(creneau: { dateDebut: Date | null; dateFin: Date | null }, jour: Date) {
@@ -84,6 +85,38 @@ export const SEANCE_INCLUDE_RESTREINT = {
   },
 } satisfies Prisma.SeanceInclude;
 
+/**
+ * Colonnes lues pour l'instantané d'audit d'une séance. Le journal n'a pas
+ * besoin de la séance complète : seuls ces champs y figurent, quelle que soit
+ * la projection depuis laquelle la séance a été relue.
+ */
+type SeanceAudit = {
+  id: string;
+  affectationId: string;
+  anneeId: string;
+  date: Date;
+  heureDebut: string;
+  heureFin: string;
+  statut: StatutSeance;
+  salleId: string | null;
+  controleurAssigneId: string | null;
+};
+
+/**
+ * Charge utile d'une séance, telle que la compose `payload()` : les champs
+ * issus du DTO plus l'affectation, la date et l'année résolues.
+ */
+type ChargeSeance = {
+  affectationId?: string;
+  anneeId?: string;
+  date?: Date;
+  heureDebut: string;
+  heureFin: string;
+  type?: TypeCours;
+  salleId?: string;
+  thematique?: string;
+};
+
 @Injectable()
 export class SeancesService extends CrudService {
   private readonly logger = new Logger(SeancesService.name);
@@ -111,7 +144,7 @@ export class SeancesService extends CrudService {
 
   /** Filtre Prisma dérivé des paramètres d'URL + du périmètre de l'utilisateur. */
   where(query: SeanceQueryDto, user?: AuthUser): Prisma.SeanceWhereInput {
-    const affectation: Record<string, any> = {};
+    const affectation: Prisma.AffectationWhereInput = {};
     const contraintes: Prisma.SeanceWhereInput[] = [];
     if (query.anneeId) affectation.anneeId = query.anneeId;
     if (query.enseignantId) affectation.enseignantId = query.enseignantId;
@@ -197,7 +230,7 @@ export class SeancesService extends CrudService {
     const nouveauControleurId = dto.controleurId || null;
     return this.prisma.$transaction(
       async (tx) => {
-        const seance: any = await tx.seance.findUnique({
+        const seance = await tx.seance.findUnique({
           where: { id },
           select: { id: true, anneeId: true, controleurAssigneId: true },
         });
@@ -360,9 +393,9 @@ export class SeancesService extends CrudService {
     dto: CreateSeanceDto | UpdateSeanceDto,
     anneeId?: string,
     autoriserAnneeFermee = false,
-    db: any = this.prisma,
+    db: PrismaService | Prisma.TransactionClient = this.prisma,
     user?: AuthUser,
-  ) {
+  ): Promise<ChargeSeance> {
     const { affectationId, date, ...rest } = dto as CreateSeanceDto;
     let annee = anneeId;
     if (affectationId && (!annee || (dto as UpdateSeanceDto).affectationId !== undefined)) {
@@ -421,7 +454,7 @@ export class SeancesService extends CrudService {
   async modifier(id: string, dto: UpdateSeanceDto, user?: AuthUser) {
     return this.prisma.$transaction(
       async (tx) => {
-        const avant: any = await tx.seance.findFirst({
+        const avant = await tx.seance.findFirst({
           where: { id, ...this.where({}, user) },
           include: SEANCE_INCLUDE,
         });
@@ -443,7 +476,7 @@ export class SeancesService extends CrudService {
   async annuler(id: string, motif?: string, user?: AuthUser) {
     return this.prisma.$transaction(
       async (tx) => {
-        const avant: any = await tx.seance.findFirst({
+        const avant = await tx.seance.findFirst({
           where: { id, ...this.where({}, user) },
           include: { ...SEANCE_INCLUDE, controle: true },
         });
@@ -469,7 +502,7 @@ export class SeancesService extends CrudService {
   async supprimer(id: string, user?: AuthUser) {
     return this.prisma.$transaction(
       async (tx) => {
-        const avant: any = await tx.seance.findUnique({ where: { id }, include: SEANCE_INCLUDE });
+        const avant = await tx.seance.findUnique({ where: { id }, include: SEANCE_INCLUDE });
         if (!avant) throw new NotFoundException(t('common.notFound'));
         await exigerAnneeOuverte(tx, avant.anneeId);
         // Un contrôle ou un justificatif est une preuve (base de la paie) : la
@@ -496,7 +529,7 @@ export class SeancesService extends CrudService {
     );
   }
 
-  private instantaneAudit(seance: any) {
+  private instantaneAudit(seance: SeanceAudit) {
     return {
       id: seance.id,
       affectationId: seance.affectationId,
@@ -590,7 +623,13 @@ export class SeancesService extends CrudService {
    * les autres.
    */
   async synchroniser(dto: SyncSeancesDto, user?: AuthUser) {
-    const resultats: Array<{ idClient: string; ok: boolean; id?: string; dejaCreee?: boolean; erreur?: string }> = [];
+    const resultats: Array<{
+      idClient: string;
+      ok: boolean;
+      id?: string;
+      dejaCreee?: boolean;
+      erreur?: string | string[];
+    }> = [];
 
     for (const entree of dto.seances) {
       try {
@@ -624,10 +663,11 @@ export class SeancesService extends CrudService {
           { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
         );
         resultats.push({ idClient, ok: true, id: resultat.seance.id, dejaCreee: resultat.dejaCreee });
-      } catch (e: any) {
+      } catch (e: unknown) {
+        const err = erreur(e);
         // Deux tentatives concurrentes peuvent gagner la création avec la même
         // clé. On relit et compare avant de reconnaître le rejeu.
-        if (e?.code === 'P2002') {
+        if (err.code === 'P2002') {
           try {
             const { idClient, ...creation } = entree;
             const payload = await this.payload(creation, undefined, false, this.prisma, user);
@@ -643,7 +683,7 @@ export class SeancesService extends CrudService {
         resultats.push({
           idClient: entree.idClient,
           ok: false,
-          erreur: e?.response?.message ?? e?.message ?? t('common.internalError'),
+          erreur: err.response?.message ?? err.message ?? t('common.internalError'),
         });
       }
     }
@@ -656,14 +696,16 @@ export class SeancesService extends CrudService {
     };
   }
 
-  private memeSeance(existante: any, payload: Record<string, any>) {
+  private memeSeance(existante: Seance, payload: ChargeSeance) {
     const date = toDateOnly(isoDate(existante.date));
     return (
       existante.affectationId === payload.affectationId &&
-      date.getTime() === payload.date.getTime() &&
+      // La date fait toujours partie de la charge utile (séance hors ligne) ;
+      // le cast évite d'alourdir la comparaison d'un cas jamais survenu.
+      date.getTime() === (payload.date as Date).getTime() &&
       existante.heureDebut === payload.heureDebut &&
       existante.heureFin === payload.heureFin &&
-      existante.type === (payload.type ?? 'CM') &&
+      existante.type === (payload.type ?? TypeCours.CM) &&
       (existante.salleId ?? null) === (payload.salleId ?? null) &&
       (existante.thematique ?? null) === (payload.thematique ?? null)
     );
