@@ -1,0 +1,6 @@
+# Fichier de configuration de l'appareil : il porte une clé de signature.
+# Il ne doit jamais être versionné — la passerelle refuse de démarrer s'il se
+# trouve dans le dépôt, et le dépôt doit le refuser aussi.
+biometrie.json
+config*.json
+*.local.json
