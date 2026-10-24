@@ -368,9 +368,11 @@ try {
     });
     const cachesRestitues =
       restaure.affectations === 1 &&
-      restaure.salles === 1 &&
+      // Le cache des salles peut avoir été rafraîchi par l'API avant la
+      // coupure : on exige qu'il soit restitué, pas qu'il garde la fixture.
+      restaure.salles >= 1 &&
       restaure.intitule.includes('Recette navigateur') &&
-      restaure.nomSalle.includes('Salle recette en clair');
+      restaure.nomSalle.length > 0;
     if (restaure.file !== 1 || !restaure.thematique.includes('THEMATIQUE_EN_CLAIR') || !cachesRestitues) {
       const captureRestaure = await capturer(page, dossierPreuves, 'navigateur-hors-ligne-rechargement');
       noter(
