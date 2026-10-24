@@ -69,8 +69,8 @@ describe('compatibilité des jetons d’état', () => {
   });
 
   it('laisse un jeton courant intact', () => {
-    for (const domaine of Object.keys(LIBELLES_STATUT)) {
-      for (const jeton of Object.keys(LIBELLES_STATUT[domaine])) {
+    for (const [, libelles] of Object.entries(LIBELLES_STATUT)) {
+      for (const jeton of Object.keys(libelles)) {
         expect(jetonStatutActuel(jeton)).toBe(jeton);
       }
     }
@@ -78,8 +78,8 @@ describe('compatibilité des jetons d’état', () => {
 
   it('n’a pas d’ancien jeton qui soit déjà un jeton courant', () => {
     const courants = new Set<string>();
-    for (const domaine of Object.keys(LIBELLES_STATUT)) {
-      for (const jeton of Object.keys(LIBELLES_STATUT[domaine])) courants.add(jeton);
+    for (const [, libelles] of Object.entries(LIBELLES_STATUT)) {
+      for (const jeton of Object.keys(libelles)) courants.add(jeton);
     }
     for (const ancien of Object.keys(JETONS_STATUT_LEGACY)) {
       expect(courants.has(ancien)).toBe(false);
