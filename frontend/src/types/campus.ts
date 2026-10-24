@@ -245,6 +245,6 @@ export interface InscriptionFormation {
   statut: StatutInscriptionFormation;
   paiementId?: string | null;
   inscriteLe: string;
-  formation?: Formation;
+  formation?: Formation | null;
   etudiant?: Etudiant | null;
 }

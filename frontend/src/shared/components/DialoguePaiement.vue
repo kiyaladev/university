@@ -281,8 +281,11 @@ watch(
 );
 
 async function poster(): Promise<string> {
+  // Le bouton d'enregistrement est désactivé tant que le montant n'est pas
+  // valide : le montant est donc un nombre positif à ce point. Le repli à 0
+  // ne sert qu'à tenir le type — l'API refuse un montant hors bornes.
   const paiement = await paiementsApi.creer({
-    montant: form.value.montant,
+    montant: form.value.montant ?? 0,
     devise: form.value.devise,
     mode: form.value.mode,
     operateur: form.value.mode === 'MOBILE_MONEY' ? form.value.operateur : undefined,

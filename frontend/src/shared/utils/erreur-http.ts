@@ -11,6 +11,8 @@
  * sinon l'utilisateur voit un message générique au lieu de la cause réelle.
  */
 
+import axios from 'axios';
+
 /** Extrait le message d'un corps d'erreur, quel que soit son format. */
 export function extraireMessageErreur(donnees: unknown): string | string[] | undefined {
   if (!donnees || typeof donnees !== 'object') return undefined;
@@ -38,4 +40,19 @@ export function completerMessageErreur(donnees: unknown): Record<string, unknown
   const message = extraireMessageErreur(corps);
   if (message === undefined || corps.message !== undefined) return corps;
   return { ...corps, message };
+}
+
+/**
+ * Message d'une exception HTTP, prêt à afficher.
+ *
+ * L'API renvoie `message` — un texte, ou un tableau de textes quand plusieurs
+ * fautes se cumulent ; les textes sont alors joints comme le fait
+ * l'intercepteur d'`axios`. `undefined` si l'exception ne porte pas de
+ * message : l'appelant fournit alors son propre libellé.
+ */
+export function messageErreurApi(e: unknown): string | undefined {
+  const reponse = axios.isAxiosError(e) ? e.response : undefined;
+  const message = extraireMessageErreur(reponse?.data);
+  if (message === undefined) return undefined;
+  return Array.isArray(message) ? message.join(' · ') : message;
 }
