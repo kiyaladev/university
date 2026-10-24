@@ -66,6 +66,8 @@ function preparer(options: { enseignant?: any; seuil?: number; appareil?: any } 
       create: jest.fn(({ data }: any) => Promise.resolve({ id: 'appareil-neuf', actif: true, ...data })),
     },
     seance: { findFirst: jest.fn().mockResolvedValue(null) },
+    // Registre des preuves consommées : chaque preuve acceptée y est inscrite.
+    preuveConsommee: { create: jest.fn().mockResolvedValue({}), deleteMany: jest.fn().mockResolvedValue({ count: 0 }) },
   } as any;
   prisma.$transaction = jest.fn(async (operation: (tx: any) => unknown) => operation(prisma));
 
