@@ -184,7 +184,7 @@ describe('Confirmation de paiement — moteur commun', () => {
   });
 
   it('n’écrit rien quand le statut attendu n’est plus le sien', async () => {
-    const { prisma, tx, table } = fauxPrisma({ 'pay-1': StatutPaiement.ECHOUE });
+    const { prisma, table } = fauxPrisma({ 'pay-1': StatutPaiement.ECHOUE });
 
     await expect(
       confirmerPaiement({
@@ -204,7 +204,7 @@ describe('Confirmation de paiement — moteur commun', () => {
   });
 
   it('annule tout quand l’effet échoue : le paiement reste en attente', async () => {
-    const { prisma, tx, table, ecrits } = fauxPrisma({ 'pay-1': StatutPaiement.EN_ATTENTE });
+    const { prisma, table, ecrits } = fauxPrisma({ 'pay-1': StatutPaiement.EN_ATTENTE });
     const effetScolarite = effet({ echec: new BadRequestException('effet métier refusé') });
 
     await expect(

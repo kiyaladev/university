@@ -25,10 +25,7 @@ import {
   sourcePaiement,
   transmettreMobileMoney,
 } from '../../../common/finances/index';
-import {
-  type EffetConfirmationPaiement,
-  confirmerPaiement,
-} from '../../../common/finances/confirmation';
+import { type EffetConfirmationPaiement, confirmerPaiement } from '../../../common/finances/confirmation';
 import { MobileMoneyService } from './mobile-money.service';
 import { AnnulerPaiementDto, CreatePaiementDto, PaiementQueryDto, SimulerPaiementDto } from './inscription.dto';
 
@@ -165,7 +162,8 @@ type PreparationScolarite = {
 };
 
 @Injectable()
-export class PaiementsService {  private readonly logger = new Logger(PaiementsService.name);
+export class PaiementsService {
+  private readonly logger = new Logger(PaiementsService.name);
 
   constructor(
     private prisma: PrismaService,

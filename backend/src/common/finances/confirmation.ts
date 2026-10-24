@@ -213,35 +213,32 @@ export async function confirmerPaiement<T, P = unknown>(options: OptionsConfirma
   const { prisma, effet, user, journal } = options;
   const statut = options.statut ?? StatutPaiement.REUSSI;
 
-  return prisma.$transaction(
-    async (tx) => {
-      const preparation = await effet.preparer({ tx, user, statut });
+  return prisma.$transaction(async (tx) => {
+    const preparation = await effet.preparer({ tx, user, statut });
 
-      // Confirmation déjà appliquée : ni transition, ni journal, effet rejoué
-      // jamais. La source décide si elle renvoie l'état courant ou refuse.
-      if (preparation.confirme) {
-        return effet.dejaConfirme({ tx, user, statut, preparation, ecrit: { statut } });
-      }
+    // Confirmation déjà appliquée : ni transition, ni journal, effet rejoué
+    // jamais. La source décide si elle renvoie l'état courant ou refuse.
+    if (preparation.confirme) {
+      return effet.dejaConfirme({ tx, user, statut, preparation, ecrit: { statut } });
+    }
 
-      const transition = preparation.transition;
-      if (!transition) throw new Error('Confirmation de paiement : transition manquante.');
+    const transition = preparation.transition;
+    if (!transition) throw new Error('Confirmation de paiement : transition manquante.');
 
-      const ecrit = await appliquerTransition(tx, transition, statut);
-      const resultat = await effet.appliquer({ tx, user, statut, preparation, ecrit });
+    const ecrit = await appliquerTransition(tx, transition, statut);
+    const resultat = await effet.appliquer({ tx, user, statut, preparation, ecrit });
 
-      await journaliser(
-        tx,
-        user,
-        typeof journal.action === 'function' ? journal.action(statut) : journal.action,
-        journal.entite,
-        typeof journal.entiteId === 'function' ? journal.entiteId(preparation) : journal.entiteId,
-        journal.details({ preparation, resultat, statut, ecrit }),
-      );
+    await journaliser(
+      tx,
+      user,
+      typeof journal.action === 'function' ? journal.action(statut) : journal.action,
+      journal.entite,
+      typeof journal.entiteId === 'function' ? journal.entiteId(preparation) : journal.entiteId,
+      journal.details({ preparation, resultat, statut, ecrit }),
+    );
 
-      return resultat.valeur;
-    },
-    options.transaction,
-  );
+    return resultat.valeur;
+  }, options.transaction);
 }
 
 /**
@@ -253,7 +250,7 @@ export async function confirmerPaiement<T, P = unknown>(options: OptionsConfirma
  */
 export const EFFETS_CONFIRMATION_PAIEMENT: Record<SourcePaiement, string> = {
   INSCRIPTION:
-    "Le dossier de scolarité est soldé (PAYÉ) quand le cumul des paiements réussis de sa devise atteint les frais.",
+    'Le dossier de scolarité est soldé (PAYÉ) quand le cumul des paiements réussis de sa devise atteint les frais.',
   FORMATION: "La place est confirmée : le paiement passe RÉUSSI, l'inscription à la formation passe CONFIRMÉ.",
   RESTO: 'Le solde du portefeuille restaurant est crédité du montant de la recharge.',
   DOCUMENT: 'La demande passe en traitement et part à la scolarité.',
