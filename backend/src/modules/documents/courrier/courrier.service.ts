@@ -155,7 +155,10 @@ export class CourrierService {
 
   // ------------------------------------------------------- lecture
 
-  async lister(query: CourrierQueryDto, user: AuthUser): Promise<Paginated<Prisma.CourrierGetPayload<{ include: typeof COURRIER_INCLUDE }>>> {
+  async lister(
+    query: CourrierQueryDto,
+    user: AuthUser,
+  ): Promise<Paginated<Prisma.CourrierGetPayload<{ include: typeof COURRIER_INCLUDE }>>> {
     const pagination = paginer(query);
 
     const scope = this.filtreVisible(user);

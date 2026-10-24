@@ -83,7 +83,9 @@ export class PaieService {
 
   // ---------------------------------------------------------------- lecture
 
-  async lister(query: FeuilleQueryDto): Promise<Paginated<Prisma.FeuillePaieGetPayload<{ include: typeof FEUILLE_INCLUDE }>>> {
+  async lister(
+    query: FeuilleQueryDto,
+  ): Promise<Paginated<Prisma.FeuillePaieGetPayload<{ include: typeof FEUILLE_INCLUDE }>>> {
     const pagination = paginer(query);
 
     const where: Prisma.FeuillePaieWhereInput = {

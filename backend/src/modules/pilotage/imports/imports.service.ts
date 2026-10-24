@@ -250,7 +250,9 @@ export class ImportsService {
         } catch (cause) {
           const message = cause instanceof BadRequestException ? messageHttp(cause) : undefined;
           erreurs.push(
-            ...(Array.isArray(message) ? message : [typeof message === 'string' ? message : t('imports.creneauHorsRegles')]),
+            ...(Array.isArray(message)
+              ? message
+              : [typeof message === 'string' ? message : t('imports.creneauHorsRegles')]),
           );
         }
       }
