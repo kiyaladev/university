@@ -112,11 +112,6 @@ export class SeancesController {
     return this.service.journee(query.date, query, user);
   }
 
-  /** Espace enseignant : mes séances. */
-  @Get('mes-seances') mesSeances(@Query() query: SeanceQueryDto, @CurrentUser() user: AuthUser) {
-    return this.service.lister({ ...query, enseignantId: user.enseignantId ?? '—' }, user);
-  }
-
   @Get(':id') lire(@Param('id') id: string, @CurrentUser() user: AuthUser) {
     return this.service.consulter(id, user);
   }
