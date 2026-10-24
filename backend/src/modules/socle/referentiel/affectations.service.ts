@@ -1,7 +1,7 @@
 /** Affectations d’enseignants aux promotions. */
 
 import { ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { Role } from '@prisma/client';
+import { Prisma, Role } from '@prisma/client';
 import { CrudService, supprimerOuConflit } from '../../../common/crud.service';
 import { t } from '../../../common/i18n';
 import { exigerAnneeOuverte, exigerPromotionMemeAnnee } from '../../../common/annee';
@@ -30,8 +30,24 @@ export const AFFECTATION_INCLUDE = {
   annee: true,
 };
 
+/** Charge utile d'une affectation lue avec ses relations (voir AFFECTATION_INCLUDE). */
+type AffectationAvecRelations = Prisma.AffectationGetPayload<{ include: typeof AFFECTATION_INCLUDE }>;
+
+/**
+ * Client minimal capable de lire l'enseignant visé : le client Prisma et la
+ * transaction courante portent tous deux ce delegate.
+ */
+interface DepotEnseignant {
+  enseignant: {
+    findUnique(args: {
+      where: { id: string };
+      select: { departementId: true };
+    }): Promise<{ departementId: string | null } | null>;
+  };
+}
+
 @Injectable()
-export class AffectationsService extends CrudService {
+export class AffectationsService extends CrudService<AffectationAvecRelations> {
   constructor(prisma: PrismaService) {
     super(prisma, 'affectation', {
       orderBy: { createdAt: 'desc' },
@@ -48,7 +64,7 @@ export class AffectationsService extends CrudService {
    *
    * Le département n'est pas dans le DTO : il se déduit de l'enseignant visé.
    */
-  private async exigerPerimetreAffectation(user: AuthUser, enseignantId?: string, db: any = this.prisma) {
+  private async exigerPerimetreAffectation(user: AuthUser, enseignantId?: string, db: DepotEnseignant = this.prisma) {
     if (!estChefDeDepartement(user) && user.role !== Role.CONTROLEUR) return;
     if (!enseignantId) {
       throw new ForbiddenException(t('common.forbidden'));
@@ -67,7 +83,7 @@ export class AffectationsService extends CrudService {
     return this.prisma.$transaction(async (tx) => {
       await exigerAnneeOuverte(tx, dto.anneeId);
       await exigerPromotionMemeAnnee(tx, dto.promotionId, dto.anneeId);
-      await this.exigerPerimetreAffectation(user, dto.enseignantId, tx as any);
+      await this.exigerPerimetreAffectation(user, dto.enseignantId, tx);
       const affectation = await tx.affectation.create({ data: dto, include: AFFECTATION_INCLUDE });
       await journaliser(tx, user, 'AFFECTATION_CREEE', 'Affectation', affectation.id, {
         avant: null,
@@ -78,7 +94,7 @@ export class AffectationsService extends CrudService {
   }
 
   async modifierPour(id: string, dto: UpdateAffectationDto, user: AuthUser) {
-    const actuelle: any = await this.lire(id);
+    const actuelle = await this.lire(id);
     await exigerAnneeOuverte(this.prisma, actuelle.anneeId);
     if (dto.anneeId !== undefined) await exigerAnneeOuverte(this.prisma, dto.anneeId);
     const anneeCible = dto.anneeId ?? actuelle.anneeId;
@@ -88,13 +104,13 @@ export class AffectationsService extends CrudService {
     // Un déplacement vers un enseignant d'un autre département sort du périmètre.
     await this.exigerPerimetreAffectation(user, dto.enseignantId ?? actuelle.enseignantId);
     return this.prisma.$transaction(async (tx) => {
-      const avant: any = await tx.affectation.findUnique({ where: { id }, include: AFFECTATION_INCLUDE });
+      const avant = await tx.affectation.findUnique({ where: { id }, include: AFFECTATION_INCLUDE });
       if (!avant) throw new ForbiddenException(t('common.forbidden'));
       await exigerAnneeOuverte(tx, avant.anneeId);
       if (dto.anneeId !== undefined) await exigerAnneeOuverte(tx, dto.anneeId);
       await exigerPromotionMemeAnnee(tx, dto.promotionId ?? avant.promotionId, dto.anneeId ?? avant.anneeId);
       if (estChefDeDepartement(user)) exigerPerimetre(user, avant.enseignant?.departementId);
-      await this.exigerPerimetreAffectation(user, dto.enseignantId ?? avant.enseignantId, tx as any);
+      await this.exigerPerimetreAffectation(user, dto.enseignantId ?? avant.enseignantId, tx);
       const maj = await tx.affectation.update({ where: { id }, data: dto, include: AFFECTATION_INCLUDE });
       await journaliser(tx, user, 'AFFECTATION_MODIFIEE', 'Affectation', id, {
         avant: this.instantaneAudit(avant),
@@ -105,10 +121,10 @@ export class AffectationsService extends CrudService {
   }
 
   async supprimer(id: string, user?: AuthUser) {
-    const actuelle: any = await this.lire(id);
+    const actuelle = await this.lire(id);
     await exigerAnneeOuverte(this.prisma, actuelle.anneeId);
     return this.prisma.$transaction(async (tx) => {
-      const avant: any = await tx.affectation.findUnique({ where: { id }, include: AFFECTATION_INCLUDE });
+      const avant = await tx.affectation.findUnique({ where: { id }, include: AFFECTATION_INCLUDE });
       if (!avant) throw new ForbiddenException(t('common.forbidden'));
       await exigerAnneeOuverte(tx, avant.anneeId);
       // Contrôles et justificatifs sont des preuves (base de la paie) : une
@@ -137,7 +153,7 @@ export class AffectationsService extends CrudService {
     });
   }
 
-  private instantaneAudit(affectation: any) {
+  private instantaneAudit(affectation: AffectationAvecRelations) {
     return {
       id: affectation.id,
       enseignantId: affectation.enseignantId,
@@ -150,7 +166,7 @@ export class AffectationsService extends CrudService {
 
   /** Vérifie qu'une affectation existe et reste dans le périmètre du demandeur. */
   async trouverPerimetre(id: string, user: AuthUser) {
-    const affectation: any = await this.lire(id);
+    const affectation = await this.lire(id);
     if (estChefDeDepartement(user) || user.role === Role.CONTROLEUR) {
       if (!user.departementId || affectation.enseignant?.departementId !== user.departementId) {
         throw new NotFoundException(t('common.notFound'));

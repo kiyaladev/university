@@ -21,14 +21,20 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma, StatutFormation, StatutInscriptionFormation, StatutPaiement } from '@prisma/client';
+import { Formation, Prisma, StatutFormation, StatutInscriptionFormation, StatutPaiement } from '@prisma/client';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { AuthUser } from '../../../common/decorators';
 import { journaliser } from '../../../common/audit';
 import { Paginated, QueryDto } from '../../../common/dto';
 import { pagine, paginer } from '../../../common/pagination';
 import { isoDate, toDateOnly } from '../../../common/utils';
-import { chargerEtablissement, echapper, pageA4, PALETTE_IMPRESSION as P, qrSvg } from '../../../common/impression/index';
+import {
+  chargerEtablissement,
+  echapper,
+  pageA4,
+  PALETTE_IMPRESSION as P,
+  qrSvg,
+} from '../../../common/impression/index';
 import { ParametresService } from '../../socle/parametres/parametres.service';
 import { SERIES_NUMERO, avecNumeroUnique, millesimeSerie, prochainNumeroSerie } from '../../../common/numero';
 import { creerPaiementTx } from '../../../common/finances/index';
@@ -329,7 +335,9 @@ export class FormationsService {
     };
   }
 
-  async lister(query: FormationQueryDto): Promise<Paginated<any>> {
+  async lister(
+    query: FormationQueryDto,
+  ): Promise<Paginated<Prisma.FormationGetPayload<{ include: typeof FORMATION_INCLUDE }>>> {
     const pagination = paginer(query);
     const where: Prisma.FormationWhereInput = {
       ...(query.statut ? { statut: query.statut } : {}),
@@ -521,7 +529,7 @@ export class FormationsService {
     });
   }
 
-  private instantaneAudit(formation: any) {
+  private instantaneAudit(formation: Formation) {
     return {
       id: formation.id,
       titreFourni: Boolean(formation.titre),
@@ -536,7 +544,10 @@ export class FormationsService {
 
   // --------------------------------------------------------- le registre
 
-  async inscriptionsDe(formationId: string, query: QueryDto = {}): Promise<Paginated<any>> {
+  async inscriptionsDe(
+    formationId: string,
+    query: QueryDto = {},
+  ): Promise<Paginated<Prisma.InscriptionFormationGetPayload<{ include: typeof INSCRIPTION_FORMATION_INCLUDE }>>> {
     await this.trouverFormation(formationId);
     const pagination = paginer(query);
     const where = { formationId };
@@ -620,10 +631,13 @@ export class FormationsService {
 
   /** Sérialise les confirmations d'une même formation pendant le contrôle de capacité. */
   private async verrouillerFormation(tx: Prisma.TransactionClient, id: string) {
+    // Le SQL brut n'est pas garanti (client de test, double) : sans lui, on
+    // retombe sur la lecture Prisma. Même SQL, même verrou, même résultat.
+    const brut = tx as { $queryRaw?: Prisma.TransactionClient['$queryRaw'] };
     const formation =
-      typeof (tx as any).$queryRaw === 'function'
+      typeof brut.$queryRaw === 'function'
         ? ((
-            await (tx as any).$queryRaw`
+            await brut.$queryRaw<{ id: string; statut: StatutFormation; capacite: number | null }>`
           SELECT "id", "statut", "capacite"
           FROM "Formation" WHERE "id" = ${id} FOR UPDATE
         `

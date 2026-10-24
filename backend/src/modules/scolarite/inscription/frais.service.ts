@@ -143,7 +143,7 @@ export class FraisService extends CrudService {
   async modifierFrais(id: string, dto: UpdateFraisDto, user: AuthUser) {
     return this.prisma.$transaction(
       async (tx) => {
-        const avant: any = await tx.frais.findUnique({ where: { id }, include: FRAIS_INCLUDE });
+        const avant = await tx.frais.findUnique({ where: { id }, include: FRAIS_INCLUDE });
         if (!avant) throw new NotFoundException(t('common.notFound'));
         await exigerAnneeOuverte(tx, avant.anneeId);
         if (dto.anneeId !== undefined) await exigerAnneeOuverte(tx, dto.anneeId);
@@ -169,7 +169,7 @@ export class FraisService extends CrudService {
   async supprimerFrais(id: string, user: AuthUser) {
     await this.prisma.$transaction(
       async (tx) => {
-        const actuel: any = await tx.frais.findUnique({ where: { id }, include: FRAIS_INCLUDE });
+        const actuel = await tx.frais.findUnique({ where: { id }, include: FRAIS_INCLUDE });
         if (!actuel) throw new NotFoundException(t('common.notFound'));
         await exigerAnneeOuverte(tx, actuel.anneeId);
         await tx.frais.delete({ where: { id } });

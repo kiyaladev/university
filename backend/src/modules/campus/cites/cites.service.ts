@@ -12,7 +12,14 @@
  *     est encore en attente)
  */
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma, StatutAttributionLogement, StatutChambre } from '@prisma/client';
+import {
+  AttributionLogement,
+  Chambre,
+  Prisma,
+  Residence,
+  StatutAttributionLogement,
+  StatutChambre,
+} from '@prisma/client';
 import { AuthUser } from '../../../common/decorators';
 import { CrudService } from '../../../common/crud.service';
 import { PrismaService } from '../../../prisma/prisma.service';
@@ -61,6 +68,27 @@ const ATTRIBUTION_INCLUDE = {
   annee: true,
 };
 
+/**
+ * Champs lus par les instantanés d'audit : le typage suit le modèle Prisma,
+ * la projection reste minimale. Les relations ne sont jamais recopiées.
+ */
+type ResidenceAudit = Pick<Residence, 'id' | 'code' | 'capacite' | 'actif' | 'ville' | 'adresse' | 'responsable'>;
+
+type ChambreAudit = Pick<Chambre, 'id' | 'code' | 'residenceId' | 'categorie' | 'lits' | 'loyer' | 'devise' | 'statut'>;
+
+type AttributionAudit = Pick<
+  AttributionLogement,
+  | 'id'
+  | 'statut'
+  | 'anneeId'
+  | 'chambreId'
+  | 'etudiantId'
+  | 'critereScore'
+  | 'accordeeLe'
+  | 'accorderParId'
+  | 'retireeLe'
+>;
+
 @Injectable()
 export class ResidencesService extends CrudService {
   constructor(prisma: PrismaService) {
@@ -92,7 +120,7 @@ export class ResidencesService extends CrudService {
   }
 
   /** Exclut adresse, nom de résidence et coordonnées du responsable. */
-  private instantaneAudit(residence: any) {
+  private instantaneAudit(residence: ResidenceAudit) {
     return {
       id: residence.id,
       code: residence.code,
@@ -179,7 +207,7 @@ export class ChambresService extends CrudService {
     });
   }
 
-  private instantaneAudit(chambre: any) {
+  private instantaneAudit(chambre: ChambreAudit) {
     return {
       id: chambre.id,
       code: chambre.code,
@@ -347,7 +375,7 @@ export class AttributionsService extends CrudService {
 
         // Chambre réservée : seuls sa demande et cet étudiant peuvent la compléter.
         if (chambre.statut === StatutChambre.RESERVE) {
-          const enAttente: any = await tx.attributionLogement.findFirst({
+          const enAttente = await tx.attributionLogement.findFirst({
             where: { chambreId: dto.chambreId, statut: StatutAttributionLogement.EN_ATTENTE },
             include: ATTRIBUTION_INCLUDE,
           });
@@ -403,7 +431,7 @@ export class AttributionsService extends CrudService {
   async decider(id: string, dto: DeciderAttributionDto, user: AuthUser) {
     return this.prisma.$transaction(
       async (tx) => {
-        const attribution: any = await tx.attributionLogement.findUnique({
+        const attribution = await tx.attributionLogement.findUnique({
           where: { id },
           include: ATTRIBUTION_INCLUDE,
         });
@@ -483,7 +511,7 @@ export class AttributionsService extends CrudService {
           });
         }
 
-        const apres: any = await tx.attributionLogement.findUnique({
+        const apres = await tx.attributionLogement.findUnique({
           where: { id },
           include: ATTRIBUTION_INCLUDE,
         });
@@ -492,7 +520,7 @@ export class AttributionsService extends CrudService {
           autresRefusees:
             dto.statut === StatutAttributionLogement.ACCORDE ? autresEnAttente.map((autre) => autre.id) : [],
           avant: this.instantaneAudit(attribution),
-          apres: this.instantaneAudit(apres),
+          apres: this.instantaneAudit(apres!),
         });
         return apres;
       },
@@ -507,7 +535,7 @@ export class AttributionsService extends CrudService {
   async retirer(id: string, dto: RetirerAttributionDto, user: AuthUser) {
     return this.prisma.$transaction(
       async (tx) => {
-        const attribution: any = await tx.attributionLogement.findUnique({
+        const attribution = await tx.attributionLogement.findUnique({
           where: { id },
           include: ATTRIBUTION_INCLUDE,
         });
@@ -543,13 +571,13 @@ export class AttributionsService extends CrudService {
           where: { id: attribution.chambreId },
           data: { statut: autreAttente ? StatutChambre.RESERVE : StatutChambre.LIBRE },
         });
-        const apres: any = await tx.attributionLogement.findUnique({
+        const apres = await tx.attributionLogement.findUnique({
           where: { id },
           include: ATTRIBUTION_INCLUDE,
         });
         await journaliser(tx, user, 'ATTRIBUTION_RETIREE', 'AttributionLogement', id, {
           avant: this.instantaneAudit(attribution),
-          apres: this.instantaneAudit(apres),
+          apres: this.instantaneAudit(apres!),
         });
         return apres;
       },
@@ -557,7 +585,7 @@ export class AttributionsService extends CrudService {
     );
   }
 
-  private instantaneAudit(attribution: any) {
+  private instantaneAudit(attribution: AttributionAudit) {
     return {
       id: attribution.id,
       statut: attribution.statut,

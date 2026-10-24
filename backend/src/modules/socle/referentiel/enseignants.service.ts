@@ -1,7 +1,7 @@
 /** Enseignants : annuaire, statut et périmètre. */
 
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Role } from '@prisma/client';
+import { Prisma, Role, type Enseignant } from '@prisma/client';
 import { CrudService, supprimerOuConflit } from '../../../common/crud.service';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { AuthUser } from '../../../common/decorators';
@@ -22,22 +22,27 @@ export const ENSEIGNANT_LECTURE_MINIMALE = {
   departement: { select: { id: true, nom: true } },
 } as const;
 
+/** Relations chargées avec un enseignant : son département et son compte lié. */
+const ENSEIGNANT_INCLUDE = {
+  departement: true,
+  user: { select: { id: true, email: true, actif: true } },
+} as const;
+
 @Injectable()
-export class EnseignantsService extends CrudService {
+export class EnseignantsService extends CrudService<
+  Prisma.EnseignantGetPayload<{ include: typeof ENSEIGNANT_INCLUDE }>
+> {
   constructor(prisma: PrismaService) {
     super(prisma, 'enseignant', {
       searchFields: ['nom', 'prenom', 'matricule', 'email'],
       orderBy: [{ nom: 'asc' }, { prenom: 'asc' }],
-      include: {
-        departement: true,
-        user: { select: { id: true, email: true, actif: true } },
-      },
+      include: ENSEIGNANT_INCLUDE,
       label: 'Enseignant',
     });
   }
 
   /** Exclut coordonnées, rémunération, PIN et gabarit biométrique. */
-  private instantaneAudit(enseignant: any) {
+  private instantaneAudit(enseignant: Enseignant) {
     return {
       id: enseignant.id,
       statut: enseignant.statut,
@@ -92,7 +97,7 @@ export class EnseignantsService extends CrudService {
   async creerPour(dto: CreateEnseignantDto, user: AuthUser) {
     exigerPerimetre(user, dto.departementId);
     return this.prisma.$transaction(async (tx) => {
-      const cree = await tx.enseignant.create({ data: dto, include: this.options.include });
+      const cree = await tx.enseignant.create({ data: dto, include: ENSEIGNANT_INCLUDE });
       await journaliser(tx, user, 'ENSEIGNANT_CREE', 'Enseignant', cree.id, {
         avant: null,
         apres: this.instantaneAudit(cree),
@@ -109,7 +114,7 @@ export class EnseignantsService extends CrudService {
       // Le périmètre est revérifié dans la transaction, après la lecture de l'état courant.
       exigerPerimetre(user, cible.departementId);
       exigerPerimetre(user, dto.departementId ?? cible.departementId);
-      const maj = await tx.enseignant.update({ where: { id }, data: dto, include: this.options.include });
+      const maj = await tx.enseignant.update({ where: { id }, data: dto, include: ENSEIGNANT_INCLUDE });
       await journaliser(tx, user, 'ENSEIGNANT_MODIFIE', 'Enseignant', id, {
         avant: this.instantaneAudit(cible),
         apres: this.instantaneAudit(maj),

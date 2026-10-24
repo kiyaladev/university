@@ -25,7 +25,7 @@
  * module ; le journal dit qui l'a configuré, quand, et depuis quel état.
  */
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma, Role, StatutElection } from '@prisma/client';
+import { CandidatElection, Election, Prisma, Role, StatutElection } from '@prisma/client';
 import { randomBytes } from 'node:crypto';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { chargerEtablissement } from '../../../common/impression/index';
@@ -36,6 +36,7 @@ import { CreateCandidatDto, CreateElectionDto, ElectionQueryDto, UpdateElectionD
 import { documentsElection, BulletinElection } from './documents';
 import { paginer, pagine } from '../../../common/pagination';
 import { avantApres, journaliser } from '../../../common/audit';
+import { erreur } from '../../../common/erreur';
 
 /**
  * Journal d'audit : le détail « transition » est écrit en base et relu par
@@ -88,6 +89,30 @@ const ELECTION_VOTE_INCLUDE = {
 } as const;
 
 const ROLES_GESTION: Role[] = [Role.ADMIN, Role.SCOLARITE, Role.DIRECTION];
+
+/**
+ * Champs lus par les instantanés d'audit : le typage suit le modèle Prisma,
+ * la projection reste minimale. Les relations ne sont jamais recopiées.
+ */
+type ElectionAudit = Pick<
+  Election,
+  | 'id'
+  | 'type'
+  | 'statut'
+  | 'nbSieges'
+  | 'promotionId'
+  | 'departementId'
+  | 'dateOuverture'
+  | 'dateCloture'
+  | 'titre'
+  | 'description'
+  | 'bulletin'
+>;
+
+type CandidatAudit = Pick<
+  CandidatElection,
+  'id' | 'electionId' | 'ordre' | 'etudiantId' | 'enseignantId' | 'programme' | 'photoUrl'
+>;
 
 /** Les dates du journal sont des ISO : lisibles dans le journal, comparables. */
 function isoOuNull(v: Date | string | null | undefined): string | null {
@@ -548,10 +573,11 @@ export class ElectionsService {
           { isolationLevel: 'Serializable' },
         );
         break;
-      } catch (error: any) {
+      } catch (error: unknown) {
+        const err = erreur(error);
         // Deux bulletins simultanés passent par le même contrôle transactionnel.
-        if (error?.code === 'P2034' && tentative < 2) continue;
-        if (error?.code === 'P2002' || error?.code === 'P2034') {
+        if (err.code === 'P2034' && tentative < 2) continue;
+        if (err.code === 'P2002' || err.code === 'P2034') {
           throw new ConflictException(t('elections.vous_avez_deja_depose_un_bulletin_pour_cette_election'));
         }
         throw error;
@@ -668,7 +694,7 @@ export class ElectionsService {
    * de voix, de bulletin, de participation ni de résultat n'y figure : le
    * journal ne doit pas devenir une source secondaire de résultats détaillés.
    */
-  private instantaneElection(election: any) {
+  private instantaneElection(election: ElectionAudit) {
     return {
       id: election.id,
       type: election.type,
@@ -690,7 +716,7 @@ export class ElectionsService {
    * programme, ni la photo — le journal ne se transforme pas en annuaire des
    * candidats, et aucun lien n'y est tracé entre une personne et un choix.
    */
-  private instantaneCandidat(candidat: any, electionId: string) {
+  private instantaneCandidat(candidat: CandidatAudit, electionId: string) {
     return {
       id: candidat.id,
       electionId: candidat.electionId ?? electionId,

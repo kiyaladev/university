@@ -29,7 +29,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma, Role, StatutEncadrement } from '@prisma/client';
+import { Prisma, Role, StatutEncadrement, TypeEncadrement } from '@prisma/client';
 import { CrudService } from '../../../common/crud.service';
 import { AuthUser } from '../../../common/decorators';
 import { t } from '../../../common/i18n';
@@ -97,6 +97,62 @@ const SOUTENANCE_AUDIT_SELECT = {
   mention: true,
 } satisfies Prisma.SoutenanceSelect;
 
+/** Le dossier complet, relations comprises : c'est la projection des lectures. */
+type TravailComplet = Prisma.TravailEncadreGetPayload<{ include: typeof TRAVAIL_INCLUDE }>;
+
+/** L'état minimal d'un travail : ce que le journal d'audit a besoin de savoir. */
+type TravailAudit = Prisma.TravailEncadreGetPayload<{ select: typeof TRAVAIL_AUDIT_SELECT }>;
+
+/**
+ * L'état relu par la machine à états : l'audit, plus le seul fait qui compte
+ * pour la soutenance — son existence.
+ */
+type TravailTransition = Prisma.TravailEncadreGetPayload<{
+  select: typeof TRAVAIL_AUDIT_SELECT & { soutenance: { select: { id: true } } };
+}>;
+
+/** La soutenance relue pour le journal. */
+type SoutenanceAudit = Prisma.SoutenanceGetPayload<{ select: typeof SOUTENANCE_AUDIT_SELECT }>;
+
+/**
+ * Colonues communes à tous les travaux : l'instantané du journal n'en lit pas
+ * d'autres. Le type est structurel pour accepter aussi bien le dossier
+ * complet que les projections réduites de l'audit.
+ */
+type TravailJournalisable = {
+  id: string;
+  type: TypeEncadrement;
+  statut: StatutEncadrement;
+  etudiantId: string;
+  encadrantId: string | null;
+  rapportRendu: boolean;
+  dateDebut: Date | null;
+  dateFin: Date | null;
+  entreprise: string | null;
+  tuteurEntreprise: string | null;
+};
+
+/** Colonnes communes à toutes les soutenances, pour le même instantané. */
+type SoutenanceJournalisable = {
+  id: string;
+  travailEncadreId: string;
+  date: Date;
+  salleId: string | null;
+  presidentId: string | null;
+  assesseurs: string | null;
+  note: number | null;
+  mention: string | null;
+};
+
+/**
+ * Payload de création : les champs bruts du modèle, `etudiantId` compris —
+ * c'est un scalaire du modèle, pas une relation à créer.
+ */
+type CreationTravail = Omit<Prisma.TravailEncadreUncheckedCreateInput, 'statut' | 'type'> & {
+  type?: TypeEncadrement;
+  statut?: StatutEncadrement;
+};
+
 /** Les dates du journal sont des ISO : lisibles dans le journal, comparables. */
 function isoOuNull(v: Date | string | null | undefined): string | null {
   if (!v) return null;
@@ -105,7 +161,7 @@ function isoOuNull(v: Date | string | null | undefined): string | null {
 }
 
 @Injectable()
-export class StagesService extends CrudService {
+export class StagesService extends CrudService<TravailComplet> {
   constructor(prisma: PrismaService) {
     super(prisma, 'travailEncadre', {
       searchFields: ['intitule', 'description', 'entreprise', 'lieu'],
@@ -175,9 +231,9 @@ export class StagesService extends CrudService {
 
   async creer(dto: CreateTravailDto, user: AuthUser) {
     // `etudiantId` est un champ scalaire du modèle mais pas de
-    // TravailEncadreCreateInput (relation) : on passe par `any`, comme la
-    // base CrudService qui crée avec les champs bruts.
-    let donnees: any = { ...dto };
+    // TravailEncadreCreateInput (relation) : on passe par la variante
+    // « unchecked », comme la base CrudService qui crée avec les champs bruts.
+    let donnees: CreationTravail = { ...dto };
     if (user.role === Role.ETUDIANT) {
       if (!user.etudiantId) throw new ForbiddenException(t('stages.aucune_fiche_etudiant_rattachee'));
       if (dto.type && !['STAGE', 'RAPPORT'].includes(dto.type)) {
@@ -220,7 +276,7 @@ export class StagesService extends CrudService {
 
   /** Modification : la vie du statut passe par /transition, jamais par la PUT. */
   async modifier(id: string, dto: UpdateTravailDto, user: AuthUser) {
-    const travail: any = await super.lire(id);
+    const travail = await super.lire(id);
     this.autoriserPropriete(travail, user);
 
     if (dto.statut !== undefined && dto.statut !== travail.statut) {
@@ -233,8 +289,8 @@ export class StagesService extends CrudService {
     // n'importe quel enseignant puis faire avancer la machine à états seul
     // (PROPOSE → VALIDE → EN_COURS → SOUTENU), l'encadrant n'étant plus
     // partie prenante.
-    const { statut: _statut, etudiantId, encadrantId, ...reste } = dto as any;
-    const donnees = { ...reste };
+    const { statut: _statut, etudiantId, encadrantId, ...reste } = dto;
+    const donnees: Prisma.TravailEncadreUncheckedUpdateInput = { ...reste };
     // Un travail ne change pas de porteur par la PUT : l'étudiant est la clé
     // du périmètre (une erreur de saisie passe par la réaffectation en création).
     if (etudiantId !== undefined && etudiantId !== travail.etudiantId) {
@@ -242,7 +298,7 @@ export class StagesService extends CrudService {
     }
     // Changer d'encadrant relève de l'administration ou de la scolarité.
     if (encadrantId !== undefined && encadrantId !== travail.encadrantId) {
-      if (![Role.ADMIN, Role.DIRECTION, Role.SCOLARITE].includes(user.role as any)) {
+      if (!ROLES_PILOTES.includes(user.role)) {
         throw new ForbiddenException(t('stages.seule_l_administration_peut_changer_l_encadrant_d_un_travail_'));
       }
     }
@@ -252,7 +308,7 @@ export class StagesService extends CrudService {
     // un dossier modifié sans trace d'état avant/après, ou une trace sans
     // l'écriture, sont tous deux inexploitables en cas de contestation.
     return this.prisma.$transaction(async (tx) => {
-      const avant: any = await tx.travailEncadre.findUnique({
+      const avant: TravailAudit | null = await tx.travailEncadre.findUnique({
         where: { id },
         select: TRAVAIL_AUDIT_SELECT,
       });
@@ -275,8 +331,9 @@ export class StagesService extends CrudService {
 
   /** Suppression : réservée à l'administration, tant que le dossier n'est pas engagé. */
   async supprimer(id: string, user: AuthUser) {
-    const travail: any = await super.lire(id);
-    if (![StatutEncadrement.PROPOSE, StatutEncadrement.VALIDE].includes(travail.statut)) {
+    const travail = await super.lire(id);
+    const statutsSupprimables: StatutEncadrement[] = [StatutEncadrement.PROPOSE, StatutEncadrement.VALIDE];
+    if (!statutsSupprimables.includes(travail.statut)) {
       throw new BadRequestException(
         t('stages.un_travail_travail_statut_ne_se_supprime_pas_abandonnez_le_o', { 'travail.statut': travail.statut }),
       );
@@ -284,7 +341,7 @@ export class StagesService extends CrudService {
     return this.prisma.$transaction(async (tx) => {
       // L'état avant est relu dans la transaction : après la suppression, le
       // journal est la seule trace qui survit à la ligne.
-      const avant: any = await tx.travailEncadre.findUnique({
+      const avant: TravailAudit | null = await tx.travailEncadre.findUnique({
         where: { id },
         select: TRAVAIL_AUDIT_SELECT,
       });
@@ -307,7 +364,7 @@ export class StagesService extends CrudService {
   // ------------------------------------------------------------------
 
   async transition(id: string, cible: StatutEncadrement, user: AuthUser) {
-    const travail: any = await super.lire(id);
+    const travail = await super.lire(id);
     if (!this.verifierTransition(travail, cible, user)) {
       // Idempotent : revendiquer le même état n'est pas une erreur, c'est un no-op.
       return travail;
@@ -319,7 +376,7 @@ export class StagesService extends CrudService {
     // adjudications concurrentes ne peuvent ni faire sauter une étape de la
     // machine, ni laisser un journal mentant sur l'état de départ.
     return this.prisma.$transaction(async (tx) => {
-      const avant: any = await tx.travailEncadre.findUnique({
+      const avant: TravailTransition | null = await tx.travailEncadre.findUnique({
         where: { id },
         select: { ...TRAVAIL_AUDIT_SELECT, soutenance: { select: { id: true } } },
       });
@@ -354,7 +411,11 @@ export class StagesService extends CrudService {
    * Renvoie `false` quand la cible est déjà l'état courant (no-op) : dans ce
    * cas rien n'est écrit et rien n'est journalisé.
    */
-  private verifierTransition(travail: any, cible: StatutEncadrement, user: AuthUser): boolean {
+  private verifierTransition(
+    travail: TravailComplet | TravailTransition,
+    cible: StatutEncadrement,
+    user: AuthUser,
+  ): boolean {
     this.autoriserPropriete(travail, user);
     if (user.role === Role.ENSEIGNANT && !travail.encadrantId) {
       throw new ForbiddenException(t('stages.ce_travail_n_a_pas_d_encadrant'));
@@ -402,7 +463,7 @@ export class StagesService extends CrudService {
     // seul acte : faits vérifiés et écriture entre eux, un dossier ne peut pas
     // se retrouver SOUTENU sans soutenance, ni l'inverse.
     return this.prisma.$transaction(async (tx) => {
-      const travail: any = await tx.travailEncadre.findUnique({
+      const travail: TravailTransition | null = await tx.travailEncadre.findUnique({
         where: { id: dto.travailEncadreId },
         // Seule l'existence de la soutenance est testée : charger la mention,
         // la note et les assesseurs ici n'était qu'une fuite de vie privée.
@@ -448,7 +509,7 @@ export class StagesService extends CrudService {
         },
       });
 
-      const apres: any = await tx.travailEncadre.findUnique({
+      const apres: TravailAudit | null = await tx.travailEncadre.findUnique({
         where: { id: travail.id },
         select: TRAVAIL_AUDIT_SELECT,
       });
@@ -470,7 +531,7 @@ export class StagesService extends CrudService {
   /** Constat du jury : note et mention (ADMIN / DIRECTION). */
   async noter(id: string, dto: NoteSoutenanceDto, user: AuthUser) {
     return this.prisma.$transaction(async (tx) => {
-      const avant: any = await tx.soutenance.findUnique({
+      const avant: SoutenanceAudit | null = await tx.soutenance.findUnique({
         where: { id },
         select: SOUTENANCE_AUDIT_SELECT,
       });
@@ -558,7 +619,7 @@ export class StagesService extends CrudService {
    * confidentiel : ils ne sont jamais recopiés, seulement signalés présents ou
    * absents.
    */
-  private instantaneTravail(travail: any) {
+  private instantaneTravail(travail: TravailJournalisable | null) {
     if (!travail) return null;
     return {
       id: travail.id,
@@ -579,7 +640,7 @@ export class StagesService extends CrudService {
    * La mention et la liste des assesseurs sont des textes rédigés (noms de
    * personnes) : seule leur présence est journalisée.
    */
-  private instantaneSoutenance(soutenance: any) {
+  private instantaneSoutenance(soutenance: SoutenanceJournalisable | null) {
     if (!soutenance) return null;
     return {
       id: soutenance.id,

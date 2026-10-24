@@ -1,11 +1,11 @@
 {
-  "date": "2026-10-06T14:26:45.310Z",
+  "date": "2026-10-23T12:54:47.743Z",
   "statut": "valide",
   "resolutions": [
     400,
+    201,
     400,
-    400,
-    201
+    400
   ],
   "resolutionEtPriseEnCharge": [
     201,

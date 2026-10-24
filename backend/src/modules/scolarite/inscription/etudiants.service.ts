@@ -7,7 +7,7 @@ import { journaliser } from '../../../common/audit';
  */
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { t } from '../../../common/i18n';
-import { Prisma, Role } from '@prisma/client';
+import { Etudiant, Prisma, Role } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 import { randomBytes } from 'node:crypto';
 import { CrudService } from '../../../common/crud.service';
@@ -49,6 +49,12 @@ const ETUDIANT_DEPARTEMENT_SELECT = {
     },
   },
 } satisfies Prisma.EtudiantSelect;
+
+/**
+ * Colonnes lues pour l'instantané d'audit d'un étudiant : ni coordonnées, ni
+ * date de naissance, ni données de compte.
+ */
+type EtudiantAudit = Pick<Etudiant, 'matricule' | 'nom' | 'prenom' | 'sexe' | 'actif'>;
 
 @Injectable()
 export class EtudiantsService extends CrudService {
@@ -176,7 +182,7 @@ export class EtudiantsService extends CrudService {
   async modifier(id: string, dto: UpdateEtudiantDto, user: AuthUser) {
     const { creerCompte = false, motDePasse, ...donnees } = dto;
     return this.prisma.$transaction(async (tx) => {
-      const actuel: any = await tx.etudiant.findUnique({ where: { id } });
+      const actuel = await tx.etudiant.findUnique({ where: { id } });
       if (!actuel) throw new NotFoundException(t('common.notFound'));
 
       let compteId = actuel.userId ?? null;
@@ -202,7 +208,7 @@ export class EtudiantsService extends CrudService {
         compteId = compte.id;
       }
 
-      const maj: any = await tx.etudiant.update({
+      const maj = await tx.etudiant.update({
         where: { id },
         data: {
           ...donnees,
@@ -222,7 +228,7 @@ export class EtudiantsService extends CrudService {
   }
 
   /** État utile à l'audit sans coordonnées, date de naissance ni données de compte. */
-  private instantaneAudit(etudiant: any) {
+  private instantaneAudit(etudiant: EtudiantAudit) {
     return {
       matricule: etudiant.matricule,
       nom: etudiant.nom,
@@ -239,9 +245,9 @@ export class EtudiantsService extends CrudService {
    */
   async supprimer(id: string, user?: AuthUser) {
     await this.prisma.$transaction(async (tx) => {
-      const avant: any = await tx.etudiant.findUnique({ where: { id } });
+      const avant = await tx.etudiant.findUnique({ where: { id } });
       if (!avant) throw new NotFoundException(t('common.notFound'));
-      const apres: any = await tx.etudiant.update({
+      const apres = await tx.etudiant.update({
         where: { id },
         data: { actif: false },
         include: ETUDIANT_INCLUDE,

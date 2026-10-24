@@ -3,7 +3,14 @@
  *  Une absence justifiée bascule le contrôle correspondant en EXCUSE et n'est
  *  plus comptée comme absence sèche dans les statistiques. */
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { MethodeVerification, Prisma, Role, StatutJustificatif, StatutPresence } from '@prisma/client';
+import {
+  MethodeVerification,
+  Prisma,
+  Role,
+  StatutJustificatif,
+  StatutPresence,
+  TypeJustificatif,
+} from '@prisma/client';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { CrudService } from '../../../common/crud.service';
 import { AuthUser } from '../../../common/decorators';
@@ -58,8 +65,31 @@ const JUSTIFICATIF_ENSEIGNANT_SELECT = {
   },
 } as const;
 
+/**
+ * Charge utile d'un justificatif : l'administration lit la pièce et le
+ * traitement, l'enseignant n'a pas accès à la pièce médicale.
+ */
+type JustificatifPayload =
+  | Prisma.JustificatifGetPayload<{ include: typeof JUSTIFICATIF_INCLUDE }>
+  | Prisma.JustificatifGetPayload<{ select: typeof JUSTIFICATIF_ENSEIGNANT_SELECT }>;
+
+/**
+ * Colonnes lues pour l'instantané d'audit d'un justificatif : le journal
+ * retient l'identité de la séance, l'enseignant et l'issue de la demande.
+ */
+type JustificatifAudit = {
+  id: string;
+  seanceId: string;
+  enseignantId: string;
+  type: TypeJustificatif;
+  statut: StatutJustificatif;
+  /** Absent de la projection réduite : l'instantané le reporte à null. */
+  traiteParId?: string | null;
+  traiteLe: Date | null;
+};
+
 @Injectable()
-export class JustificatifsService extends CrudService {
+export class JustificatifsService extends CrudService<JustificatifPayload> {
   constructor(prisma: PrismaService) {
     super(prisma, 'justificatif', {
       orderBy: { createdAt: 'desc' },
@@ -167,7 +197,7 @@ export class JustificatifsService extends CrudService {
     const { enseignantId: _ignore, ...rest } = dto;
     return this.prisma.$transaction(
       async (tx) => {
-        const seanceTx: any = await tx.seance.findFirst({
+        const seanceTx = await tx.seance.findFirst({
           where: {
             id: dto.seanceId,
             ...filtreDepartement(user, 'affectation.promotion.filiere'),
@@ -206,7 +236,7 @@ export class JustificatifsService extends CrudService {
 
     await this.prisma.$transaction(
       async (tx) => {
-        const avant: any = await tx.justificatif.findUnique({
+        const avant = await tx.justificatif.findUnique({
           where: { id },
           include: {
             seance: {
@@ -274,7 +304,7 @@ export class JustificatifsService extends CrudService {
   async supprimer(id: string, user?: AuthUser) {
     return this.prisma.$transaction(
       async (tx) => {
-        const avant: any = await tx.justificatif.findUnique({
+        const avant = await tx.justificatif.findUnique({
           where: { id },
           include: { seance: { select: { id: true, anneeId: true } } },
         });
@@ -294,7 +324,7 @@ export class JustificatifsService extends CrudService {
     );
   }
 
-  private instantaneAudit(justificatif: any) {
+  private instantaneAudit(justificatif: JustificatifAudit) {
     return {
       id: justificatif.id,
       seanceId: justificatif.seanceId,

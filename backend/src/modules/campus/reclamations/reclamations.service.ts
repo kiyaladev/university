@@ -99,6 +99,35 @@ const RECLAMATION_DETAIL_INCLUDE = {
 
 const MAX_MESSAGES_PAR_RECLAMATION = 100;
 
+/**
+ * Réclamation lue par l'instantané d'audit. La projection est volontairement
+ * partielle : l'escalade automatique ne charge qu'une fraction des champs,
+ * et le bloc-notes interne peut être omis de la réponse adressée à un
+ * étudiant.
+ */
+interface ReclamationAudit {
+  id: string;
+  numero: string;
+  type: TypeReclamation;
+  priorite: PrioriteReclamation;
+  statut: StatutReclamation;
+  anonyme?: boolean;
+  etudiantId?: string | null;
+  departementId?: string | null;
+  assigneAId?: string | null;
+  assigneA?: { role: Role } | null;
+  delaiEscaladeHeures?: number | null;
+  escaladeLe?: Date | null;
+  createdAt?: Date | null;
+  fermeLe?: Date | null;
+  _count?: { messages: number };
+  sujet?: string | null;
+  description?: string | null;
+  notes?: string | null;
+  nomAuteur?: string | null;
+  emailAuteur?: string | null;
+}
+
 @Injectable()
 export class ReclamationsService extends CrudService {
   private readonly logger = new Logger(ReclamationsService.name);
@@ -170,7 +199,7 @@ export class ReclamationsService extends CrudService {
    * pièce jointe ; les clés étrangères techniques (agent, département) restent,
    * comme dans les autres modules, pour qu'une affectation soit reconstituable.
    */
-  private instantaneAudit(reclamation: any) {
+  private instantaneAudit(reclamation: ReclamationAudit) {
     return {
       id: reclamation.id,
       numero: reclamation.numero,

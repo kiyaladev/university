@@ -6,6 +6,7 @@ import { StatutSuspicionPlagiat, SuspicionPlagiat } from '@prisma/client';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { AuthUser } from '../../../common/decorators';
 import { journaliser } from '../../../common/audit';
+import { erreur } from '../../../common/erreur';
 
 /**
  * Détection de doublons dans le dépôt. Le service regroupe toute la logique
@@ -213,8 +214,8 @@ export class PlagiatService {
       } finally {
         await parser.destroy();
       }
-    } catch (e: any) {
-      this.logger.warn(`Échec d'extraction PDF (${e?.message ?? e}). Document enregistré sans texte.`);
+    } catch (e: unknown) {
+      this.logger.warn(`Échec d'extraction PDF (${erreur(e).message ?? String(e)}). Document enregistré sans texte.`);
       return { contenuTexte: null, empreinteHash };
     }
   }
@@ -228,8 +229,8 @@ export class PlagiatService {
   async detecterSilencieusement(documentId: string): Promise<{ creees: number; ignorees: number } | null> {
     try {
       return await this.detecterDoublons(documentId);
-    } catch (e: any) {
-      this.logger.warn(`Détection de doublons en échec pour ${documentId} : ${e?.message ?? e}`);
+    } catch (e: unknown) {
+      this.logger.warn(`Détection de doublons en échec pour ${documentId} : ${erreur(e).message ?? String(e)}`);
       return null;
     }
   }

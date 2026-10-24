@@ -18,6 +18,10 @@ import { exigerAnneeOuverte } from '../../../common/annee';
 import { paginer, pagine } from '../../../common/pagination';
 import { journaliser } from '../../../common/audit';
 import { estChefDeDepartement } from '../../../common/perimetre';
+import { erreur } from '../../../common/erreur';
+
+/** Rôles qui corrigent le pointage d'une séance déjà consignée. */
+const ROLES_CORRECTION: Role[] = [Role.ADMIN, Role.DIRECTION];
 
 const AUDIT_DETAILS_LIBRES_A_MASQUER = new Set([
   'PAIE_CREEE',
@@ -119,7 +123,7 @@ function retirerTexteLibreAudit(valeur: unknown): unknown {
   );
 }
 
-function detailsAuditNettoyes(action: string, details: unknown): unknown {
+function detailsAuditNettoyes(action: string, details: string | null): string | null {
   if (typeof details !== 'string') return details;
   if (action === 'SMS_DIFFUSION_DEMANDEE') {
     try {
@@ -247,6 +251,22 @@ const CONTROLE_SELECT_RESTREINT = {
     },
   },
 } satisfies Prisma.ControleSelect;
+
+/**
+ * Colonnes lues pour l'état « avant / après » d'un pointage. La projection
+ * restreinte et la projection complète portent toutes deux ces champs.
+ */
+type EtatControle = {
+  statut: StatutPresence;
+  heureArrivee: string | null;
+  heureFinReelle: string | null;
+  dureeMinutes: number;
+  effectifPresent: number | null;
+  thematiqueTraitee: string | null;
+  methode: MethodeVerification;
+  horsLigne: boolean;
+  horodatage: Date;
+};
 
 @Injectable()
 export class ControleService {
@@ -592,7 +612,7 @@ export class ControleService {
       // reconnaître le renvoi du même pointage.
       const idClientConsigne = lu?.idClient ?? null;
       const existant = lu ? sansIdClient(lu) : null;
-      if (existant && ![Role.ADMIN, Role.DIRECTION].includes(user.role as any)) {
+      if (existant && !ROLES_CORRECTION.includes(user.role)) {
         if (existant.controleurId !== user.id) {
           throw new ForbiddenException(t('controle.cette_seance_a_deja_ete_controlee_par_un_autre_agent_seule_l'));
         }
@@ -724,7 +744,7 @@ export class ControleService {
     // enseignant ou contrôleur. Le garde-fou `controleurId` ci-dessous
     // suffisait aujourd'hui par accident, pas par conception.
     const existant = await this.lire(id, user);
-    if (existant.controleurId !== user.id && ![Role.ADMIN, Role.DIRECTION].includes(user.role as any)) {
+    if (existant.controleurId !== user.id && !ROLES_CORRECTION.includes(user.role)) {
       throw new ForbiddenException(t('controle.seul_l_auteur_du_controle_ou_la_direction_peut_le_corriger'));
     }
     // L'état complet est relu : la correction repart de ce qui a été consigné,
@@ -761,18 +781,19 @@ export class ControleService {
    * la file du contrôleur le retire au lieu de le réessayer indéfiniment.
    */
   async synchroniser(dto: SyncPointagesDto, user: AuthUser, ip?: string) {
-    const resultats: Array<{ seanceId: string; ok: boolean; erreur?: string; code?: string; id?: string }> = [];
+    const resultats: Array<{ seanceId: string; ok: boolean; erreur?: string | string[]; code?: string; id?: string }> = [];
 
     for (const p of dto.pointages) {
       try {
         const c = await this.pointer({ ...p, horsLigne: true }, user, ip);
         resultats.push({ seanceId: p.seanceId, ok: true, id: c.id });
-      } catch (e: any) {
+      } catch (e: unknown) {
+        const err = erreur(e);
         resultats.push({
           seanceId: p.seanceId,
           ok: false,
-          erreur: e?.response?.message ?? e?.message ?? 'Erreur inconnue',
-          ...(e?.code === CODE_PREUVE_DEJA_UTILISEE ? { code: e.code } : {}),
+          erreur: err.response?.message ?? err.message ?? 'Erreur inconnue',
+          ...(err.code === CODE_PREUVE_DEJA_UTILISEE ? { code: err.code } : {}),
         });
       }
     }
@@ -808,20 +829,19 @@ export class ControleService {
     });
   }
 
-  private etatAudit(controle: any) {
-    return Object.fromEntries(
-      [
-        'statut',
-        'heureArrivee',
-        'heureFinReelle',
-        'dureeMinutes',
-        'effectifPresent',
-        'thematiqueTraitee',
-        'methode',
-        'horsLigne',
-        'horodatage',
-      ].map((champ) => [champ, controle[champ] ?? null]),
-    );
+  private etatAudit(controle: EtatControle) {
+    const champs = [
+      'statut',
+      'heureArrivee',
+      'heureFinReelle',
+      'dureeMinutes',
+      'effectifPresent',
+      'thematiqueTraitee',
+      'methode',
+      'horsLigne',
+      'horodatage',
+    ] as const;
+    return Object.fromEntries(champs.map((champ) => [champ, controle[champ] ?? null] as const));
   }
 
   /** Journal d'audit (traçabilité des corrections). */
@@ -870,8 +890,8 @@ export class ControleService {
       this.prisma.auditLog.count({ where }),
     ]);
     const nettoye = data
-      .filter((ligne: any) => ligne.action !== 'VOTE_DEPOSE')
-      .map((ligne: any) => {
+      .filter((ligne) => ligne.action !== 'VOTE_DEPOSE')
+      .map((ligne) => {
         // L'adresse IP reste réservée à l'exploitation serveur et ne sert pas
         // aux filtres ou aux détails visibles de l'écran Journal.
         const { ip: _ip, ...ligneExposee } = ligne;
@@ -881,7 +901,10 @@ export class ControleService {
         if (typeof ligne.details !== 'string') return ligneExposee;
         if (ligne.action === 'POINTAGE_CORRECTION') {
           try {
-            const details = JSON.parse(ligne.details);
+            const details = JSON.parse(ligne.details) as {
+              avant?: Record<string, unknown>;
+              apres?: Record<string, unknown>;
+            };
             for (const instantane of [details.avant, details.apres]) {
               if (instantane && typeof instantane === 'object') delete instantane.observation;
             }

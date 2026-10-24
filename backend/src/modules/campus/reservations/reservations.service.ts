@@ -21,6 +21,7 @@ import {
 } from './reservations.dto';
 import { journaliser } from '../../../common/audit';
 import { estChefDeDepartement } from '../../../common/perimetre';
+import { erreur } from '../../../common/erreur';
 
 const MAX_JOURS_CALENDRIER = 93;
 
@@ -40,6 +41,28 @@ export const RESERVATION_INCLUDE = {
   salle: { select: { id: true, code: true, nom: true } },
   demandeur: { select: { id: true, nom: true, prenom: true } },
   refusePar: { select: { id: true, nom: true, prenom: true } },
+};
+
+/** Réservation lue par les instantanés d'audit et par les vues de la semaine. */
+type ReservationDetail = Prisma.ReservationSalleGetPayload<{ include: typeof RESERVATION_INCLUDE }>;
+
+/**
+ * Réservation affichée dans la vue semaine. Pour un demandeur non gestionnaire,
+ * les champs libres sont neutralisés : le type le déclare, la valeur reste
+ * celle renvoyée par la requête.
+ */
+type ReservationVue = Omit<
+  ReservationDetail,
+  'motif' | 'organisme' | 'responsable' | 'demandeurId' | 'demandeur' | 'refuseParId' | 'refusePar' | 'refuseMotif'
+> & {
+  motif: string | null;
+  organisme: string | null;
+  responsable: string | null;
+  demandeurId: string | null;
+  demandeur: { id: string; nom: string; prenom: string } | null;
+  refuseParId: string | null;
+  refusePar: { id: string; nom: string; prenom: string } | null;
+  refuseMotif: string | null;
 };
 
 /** Seules les demandes encore vives occupent la salle : une réservation
@@ -76,7 +99,9 @@ const SALLE_CALENDRIER_SELECT = {
 };
 
 @Injectable()
-export class ReservationsService extends CrudService {
+export class ReservationsService extends CrudService<
+  Prisma.ReservationSalleGetPayload<{ include: typeof RESERVATION_INCLUDE }>
+> {
   constructor(prisma: PrismaService) {
     super(prisma, 'reservationSalle', {
       orderBy: [{ dateJour: 'asc' }, { heureDebut: 'asc' }],
@@ -93,8 +118,9 @@ export class ReservationsService extends CrudService {
       return await this.prisma.$transaction(operation, {
         isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
       });
-    } catch (e: any) {
-      if (e?.code === 'P2034') {
+    } catch (e: unknown) {
+      const err = erreur(e);
+      if (err.code === 'P2034') {
         throw new ConflictException(t('reservations.ecriture_concurrente_reessayez'));
       }
       throw e;
@@ -187,7 +213,7 @@ export class ReservationsService extends CrudService {
    * (jeton QR, coordonnées) — seulement son identifiant. La présence d'un
    * texte libre est notée par un booléen, jamais par son contenu.
    */
-  private instantaneAudit(reservation: any) {
+  private instantaneAudit(reservation: ReservationDetail) {
     return {
       id: reservation.id,
       salleId: reservation.salleId,
@@ -226,7 +252,7 @@ export class ReservationsService extends CrudService {
 
   async modifier(id: string, dto: UpdateReservationDto, user: AuthUser) {
     return this.transactionSerializable(async (tx) => {
-      const existante: any = await tx.reservationSalle.findUnique({
+      const existante = await tx.reservationSalle.findUnique({
         where: { id },
         include: RESERVATION_INCLUDE,
       });
@@ -264,7 +290,7 @@ export class ReservationsService extends CrudService {
 
   async supprimer(id: string, user: AuthUser) {
     return this.transactionSerializable(async (tx) => {
-      const existante: any = await tx.reservationSalle.findUnique({
+      const existante = await tx.reservationSalle.findUnique({
         where: { id },
         include: RESERVATION_INCLUDE,
       });
@@ -287,7 +313,7 @@ export class ReservationsService extends CrudService {
    */
   async decider(id: string, dto: DeciderReservationDto, user: AuthUser) {
     return this.transactionSerializable(async (tx) => {
-      const existante: any = await tx.reservationSalle.findUnique({
+      const existante = await tx.reservationSalle.findUnique({
         where: { id },
         include: RESERVATION_INCLUDE,
       });
@@ -385,8 +411,8 @@ export class ReservationsService extends CrudService {
 
     const jours = joursEntre(query.dateDebut, query.dateFin).map((date) => ({
       date,
-      reservations: [] as any[],
-      seances: [] as any[],
+      reservations: [] as ReservationVue[],
+      seances: [] as typeof seances,
     }));
 
     const parDate = new Map(jours.map((j) => [j.date, j]));

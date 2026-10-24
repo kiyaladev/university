@@ -88,6 +88,24 @@ function preparer(options: { parametres?: Record<string, unknown>; seance?: any 
 }
 
 describe('ControleService — déduction du statut de présence', () => {
+  // Garde-fou : seuls ADMIN et DIRECTION corrigent le pointage d'un autre
+  // agent. Une refactorisation avait inversé cette condition sans qu'aucun
+  // test ne le voie.
+  it('refuse au contrôleur de repointer une séance pointée par un autre agent, pas à la direction', async () => {
+    const autre = { id: 'c1', seanceId: 'seance-1', controleurId: 'user-9', idClient: null };
+    const { service, prisma } = preparer();
+    prisma.controle.findUnique.mockResolvedValue(autre);
+
+    await expect(service.pointer({ seanceId: 'seance-1', statut: StatutPresence.ABSENT }, CONTROLEUR)).rejects.toThrow(
+      ForbiddenException,
+    );
+    expect(prisma.controle.update).not.toHaveBeenCalled();
+
+    const direction = { ...CONTROLEUR, id: 'user-dir', role: Role.DIRECTION };
+    await service.pointer({ seanceId: 'seance-1', statut: StatutPresence.ABSENT }, direction);
+    expect(prisma.controle.update).toHaveBeenCalled();
+  });
+
   it('refuse au chef un pointage de séance appartenant à un autre département', async () => {
     const { service, prisma } = preparer({
       seance: {
@@ -615,7 +633,7 @@ describe('ControleService — journal de corrections', () => {
 
     const result = await service.audit({} as any);
 
-    expect(JSON.parse(result.data[0].details)).toEqual({
+    expect(JSON.parse(result.data[0].details as string)).toEqual({
       lotId: '00000000-0000-4000-8000-000000000001',
       canal: 'SMS',
       statutInitial: 'EN_ATTENTE',
@@ -685,14 +703,14 @@ describe('ControleService — journal de corrections', () => {
 
     const result = await service.audit({} as any);
 
-    expect(JSON.parse(result.data[0].details)).toEqual({
+    expect(JSON.parse(result.data[0].details as string)).toEqual({
       avant: { statut: 'ABSENT' },
       apres: { statut: 'EXCUSE' },
     });
     expect(result.data[1].details).toBe('QR régénéré');
     expect(result.data.slice(2, 7).every((ligne: any) => ligne.details === '[détails masqués]')).toBe(true);
-    expect(JSON.parse(result.data[7].details)).toEqual({ avant: { id: 'att-1' }, apres: { id: 'att-1' } });
-    expect(JSON.parse(result.data[8].details)).toEqual({ avant: { id: 'log-1' }, apres: { id: 'log-1' } });
+    expect(JSON.parse(result.data[7].details as string)).toEqual({ avant: { id: 'att-1' }, apres: { id: 'att-1' } });
+    expect(JSON.parse(result.data[8].details as string)).toEqual({ avant: { id: 'log-1' }, apres: { id: 'log-1' } });
     expect(JSON.stringify(result)).not.toMatch(
       /diagnostic privé|usage avant privé|usage après privé|donnée privée|UP-PAT-SECRET|référence scannée privée|198\.51\.100\.42/,
     );
@@ -740,7 +758,7 @@ describe('ControleService — journal de corrections', () => {
     const result = await service.audit({} as any);
 
     expect(result.data[0].details).toBe('[détails masqués]');
-    expect(JSON.parse(result.data[1].details)).toEqual({
+    expect(JSON.parse(result.data[1].details as string)).toEqual({
       avant: null,
       apres: { id: 'ticket-1', numero: 'TCK-2', statut: 'OUVERT', descriptionFournie: true },
     });
@@ -764,7 +782,7 @@ describe('ControleService — journal de corrections', () => {
     const result = await service.audit({} as any);
 
     expect(result.data[0].details).toBe('[détails masqués]');
-    expect(JSON.parse(result.data[1].details)).toEqual({
+    expect(JSON.parse(result.data[1].details as string)).toEqual({
       avant: null,
       apres: { id: 'rec-2', numero: 'REC-2026-00002', statut: 'OUVERT', sujetFourni: true },
     });
@@ -789,7 +807,7 @@ describe('ControleService — journal de corrections', () => {
     const result = await service.audit({} as any);
 
     expect(result.data[0].details).toBe('[détails masqués]');
-    expect(JSON.parse(result.data[1].details)).toEqual({
+    expect(JSON.parse(result.data[1].details as string)).toEqual({
       avant: { id: 'susp-1', statut: 'EN_ATTENTE', commentaireFourni: false },
       apres: { id: 'susp-1', statut: 'CONFIRME', commentaireFourni: true },
       champsModifies: ['statut'],
@@ -986,17 +1004,15 @@ describe('ControleService — preuve biométrique et transaction du pointage', (
     });
     // L'attestation simule la consommation d'une preuve biométrique : elle
     // s'inscrit dans la transaction du pointage, comme en production.
-    base.attestation.verifierPreuves.mockImplementation(
-      async (_ens: string, preuves: any, tx?: any) => {
-        if (preuves.empreinte) {
-          await tx?.preuveConsommee?.create?.({ data: { cle: `preuve:${preuves.empreinte.signature}` } });
-          return { mode: 'EMPREINTE', valide: true, score: preuves.empreinte.score };
-        }
-        if (preuves.codePinEnseignant) return { mode: 'CODE_PIN', valide: true };
-        if (preuves.signatureBase64) return { mode: 'SIGNATURE', valide: true };
-        return { mode: 'AUCUNE', valide: false };
-      },
-    );
+    base.attestation.verifierPreuves.mockImplementation(async (_ens: string, preuves: any, tx?: any) => {
+      if (preuves.empreinte) {
+        await tx?.preuveConsommee?.create?.({ data: { cle: `preuve:${preuves.empreinte.signature}` } });
+        return { mode: 'EMPREINTE', valide: true, score: preuves.empreinte.score };
+      }
+      if (preuves.codePinEnseignant) return { mode: 'CODE_PIN', valide: true };
+      if (preuves.signatureBase64) return { mode: 'SIGNATURE', valide: true };
+      return { mode: 'AUCUNE', valide: false };
+    });
     return { ...base, consommations };
   }
 
@@ -1086,7 +1102,10 @@ describe('ControleService — renvoi d’un pointage hors ligne', () => {
     attestation.verifierPreuves.mockRejectedValue(new PreuveDejaUtiliseeException());
 
     await expect(
-      service.pointer({ seanceId: 'seance-1', heureArrivee: '08:05', idClient: 'uuid-client', empreinte: EMPREINTE }, CONTROLEUR),
+      service.pointer(
+        { seanceId: 'seance-1', heureArrivee: '08:05', idClient: 'uuid-client', empreinte: EMPREINTE },
+        CONTROLEUR,
+      ),
     ).rejects.toBeInstanceOf(ConflictException);
   });
 
@@ -1107,7 +1126,10 @@ describe('ControleService — renvoi d’un pointage hors ligne', () => {
     const { service, attestation } = preparer();
     attestation.verifierPreuves.mockRejectedValue(new PreuveDejaUtiliseeException());
 
-    const res = await service.synchroniser({ pointages: [{ seanceId: 'seance-1', heureArrivee: '08:05' }] }, CONTROLEUR);
+    const res = await service.synchroniser(
+      { pointages: [{ seanceId: 'seance-1', heureArrivee: '08:05' }] },
+      CONTROLEUR,
+    );
 
     expect(res.echecs[0]).toMatchObject({ seanceId: 'seance-1', ok: false, code: 'PREUVE_DEJA_UTILISEE' });
   });

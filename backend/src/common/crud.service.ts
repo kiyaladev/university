@@ -39,6 +39,29 @@ export interface CrudOptions {
   label?: string;
 }
 
+/** Arguments passés au delegate Prisma : la forme exacte dépend de l'opération. */
+export type CrudArgs = Record<string, unknown>;
+
+/**
+ * Contrat minimal du delegate Prisma utilisé par le CRUD générique.
+ *
+ * Le delegate est résolu à l'exécution à partir du nom du modèle : sa forme
+ * exacte n'est connue qu'au moment de l'appel. On se limite donc aux six
+ * opérations réellement utilisées ici, arguments et résultats non spécifiés.
+ * Le type de la charge utile est porté par `T` : chaque service déclare ce
+ * qu'il attend (`Prisma.XGetPayload<…>` le plus souvent) et les types Prisma
+ * précis sont posés aux points d'usage.
+ */
+export interface CrudDelegate<T = unknown> {
+  findMany(args: CrudArgs): Promise<T[]>;
+  findFirst(args: CrudArgs): Promise<T | null>;
+  findUnique(args: CrudArgs): Promise<T | null>;
+  count(args: CrudArgs): Promise<number>;
+  create(args: CrudArgs): Promise<T>;
+  update(args: CrudArgs): Promise<T>;
+  delete(args: CrudArgs): Promise<T>;
+}
+
 /**
  * Service CRUD générique sur un modèle Prisma. Les services métier en héritent
  * et ne redéfinissent que ce qui leur est spécifique.
@@ -49,11 +72,12 @@ export interface CrudOptions {
  * Les signatures de base sont donc volontairement larges (`unknown`,
  * `...contexte`) pour rester compatibles avec ces surcharges.
  *
- * Le type du modèle reste `any` par défaut : les services qui l'héritent sans
- * le préciser s'appuient sur le delegate Prisma résolu à l'exécution, dont la
- * forme exacte n'est connue qu'au moment de l'appel.
+ * Le type de la charge utile est un paramètre générique : par défaut `unknown`,
+ * un service qui l'héritent sans le préciser reste « non typé » plutôt que
+ * `any`, et les services qui exploitent le résultat d'un `lire` déclarent
+ * eux-mêmes le type Prisma attendu.
  */
-export class CrudService<T = any> {
+export class CrudService<T = unknown> {
   constructor(
     protected readonly prisma: PrismaService,
     protected readonly model: string,
@@ -64,8 +88,8 @@ export class CrudService<T = any> {
    * Delegate Prisma du modèle configuré : il est résolu à l'exécution, le type
    * exact dépend du modèle et n'est connu qu'au moment de l'appel.
    */
-  protected get delegate(): any {
-    return (this.prisma as any)[this.model];
+  protected get delegate(): CrudDelegate<T> {
+    return (this.prisma as unknown as Record<string, CrudDelegate<T>>)[this.model];
   }
 
   protected searchWhere(search?: string) {

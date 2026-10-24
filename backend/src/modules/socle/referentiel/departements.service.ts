@@ -1,7 +1,7 @@
 /** Départements : l’ossature académique. */
 
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma, type Departement } from '@prisma/client';
 import { CrudService, supprimerOuConflit } from '../../../common/crud.service';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { AuthUser } from '../../../common/decorators';
@@ -9,13 +9,18 @@ import { t } from '../../../common/i18n';
 import { journaliser } from '../../../common/audit';
 import { CreateDepartementDto, UpdateDepartementDto } from './departements.dto';
 
+/** Relations chargées avec un département : le nombre d'enseignants et de filières. */
+const DEPARTEMENT_INCLUDE = { _count: { select: { enseignants: true, filieres: true } } } as const;
+
 @Injectable()
-export class DepartementsService extends CrudService {
+export class DepartementsService extends CrudService<
+  Prisma.DepartementGetPayload<{ include: typeof DEPARTEMENT_INCLUDE }>
+> {
   constructor(prisma: PrismaService) {
     super(prisma, 'departement', {
       searchFields: ['code', 'nom', 'faculte'],
       orderBy: { nom: 'asc' },
-      include: { _count: { select: { enseignants: true, filieres: true } } },
+      include: DEPARTEMENT_INCLUDE,
       label: 'Département',
     });
   }
@@ -27,14 +32,14 @@ export class DepartementsService extends CrudService {
     });
   }
 
-  private instantaneAudit(departement: any) {
+  private instantaneAudit(departement: Departement) {
     return { id: departement.id, code: departement.code, nom: departement.nom, faculte: departement.faculte };
   }
 
   async creer(dto: CreateDepartementDto, user?: AuthUser) {
     return this.prisma.$transaction(
       async (tx) => {
-        const departement = await tx.departement.create({ data: dto, include: this.options.include });
+        const departement = await tx.departement.create({ data: dto, include: DEPARTEMENT_INCLUDE });
         await journaliser(tx, user ?? null, 'DEPARTEMENT_CREE', 'Departement', departement.id, {
           avant: null,
           apres: this.instantaneAudit(departement),
@@ -51,7 +56,7 @@ export class DepartementsService extends CrudService {
       async (tx) => {
         const avant = await tx.departement.findUnique({ where: { id } });
         if (!avant) throw new NotFoundException(t('common.crud.itemNotFound', { label: 'Département' }));
-        const apres = await tx.departement.update({ where: { id }, data: dto, include: this.options.include });
+        const apres = await tx.departement.update({ where: { id }, data: dto, include: DEPARTEMENT_INCLUDE });
         await journaliser(tx, user ?? null, 'DEPARTEMENT_MODIFIE', 'Departement', id, {
           avant: this.instantaneAudit(avant),
           apres: this.instantaneAudit(apres),

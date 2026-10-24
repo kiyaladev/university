@@ -48,6 +48,22 @@ const CRENEAU_INCLUDE_ETUDIANT = {
 
 type Periode = { dateDebut: Date | null; dateFin: Date | null };
 
+/**
+ * Colonnes lues pour l'instantané d'audit d'un créneau : le journal retient la
+ * grille horaire, la salle et la période de validité.
+ */
+type CreneauAudit = {
+  id: string;
+  affectationId: string;
+  jourSemaine: number;
+  heureDebut: string;
+  heureFin: string;
+  salleId: string | null;
+  dateDebut: Date | null;
+  dateFin: Date | null;
+  actif: boolean;
+};
+
 /** Deux périodes ouvertes d'un côté ou de l'autre se croisent-elles ? */
 function periodesSeCroisent(a: Periode, b: Periode) {
   const aDebut = a.dateDebut?.getTime() ?? -Infinity;
@@ -73,7 +89,7 @@ export class CreneauxService extends CrudService {
   }
 
   private where(query: CreneauQueryDto, user?: AuthUser) {
-    const affectation: Record<string, any> = {};
+    const affectation: Prisma.AffectationWhereInput = {};
     if (query.anneeId) affectation.anneeId = query.anneeId;
     if (query.enseignantId) affectation.enseignantId = query.enseignantId;
     if (query.promotionId) affectation.promotionId = query.promotionId;
@@ -166,7 +182,12 @@ export class CreneauxService extends CrudService {
   }
 
   /** Refuse un créneau incohérent ou en collision (même salle / même enseignant). */
-  private async valider(dto: CreateCreneauDto | UpdateCreneauDto, id?: string, db: any = this.prisma, user?: AuthUser) {
+  private async valider(
+    dto: CreateCreneauDto | UpdateCreneauDto,
+    id?: string,
+    db: PrismaService | Prisma.TransactionClient = this.prisma,
+    user?: AuthUser,
+  ) {
     const base = id ? await db.creneau.findUnique({ where: { id }, include: { affectation: true } }) : null;
     const debut = dto.heureDebut ?? base?.heureDebut;
     const fin = dto.heureFin ?? base?.heureFin;
@@ -280,14 +301,14 @@ export class CreneauxService extends CrudService {
   async modifier(id: string, dto: UpdateCreneauDto, user?: AuthUser) {
     return this.prisma.$transaction(
       async (tx) => {
-        const avant: any = await tx.creneau.findFirst({
+        const avant = await tx.creneau.findFirst({
           where: { id, ...this.where({}, user) },
           include: CRENEAU_INCLUDE,
         });
         if (!avant) throw new NotFoundException(t('common.notFound'));
         await exigerAnneeOuverte(tx, avant.affectation.anneeId);
         await this.valider(dto, id, tx, user);
-        const cible: any = dto.affectationId
+        const cible = dto.affectationId
           ? await tx.affectation.findFirst({
               where: { id: dto.affectationId, ...(this.where({}, user).affectation ?? {}) },
               select: { anneeId: true },
@@ -309,7 +330,7 @@ export class CreneauxService extends CrudService {
   async supprimer(id: string, user?: AuthUser) {
     return this.prisma.$transaction(
       async (tx) => {
-        const creneau: any = await tx.creneau.findFirst({
+        const creneau = await tx.creneau.findFirst({
           where: { id, ...this.where({}, user) },
           include: CRENEAU_INCLUDE,
         });
@@ -326,7 +347,7 @@ export class CreneauxService extends CrudService {
     );
   }
 
-  private instantaneAudit(creneau: any) {
+  private instantaneAudit(creneau: CreneauAudit) {
     return {
       id: creneau.id,
       affectationId: creneau.affectationId,

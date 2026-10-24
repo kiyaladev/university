@@ -21,7 +21,12 @@ import { pct, toDateOnly } from '../../../common/utils';
 import { exigerAnneeOuverte, exigerPromotionMemeAnnee } from '../../../common/annee';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { chargerEtablissement } from '../../../common/impression/index';
-import { bulletinDeliberationHtml, pvDeliberationHtml } from './scolarite.impression';
+import {
+  bulletinDeliberationHtml,
+  DELIBERATION_DETAIL_INCLUDE,
+  type MatiereEtudiant,
+  pvDeliberationHtml,
+} from './scolarite.impression';
 import { classer, decider, moyenneUe, type ResultatEtudiant } from './calcul.service';
 import {
   CreateDeliberationDto,
@@ -39,12 +44,70 @@ import { filtreDepartement } from '../../../common/perimetre';
 /** Inscrits « présents aux fichiers » : les dossiers validés par la scolarité. */
 const INSCRITS_VALIDES = { statut: 'VALIDE' } as const;
 
+/** Épreuve avec sa matière, sa promotion et sa filière (listes d'évaluations). */
+const EVALUATION_INCLUDE = {
+  matiere: true,
+  promotion: { include: { filiere: true } },
+  annee: true,
+  _count: { select: { notes: true } },
+} satisfies Prisma.EvaluationInclude;
+
+/** Note avec son épreuve, son inscrit et sa promotion (liste des notes). */
+const NOTE_INCLUDE = {
+  evaluation: { include: { matiere: true } },
+  inscription: {
+    include: {
+      etudiant: { select: { id: true, matricule: true, nom: true, prenom: true } },
+      promotion: true,
+    },
+  },
+} satisfies Prisma.NoteInclude;
+
+/** Délibération listée : jury, promotion et nombre de lignes. */
+const DELIBERATION_LIST_INCLUDE = {
+  annee: true,
+  promotion: { include: { filiere: true } },
+  creePar: { select: { id: true, nom: true, prenom: true } },
+  valideePar: { select: { id: true, nom: true, prenom: true } },
+  _count: { select: { lignes: true } },
+} satisfies Prisma.DeliberationInclude;
+
+/** Délibération lue pendant le calcul des moyennes et des décisions. */
+const DELIBERATION_CALCUL_INCLUDE = {
+  annee: true,
+  promotion: true,
+} satisfies Prisma.DeliberationInclude;
+
+/** Épreuve et matière d'un étudiant, avec ses notes (calcul et bulletin). */
+type EvaluationAvecNotes = Prisma.EvaluationGetPayload<{ include: { matiere: true; notes: true } }>;
+
+/** Délibération lue pendant le calcul des moyennes et des décisions. */
+type DeliberationCalcul = Prisma.DeliberationGetPayload<{ include: typeof DELIBERATION_CALCUL_INCLUDE }>;
+
 type Db = PrismaService | Prisma.TransactionClient;
 
 interface Candidat {
   inscriptionId: string;
   nom: string;
   prenom: string;
+}
+
+/**
+ * Champs de l'instantané d'audit d'une évaluation. Une lecture partielle
+ * (select réduit) peut en laisser certains absents : ils restent alors
+ * `undefined` dans la trace, comme avant.
+ */
+interface InstantaneEvaluation {
+  id?: string;
+  intitule?: string;
+  type?: TypeEvaluation;
+  coefficient?: number;
+  matiereId?: string;
+  anneeId?: string;
+  promotionId?: string;
+  semestre?: number;
+  date?: Date | null;
+  statut?: StatutEvaluation;
 }
 
 @Injectable()
@@ -57,7 +120,10 @@ export class ScolariteService {
 
   // ----------------------------------------------------------- Évaluations
 
-  async listerEvaluations(query: EvaluationQueryDto, user: AuthUser): Promise<Paginated<any>> {
+  async listerEvaluations(
+    query: EvaluationQueryDto,
+    user: AuthUser,
+  ): Promise<Paginated<Prisma.EvaluationGetPayload<{ include: typeof EVALUATION_INCLUDE }>>> {
     const pagination = paginer(query);
     const search = query.search?.trim();
 
@@ -84,12 +150,7 @@ export class ScolariteService {
     const [data, total] = await Promise.all([
       this.prisma.evaluation.findMany({
         where,
-        include: {
-          matiere: true,
-          promotion: { include: { filiere: true } },
-          annee: true,
-          _count: { select: { notes: true } },
-        },
+        include: EVALUATION_INCLUDE,
         orderBy: { createdAt: 'desc' },
         skip: pagination.skip,
         take: pagination.take,
@@ -102,12 +163,7 @@ export class ScolariteService {
   private veillerEvaluation(id: string, db: Db = this.prisma) {
     return db.evaluation.findUnique({
       where: { id },
-      include: {
-        matiere: true,
-        promotion: { include: { filiere: true } },
-        annee: true,
-        _count: { select: { notes: true } },
-      },
+      include: EVALUATION_INCLUDE,
     });
   }
 
@@ -117,7 +173,7 @@ export class ScolariteService {
     return evaluation;
   }
 
-  private instantaneEvaluation(evaluation: any) {
+  private instantaneEvaluation(evaluation: InstantaneEvaluation | null) {
     if (!evaluation) return null;
     return {
       id: evaluation.id,
@@ -339,7 +395,10 @@ export class ScolariteService {
     };
   }
 
-  async listerNotes(query: NoteQueryDto, user: AuthUser): Promise<Paginated<any>> {
+  async listerNotes(
+    query: NoteQueryDto,
+    user: AuthUser,
+  ): Promise<Paginated<Prisma.NoteGetPayload<{ include: typeof NOTE_INCLUDE }>>> {
     const pagination = paginer(query);
     const where: Prisma.NoteWhereInput = {
       ...(query.evaluationId ? { evaluationId: query.evaluationId } : {}),
@@ -349,15 +408,7 @@ export class ScolariteService {
     const [data, total] = await Promise.all([
       this.prisma.note.findMany({
         where,
-        include: {
-          evaluation: { include: { matiere: true } },
-          inscription: {
-            include: {
-              etudiant: { select: { id: true, matricule: true, nom: true, prenom: true } },
-              promotion: true,
-            },
-          },
-        },
+        include: NOTE_INCLUDE,
         orderBy: { saisieLe: 'desc' },
         skip: pagination.skip,
         take: pagination.take,
@@ -435,20 +486,17 @@ export class ScolariteService {
 
   // -------------------------------------------------------- Délibérations
 
-  async listerDeliberations(query: DeliberationQueryDto, user: AuthUser): Promise<Paginated<any>> {
+  async listerDeliberations(
+    query: DeliberationQueryDto,
+    user: AuthUser,
+  ): Promise<Paginated<Prisma.DeliberationGetPayload<{ include: typeof DELIBERATION_LIST_INCLUDE }>>> {
     const pagination = paginer(query);
     const where = { ...(query.anneeId ? { anneeId: query.anneeId } : {}), ...this.promotionAutorisee(user) };
 
     const [data, total] = await Promise.all([
       this.prisma.deliberation.findMany({
         where,
-        include: {
-          annee: true,
-          promotion: { include: { filiere: true } },
-          creePar: { select: { id: true, nom: true, prenom: true } },
-          valideePar: { select: { id: true, nom: true, prenom: true } },
-          _count: { select: { lignes: true } },
-        },
+        include: DELIBERATION_LIST_INCLUDE,
         orderBy: { creeLe: 'desc' },
         skip: pagination.skip,
         take: pagination.take,
@@ -462,19 +510,7 @@ export class ScolariteService {
   async detailDeliberation(id: string, db: Db = this.prisma) {
     const delib = await db.deliberation.findUnique({
       where: { id },
-      include: {
-        annee: true,
-        promotion: { include: { filiere: true } },
-        creePar: { select: { id: true, nom: true, prenom: true } },
-        valideePar: { select: { id: true, nom: true, prenom: true } },
-        lignes: {
-          include: {
-            inscription: {
-              include: { etudiant: { select: { nom: true, prenom: true, matricule: true } } },
-            },
-          },
-        },
-      },
+      include: DELIBERATION_DETAIL_INCLUDE,
     });
     if (!delib) throw new NotFoundException(t('scolarite.deliberation_introuvable'));
     const lignes = [...delib.lignes].sort((a, b) => (a.rang ?? 0) - (b.rang ?? 0));
@@ -546,14 +582,14 @@ export class ScolariteService {
     }
     let delib = await db.deliberation.findUnique({
       where: { id: deliberationId },
-      include: { annee: true, promotion: true },
+      include: DELIBERATION_CALCUL_INCLUDE,
     });
     if (!delib) throw new NotFoundException(t('scolarite.deliberation_introuvable'));
     await exigerAnneeOuverte(db, delib.anneeId);
     await db.$queryRaw`SELECT id FROM "Deliberation" WHERE id = ${deliberationId} FOR UPDATE`;
     delib = await db.deliberation.findUnique({
       where: { id: deliberationId },
-      include: { annee: true, promotion: true },
+      include: DELIBERATION_CALCUL_INCLUDE,
     });
     if (!delib) throw new NotFoundException(t('scolarite.deliberation_introuvable'));
     if (delib.statut === StatutDeliberation.VALIDE) {
@@ -602,7 +638,7 @@ export class ScolariteService {
 
   /** Étudiants du jury : inscrits validés (normale) ; AJOURNÉ de la session
    *  normale (rattrapage). */
-  private async candidatsDeliberation(delib: any, tx: Db): Promise<Candidat[]> {
+  private async candidatsDeliberation(delib: DeliberationCalcul, tx: Db): Promise<Candidat[]> {
     if (delib.session === SessionDeliberation.RATTRAPAGE) {
       const normale = await tx.deliberation.findFirst({
         where: {
@@ -642,7 +678,11 @@ export class ScolariteService {
   /** Matières d'un étudiant avec leurs épreuves — sert au calcul ET au
    *  bulletin. En session normale, les épreuves de rattrapage ne comptent
    *  pas encore ; en session de rattrapage, toutes entrent. */
-  private async matieresDuEtudiant(delib: any, inscriptionId: string, tx: Db) {
+  private async matieresDuEtudiant(
+    delib: DeliberationCalcul,
+    inscriptionId: string,
+    tx: Db,
+  ): Promise<MatiereEtudiant[]> {
     const evaluations = await tx.evaluation.findMany({
       where: {
         promotionId: delib.promotionId,
@@ -655,7 +695,7 @@ export class ScolariteService {
       },
     });
 
-    const parMatiere = new Map<string, any[]>();
+    const parMatiere = new Map<string, EvaluationAvecNotes[]>();
     for (const e of evaluations) {
       const liste = parMatiere.get(e.matiereId) ?? [];
       liste.push(e);
@@ -664,7 +704,7 @@ export class ScolariteService {
 
     return [...parMatiere.entries()].map(([matiereId, evals]) => {
       const matiere = evals[0].matiere;
-      const epreuves = evals.map((e: any) => ({
+      const epreuves = evals.map((e) => ({
         note: e.notes[0]?.note ?? null,
         present: e.notes[0]?.present ?? true,
         coefficient: e.coefficient,
@@ -684,7 +724,7 @@ export class ScolariteService {
         moyenne: moyenne.moyenne,
         enDefaut: moyenne.enDefaut,
         absenceCloturee: moyenne.absencesCloturees,
-        epreuves: evals.map((e: any) => ({
+        epreuves: evals.map((e) => ({
           intitule: e.intitule,
           coefficient: e.coefficient,
           statut: e.statut,
@@ -696,7 +736,7 @@ export class ScolariteService {
   }
 
   /** Le cœur du jury : moyennes, décisions, rangs, taux de réussite. */
-  private async calculerInternes(delib: any, tx: Db) {
+  private async calculerInternes(delib: DeliberationCalcul, tx: Db) {
     const candidats = await this.candidatsDeliberation(delib, tx);
     if (!candidats.length) {
       throw new BadRequestException(
@@ -781,7 +821,7 @@ export class ScolariteService {
   /** Bulletin d'un étudiant : ligne du jury + moyennes d'UE détaillées. */
   async bulletin(deliberationId: string, inscriptionId: string) {
     const delib = await this.detailDeliberation(deliberationId);
-    const ligne = delib.lignes.find((l: any) => l.inscriptionId === inscriptionId);
+    const ligne = delib.lignes.find((l) => l.inscriptionId === inscriptionId);
     if (!ligne) throw new NotFoundException(t('scolarite.aucune_ligne_pour_cet_etudiant_a_cette_deliberation'));
     const matieres = await this.matieresDuEtudiant(delib, inscriptionId, this.prisma);
     return { delib, ligne, matieres };

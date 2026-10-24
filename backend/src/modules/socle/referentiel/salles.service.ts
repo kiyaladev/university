@@ -1,7 +1,7 @@
 /** Salles : inventaire, capacité et QR de pointage. */
 
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Role } from '@prisma/client';
+import { Role, type Salle } from '@prisma/client';
 import { randomBytes } from 'node:crypto';
 import { CrudService, supprimerOuConflit } from '../../../common/crud.service';
 import { PrismaService } from '../../../prisma/prisma.service';
@@ -13,7 +13,7 @@ import { journaliser } from '../../../common/audit';
 import { CreateSalleDto, UpdateSalleDto } from './salles.dto';
 
 @Injectable()
-export class SallesService extends CrudService {
+export class SallesService extends CrudService<Salle> {
   constructor(prisma: PrismaService) {
     super(prisma, 'salle', {
       searchFields: ['code', 'nom', 'batiment'],
@@ -28,7 +28,7 @@ export class SallesService extends CrudService {
   }
 
   /** L'instantané ignore le jeton de capacité et les coordonnées précises. */
-  private instantaneAudit(salle: any) {
+  private instantaneAudit(salle: Salle) {
     return {
       id: salle.id,
       code: salle.code,

@@ -98,8 +98,44 @@ export const TYPE_ATTESTATION_PAR_DEMANDE: Partial<Record<TypeDemandeDocument, T
   [TypeDemandeDocument.ATTESTATION_REUSSITE]: TypeAttestation.REUSSITE,
 };
 
+/**
+ * Colonnes lues pour l'instantané d'audit d'une demande de document : ni
+ * motif, ni notification, ni notes — ces textes libres sont écrits par
+ * l'étudiant ou par le guichet — ni les coordonnées du demandeur.
+ */
+type DemandeAudit = {
+  numero: string;
+  type: TypeDemandeDocument;
+  statut: StatutDemande;
+  frais: Prisma.Decimal;
+  devise: string;
+  traiteParId: string | null;
+  remiseLe: Date | null;
+  attestationId: string | null;
+};
+
+/** Écriture comptable : ni téléphone du payeur, ni jeton de l'opérateur. */
+type PaiementAudit = {
+  reference: string;
+  montant: Prisma.Decimal;
+  devise: string;
+  mode: ModePaiement;
+  statut: StatutPaiement;
+};
+
+/** Grille tarifaire : montants et délai, seuls champs paramétrables. */
+type TarifAudit = {
+  id: string;
+  type: TypeDemandeDocument;
+  montant: Prisma.Decimal;
+  devise: string;
+  delaiHeures: number;
+};
+
 @Injectable()
-export class DocumentsDemandeService extends CrudService {
+export class DocumentsDemandeService extends CrudService<
+  Prisma.DemandeDocumentGetPayload<{ include: typeof DEMANDE_INCLUDE }>
+> {
   private readonly logger = new Logger(DocumentsDemandeService.name);
 
   constructor(
@@ -801,7 +837,7 @@ export class DocumentsDemandeService extends CrudService {
    * ni les coordonnées du demandeur, ni les identifiants techniques du
    * paiement, qui ne changent pas l'état métier.
    */
-  private instantaneDemande(demande: any) {
+  private instantaneDemande(demande: DemandeAudit) {
     return {
       numero: demande.numero,
       type: demande.type,
@@ -815,7 +851,7 @@ export class DocumentsDemandeService extends CrudService {
   }
 
   /** Écriture comptable : ni téléphone du payeur, ni jeton de l'opérateur. */
-  private instantanePaiement(paiement: any) {
+  private instantanePaiement(paiement: PaiementAudit) {
     return {
       reference: paiement.reference,
       montant: toMontant(paiement.montant),
@@ -826,7 +862,7 @@ export class DocumentsDemandeService extends CrudService {
   }
 
   /** Grille tarifaire : montants et délai, seuls champs paramétrables. */
-  private instantaneTarif(tarif: any) {
+  private instantaneTarif(tarif: TarifAudit) {
     return {
       id: tarif.id,
       type: tarif.type,

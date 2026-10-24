@@ -3,7 +3,23 @@
  * avec un jeton vérifié par le contrôleur). Le contenu métier est composé ici,
  * l'enveloppe A4 vient de `common/impression`.
  */
+import { Prisma, StatutDemande, TypeDemandeDocument } from '@prisma/client';
 import { echapper, Etablissement, pageA4 } from '../../../common/impression/index';
+
+/**
+ * Demande de document telle que la compose la fiche imprimable : seul ce que
+ * la fiche montre est décrit ici, le reste de la charge utile n'est pas lu.
+ */
+export type DemandeImprimable = {
+  numero: string;
+  type: TypeDemandeDocument;
+  statut: StatutDemande;
+  frais: Prisma.Decimal;
+  devise: string;
+  createdAt: Date;
+  etudiant: { matricule: string; nom: string; prenom: string } | null;
+  inscription: { numero: string } | null;
+};
 
 /** Règles propres à la fiche ; le reste vient de `pageA4`. */
 const STYLE = `
@@ -11,7 +27,7 @@ const STYLE = `
   th { width: 26%; }
 `;
 
-export function demandeDocumentHtml(demande: any, etablissement: Etablissement): string {
+export function demandeDocumentHtml(demande: DemandeImprimable, etablissement: Etablissement): string {
   const numero = echapper(demande.numero);
   const type = echapper(demande.type);
   const etudiant = echapper(

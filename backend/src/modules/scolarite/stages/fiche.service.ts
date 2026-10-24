@@ -2,6 +2,7 @@
  *  onglet, imprimé via le navigateur. L'enveloppe et le style viennent du
  *  gabarit commun `common/impression` (pageA4). */
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { t } from '../../../common/i18n';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { ParametresService } from '../../socle/parametres/parametres.service';
@@ -63,6 +64,9 @@ const TRAVAIL_FICHE_INCLUDE = {
   },
 };
 
+/** Le dossier complet, relations comprises : c'est la projection de la fiche. */
+type TravailFiche = Prisma.TravailEncadreGetPayload<{ include: typeof TRAVAIL_FICHE_INCLUDE }>;
+
 @Injectable()
 export class FicheService {
   constructor(
@@ -74,7 +78,7 @@ export class FicheService {
    *  Authorization, le jeton passe par l'URL et est contrôlé par la garde
    *  globale. */
   async fiche(id: string): Promise<string> {
-    const travail: any = await this.prisma.travailEncadre.findUnique({
+    const travail: TravailFiche | null = await this.prisma.travailEncadre.findUnique({
       where: { id },
       include: TRAVAIL_FICHE_INCLUDE,
     });
