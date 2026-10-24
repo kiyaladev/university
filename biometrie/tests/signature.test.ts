@@ -40,11 +40,15 @@ function apiChargeVerification(params: {
   template: string;
   score: number;
   horodatage: string;
+  tentativeId?: string;
 }): string {
   const gabarit = createHash('sha256').update(params.template).digest('hex');
-  return params.appareilId
-    ? `verification|${params.appareilId}|${params.enseignantId}|${gabarit}|${params.score}|${params.horodatage}`
-    : `verification|${params.enseignantId}|${gabarit}|${params.score}|${params.horodatage}`;
+  const base = params.appareilId
+    ? `verification|${params.appareilId}|${params.enseignantId}|${gabarit}|${params.score}`
+    : `verification|${params.enseignantId}|${gabarit}|${params.score}`;
+  // L'API accepte le nonce en fin de charge (c'est la forme produite ici) et
+  // juste avant l'horodatage.
+  return params.tentativeId ? `${base}|${params.horodatage}|${params.tentativeId}` : `${base}|${params.horodatage}`;
 }
 
 function apiVerifie(params: {
@@ -102,6 +106,34 @@ describe('Signature — charges conforme à celles de l’API', () => {
       template: GABARIT,
       score: 88,
       horodatage: '2026-10-24T08:00:00.000Z',
+    };
+    const gabarit = empreinteGabarit(GABARIT);
+    expect(chargeVerification({ ...params, gabarit })).toBe(apiChargeVerification(params));
+  });
+
+  it('compose la charge de vérification avec le nonce comme l’API', () => {
+    const params = {
+      appareilId: APPAREIL,
+      enseignantId: ENSEIGNANT,
+      template: GABARIT,
+      score: 88,
+      horodatage: '2026-10-24T08:00:00.000Z',
+      tentativeId: 'tentative-1',
+    };
+    const gabarit = empreinteGabarit(GABARIT);
+    expect(chargeVerification({ ...params, gabarit })).toBe(apiChargeVerification(params));
+    expect(chargeVerification({ ...params, gabarit })).toBe(
+      `verification|appareil-1|ens-1|${gabarit}|88|2026-10-24T08:00:00.000Z|tentative-1`,
+    );
+  });
+
+  it('compose la charge de vérification avec le nonce sans appareil comme l’API', () => {
+    const params = {
+      enseignantId: ENSEIGNANT,
+      template: GABARIT,
+      score: 88,
+      horodatage: '2026-10-24T08:00:00.000Z',
+      tentativeId: 'tentative-1',
     };
     const gabarit = empreinteGabarit(GABARIT);
     expect(chargeVerification({ ...params, gabarit })).toBe(apiChargeVerification(params));
@@ -172,6 +204,52 @@ describe('Signature — vecteurs figés', () => {
 
     expect(signature).toBe('d148681e391d083cd2ed97161b2757f1e9b96865c40b1e95cafbe8b57af50287');
     expect(apiVerifie({ secret: SECRET, charge, signature })).toBe(true);
+  });
+
+  it('signe la vérification avec le nonce comme l’API (vecteur figé)', () => {
+    const params = {
+      appareilId: APPAREIL,
+      secret: SECRET,
+      enseignantId: ENSEIGNANT,
+      template: GABARIT,
+      score: 88,
+      horodatage: '2026-10-24T08:00:00.000Z',
+      tentativeId: 'tentative-1',
+    };
+    const charge = apiChargeVerification(params);
+    const signature = signer(SECRET, charge);
+
+    expect(signature).toBe('130cfb28626bb646baf164284a8c5d6d3c7d4fa98e4ca08030c7d23c2e08be7f');
+    expect(apiVerifie({ appareilId: APPAREIL, secret: SECRET, charge, signature })).toBe(true);
+  });
+
+  it('signe la vérification avec le nonce sans appareil comme l’API (vecteur figé)', () => {
+    const params = {
+      secret: SECRET,
+      enseignantId: ENSEIGNANT,
+      template: GABARIT,
+      score: 88,
+      horodatage: '2026-10-24T08:00:00.000Z',
+      tentativeId: 'tentative-1',
+    };
+    const charge = apiChargeVerification(params);
+    const signature = signer(SECRET, charge);
+
+    expect(signature).toBe('9e724430594a9043ee68c9f252c47700cb991c23409dababa6d206aa45552718');
+    expect(apiVerifie({ secret: SECRET, charge, signature })).toBe(true);
+  });
+
+  it('change la charge et la signature quand le nonce change', () => {
+    const base = {
+      enseignantId: ENSEIGNANT,
+      template: GABARIT,
+      score: 88,
+      horodatage: '2026-10-24T08:00:00.000Z',
+    };
+    const gabarit = empreinteGabarit(GABARIT);
+    const un = signer(SECRET, chargeVerification({ ...base, gabarit, tentativeId: 'tentative-1' }));
+    const deux = signer(SECRET, chargeVerification({ ...base, gabarit, tentativeId: 'tentative-2' }));
+    expect(un).not.toBe(deux);
   });
 
   it('produit une signature différente pour chaque appareil', () => {

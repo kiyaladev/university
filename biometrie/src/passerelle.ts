@@ -203,6 +203,9 @@ export function creerPasserelle(options: OptionsPasserelle): Passerelle {
           gabarit: empreinteGabarit(gabarit),
           score,
           horodatage,
+          // Le nonce de la tentative est signé quand le client en fournit un :
+          // l'API s'en sert alors pour identifier la preuve.
+          tentativeId,
         });
         if (registre.dejaSignee(charge)) {
           return json({ erreur: t('erreur.rejeu', langue) }, origine, configuration, 409);
@@ -220,6 +223,9 @@ export function creerPasserelle(options: OptionsPasserelle): Passerelle {
             // ou dont le gabarit comparé n'est pas celui qu'elle a enrôlé.
             signature: signerResultat(charge),
             appareilId: configuration.appareil?.appareilId ?? null,
+            // Le nonce signé est rendu au client : il doit le transmettre à
+            // l'API, qui s'en sert pour identifier la preuve.
+            ...(tentativeId ? { tentativeId } : {}),
           },
           origine,
           configuration,
