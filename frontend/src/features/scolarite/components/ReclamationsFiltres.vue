@@ -83,9 +83,9 @@ import {
   LIBELLE_TYPE_RECLAMATION,
   optionsDepuis,
 } from '@/shared/utils/libelles';
-import type { Utilisateur } from '@/types';
+import type { Utilisateur, FiltresPage } from '@/types';
 
-const filtres = defineModel<Record<string, any>>({ required: true });
+const filtres = defineModel<FiltresPage>({ required: true });
 const emit = defineEmits<{ reinitialiser: [] }>();
 
 defineProps<{

@@ -224,6 +224,7 @@ import {
   optionsDepuis,
 } from '@/shared/utils/libelles';
 import type { PrioriteReclamation, Reclamation, TypeReclamation } from '../types';
+import type { FiltresPage } from '@/types';
 
 const auth = useAuthStore();
 const { t } = useI18n();
@@ -234,7 +235,7 @@ const OPTIONS_STATUTS = optionsDepuis(LIBELLE_STATUT_RECLAMATION);
 const OPTIONS_TYPES = optionsDepuis(LIBELLE_TYPE_RECLAMATION);
 const OPTIONS_PRIORITES = optionsDepuis(LIBELLE_PRIORITE_RECLAMATION);
 
-const filtres = ref<Record<string, any>>({ recherche: '', statut: null, type: null, priorite: null });
+const filtres = ref<FiltresPage>({ recherche: '', statut: null, type: null, priorite: null });
 const liste = reactive(
   useListePaginee<Reclamation>({
     filtres,

@@ -14,7 +14,7 @@ import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
 import CartesEtudiantesTableau from '../components/CartesEtudiantesTableau.vue';
 import CartesEtudiantesCartes from '../components/CartesEtudiantesCartes.vue';
 import { pageApi, texteApi, useListePaginee } from '@/shared/composables/useListePaginee';
-import type { CarteEtudiante } from '@/types';
+import type { CarteEtudiante, FiltresPage } from '@/types';
 import { ouvrirImpression } from '@/shared/services/impression';
 import { cartesEtudiantesService } from '../services/cartes-etudiantes';
 
@@ -27,7 +27,7 @@ const { t } = useI18n();
  * réclamations) : `/cartes-etudiantes?etudiantId=…` ouvre directement la ou
  * les cartes de l'étudiant concerné (relu de l'URL par `syncUrl`).
  */
-const filtres = ref<Record<string, any>>({ recherche: '', etudiantId: '' });
+const filtres = ref<FiltresPage>({ recherche: '', etudiantId: '' });
 const liste = reactive(
   useListePaginee<CarteEtudiante>({
     filtres,

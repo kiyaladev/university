@@ -149,6 +149,7 @@ import type {
   Promotion,
   SessionDeliberation,
   ChipFiltre,
+  FiltresPage,
 } from '@/types';
 import type { Bulletin, LigneBulletin } from '@/features/scolarite/types';
 import { deliberationsService } from '../services/deliberations';
@@ -170,7 +171,7 @@ const deliberations = ref<Deliberation[]>([]);
  * d'origine (`/bulletins?promotionId=…`) : ce sont les mêmes clés d'URL.
  */
 const FILTRES_VIDES = { recherche: '', anneeId: null, promotionId: null, session: null, decision: null };
-const filtres = ref<Record<string, any>>({ ...FILTRES_VIDES });
+const filtres = ref<FiltresPage>({ ...FILTRES_VIDES });
 const modeVue = usePresentationListe();
 /** Pagination locale : la liste de la promotion arrive entière. */
 const page = ref(1);

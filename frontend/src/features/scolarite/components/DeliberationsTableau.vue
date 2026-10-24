@@ -15,7 +15,7 @@
       <div class="col-12 q-pb-sm">
         <q-card flat bordered class="carte">
           <q-card-section>
-            <div v-for="c in p.cols.filter((c) => c.name !== 'actions')" :key="c.name" class="q-mb-sm">
+            <div v-for="c in colonnesSansActions(p.cols)" :key="c.name" class="q-mb-sm">
               <div class="text-caption text-grey-7">{{ c.label }}</div>
               <template v-if="c.name === 'session'">{{
                 LIBELLE_SESSION_DELIBERATION[p.row.session] ?? p.row.session
@@ -220,6 +220,7 @@ import PastilleStatut from '@/shared/components/PastilleStatut.vue';
 import ActionsSecondaires from '@/shared/components/ActionsSecondaires.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
 import { LIBELLE_SESSION_DELIBERATION, LIBELLE_STATUT_DELIBERATION } from '@/shared/utils/libelles';
+import { colonnesSansActions } from '@/shared/utils/colonnes';
 import { dateLisible, pourcentLisible } from '@/shared/utils/format';
 import type { DeliberationListe } from '@/features/scolarite/types';
 

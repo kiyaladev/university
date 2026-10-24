@@ -86,6 +86,7 @@ import DemandeDocumentsStatsPanel from '../components/DemandeDocumentsStatsPanel
 import DemandeDocumentsTableau from '../components/DemandeDocumentsTableau.vue';
 import { demandesDocumentsService, type ActionDemandeDocument } from '../services/documents-demande';
 import type { DemandeDocument } from '../types';
+import type { FiltresPage } from '@/types';
 
 const $q = useQuasar();
 const auth = useAuthStore();
@@ -99,7 +100,7 @@ const stats = ref<Record<string, number | undefined> | null>(null);
  * `/demandes-docs?etudiantId=…` ouvre le registre filtré sur cet étudiant
  * (les filtres sont relus de l'URL par `syncUrl`).
  */
-const filtres = ref<Record<string, any>>({
+const filtres = ref<FiltresPage>({
   recherche: '',
   statut: null,
   type: null,

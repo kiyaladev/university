@@ -119,6 +119,7 @@ import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
 import { LIBELLE_PRIORITE_RECLAMATION, LIBELLE_TYPE_RECLAMATION } from '@/shared/utils/libelles';
 import { reclamationsService } from '../services/reclamations';
 import type { PrioriteReclamation, Reclamation, TuileType, TypeReclamation } from '../types';
+import { messageErreurApi } from '@/shared/utils/erreur-http';
 
 const ouvert = defineModel<boolean>({ required: true });
 const emit = defineEmits<{ enregistre: [Reclamation] }>();
@@ -208,8 +209,8 @@ async function envoyer() {
     $q.notify({ type: 'positive', message: $t('reclamations.dialog.create.opened', { numero: reclamation.numero }) });
     emit('enregistre', reclamation);
     ouvert.value = false;
-  } catch (e: any) {
-    erreur.value = e.response?.data?.message ?? $t('reclamations.dialog.create.sendFailed');
+  } catch (e: unknown) {
+    erreur.value = messageErreurApi(e) ?? $t('reclamations.dialog.create.sendFailed');
   } finally {
     enregistrement.value = false;
   }

@@ -90,6 +90,7 @@ import { demandesDocumentsService } from '../services/documents-demande';
 import { inscriptionsService } from '../services/inscriptions';
 import type { Inscription } from '@/types';
 import type { DemandeDocument, TarifDemande, TypeDemandeDocument } from '../types';
+import { messageErreurApi } from '@/shared/utils/erreur-http';
 
 const ouvert = defineModel<boolean>({ required: true });
 const emit = defineEmits<{ enregistre: [DemandeDocument] }>();
@@ -155,8 +156,8 @@ async function envoyer() {
     $q.notify({ type: 'positive', message: t('demandeDocuments.createDialog.created', { number: demande.numero }) });
     emit('enregistre', demande);
     ouvert.value = false;
-  } catch (e: any) {
-    erreur.value = e.response?.data?.message ?? t('demandeDocuments.createDialog.createFailed');
+  } catch (e: unknown) {
+    erreur.value = messageErreurApi(e) ?? t('demandeDocuments.createDialog.createFailed');
   } finally {
     enregistrement.value = false;
   }

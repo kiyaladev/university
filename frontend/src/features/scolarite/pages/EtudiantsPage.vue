@@ -123,7 +123,7 @@ import { etudiantsService } from '../services/etudiants';
 import { inscriptionsService } from '../services/inscriptions';
 import { ouvrirImpression } from '@/shared/services/impression';
 import type { EtudiantRegistre } from '../types';
-import type { Inscription, Promotion, ChipFiltre } from '@/types';
+import type { Inscription, Promotion, ChipFiltre, FiltresPage } from '@/types';
 
 const $q = useQuasar();
 const router = useRouter();
@@ -142,7 +142,7 @@ const modeVue = usePresentationListe();
  * gardés dans l'URL : `/etudiants?recherche=…` arrive d'un dossier ou d'un
  * paiement. Promotion et dates portent sur les dossiers d'inscription.
  */
-const filtres = ref<Record<string, any>>({
+const filtres = ref<FiltresPage>({
   recherche: '',
   promotionId: null,
   actif: null,

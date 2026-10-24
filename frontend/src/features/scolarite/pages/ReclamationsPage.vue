@@ -68,7 +68,7 @@ import ReclamationsListe from '../components/ReclamationsListe.vue';
 import ReclamationsStatsPanel from '../components/ReclamationsStatsPanel.vue';
 import { reclamationsService } from '../services/reclamations';
 import type { Reclamation } from '../types';
-import type { Utilisateur } from '@/types';
+import type { Utilisateur, FiltresPage } from '@/types';
 
 const $q = useQuasar();
 const { t } = useI18n();
@@ -76,7 +76,7 @@ const auth = useAuthStore();
 
 const stats = ref<Record<string, number | undefined> | null>(null);
 const membresStaff = ref<Utilisateur[]>([]);
-const filtres = ref<Record<string, any>>({
+const filtres = ref<FiltresPage>({
   recherche: '',
   statut: null,
   type: null,

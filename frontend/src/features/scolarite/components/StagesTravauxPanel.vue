@@ -59,7 +59,7 @@
       <div class="col-12 q-pb-sm">
         <q-card flat bordered class="carte">
           <q-card-section>
-            <div v-for="c in p.cols.filter((c) => c.name !== 'actions')" :key="c.name" class="q-mb-sm">
+            <div v-for="c in colonnesSansActions(p.cols)" :key="c.name" class="q-mb-sm">
               <div class="text-caption text-grey-7">{{ c.label }}</div>
               <template v-if="c.name === 'intitule'">{{ p.row.intitule }}</template>
               <template v-else-if="c.name === 'etudiant'"
@@ -397,8 +397,9 @@ import ChampRecherche from '@/shared/components/ChampRecherche.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
 import { useAuthStore } from '@/stores/auth';
 import { LIBELLE_STATUT_ENCADREMENT, LIBELLE_TYPE_ENCADREMENT } from '@/shared/utils/libelles';
+import { colonnesSansActions } from '@/shared/utils/colonnes';
 import { dateHeureLisible, dateLisible } from '@/shared/utils/format';
-import type { ChipFiltre, StatutEncadrement, TravailEncadre, TypeEncadrement } from '@/types';
+import type { ChipFiltre, StatutEncadrement, TravailEncadre, TypeEncadrement, FiltresPage } from '@/types';
 import type { BoutonTransition } from '../types';
 
 const $q = useQuasar();
@@ -406,7 +407,7 @@ const auth = useAuthStore();
 const { t } = useI18n();
 
 /** Filtres de l'onglet : la page les détient, le panneau les affiche. */
-const filtres = defineModel<Record<string, any>>('filtres', { required: true });
+const filtres = defineModel<FiltresPage>('filtres', { required: true });
 
 const props = defineProps<{
   lignes: TravailEncadre[];

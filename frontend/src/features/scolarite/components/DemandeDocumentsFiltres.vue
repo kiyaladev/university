@@ -48,8 +48,9 @@
 import BarreFiltres from '@/shared/components/BarreFiltres.vue';
 import ChampRecherche from '@/shared/components/ChampRecherche.vue';
 import { LIBELLE_STATUT_DEMANDE, LIBELLE_TYPE_DEMANDE, optionsDepuis } from '@/shared/utils/libelles';
+import type { FiltresPage } from '@/types';
 
-const filtres = defineModel<Record<string, any>>({ required: true });
+const filtres = defineModel<FiltresPage>({ required: true });
 const emit = defineEmits<{ reinitialiser: [] }>();
 
 const OPTIONS_STATUTS = optionsDepuis(LIBELLE_STATUT_DEMANDE);

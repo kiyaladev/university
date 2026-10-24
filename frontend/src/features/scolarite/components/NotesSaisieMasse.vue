@@ -46,11 +46,14 @@ const sauvegardeFaite = ref(false);
 function construireLignes() {
   const mapExist = new Map(props.notesExistantes.map((n) => [n.inscriptionId, n]));
   lignes.value = props.inscriptions.map((ins) => {
-    const existant = mapExist.get(ins.inscriptionId);
+    // L'API renvoie toujours l'identifiant d'inscription ; le repli évite
+    // qu'une ligne sans identifiant casse la recherche de la note existante.
+    const inscriptionId = ins.inscriptionId ?? '';
+    const existant = mapExist.get(inscriptionId);
     const note = existant?.note ?? ins.note ?? null;
     const present = existant?.present ?? ins.present ?? true;
     return {
-      inscriptionId: ins.inscriptionId,
+      inscriptionId,
       numero: ins.numero,
       matricule: ins.matricule,
       nom: ins.nom,

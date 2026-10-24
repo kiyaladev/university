@@ -367,8 +367,9 @@ import {
   optionsDepuis,
 } from '@/shared/utils/libelles';
 import { demandesDocumentsService } from '../services/documents-demande';
-import type { ModePaiement } from '@/types';
+import type { ModePaiement, FiltresPage } from '@/types';
 import type { DemandeDocument, StatutDemande, TypeDemandeDocument } from '../types';
+import { messageErreurApi } from '@/shared/utils/erreur-http';
 
 const $q = useQuasar();
 const { t } = useI18n();
@@ -406,7 +407,7 @@ const OPTIONS_OPERATEUR = computed(() => [
   { label: t('mesDemandes.operatorOptions.telecel'), value: 'TELECEL' },
 ]);
 
-const filtres = ref<Record<string, any>>({ recherche: '', statut: null });
+const filtres = ref<FiltresPage>({ recherche: '', statut: null });
 const liste = reactive(
   useListePaginee<DemandeDocument>({
     filtres,
@@ -515,8 +516,8 @@ async function payer() {
     });
     paiementOuvert.value = false;
     void liste.recharger();
-  } catch (e: any) {
-    erreurPaiement.value = e.response?.data?.message ?? t('mesDemandes.messages.paymentFailed');
+  } catch (e: unknown) {
+    erreurPaiement.value = messageErreurApi(e) ?? t('mesDemandes.messages.paymentFailed');
   } finally {
     enregistrementPaiement.value = false;
   }

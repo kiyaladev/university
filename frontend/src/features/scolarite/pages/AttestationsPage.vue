@@ -159,7 +159,7 @@ import AttestationsVerificationsDialog from '../components/AttestationsVerificat
 import BarreFiltres from '@/shared/components/BarreFiltres.vue';
 import BarrePagination from '@/shared/components/BarrePagination.vue';
 import { LIBELLE_STATUT_ATTESTATION, LIBELLE_TYPE_ATTESTATION } from '@/shared/utils/libelles';
-import type { AnneeAcademique, Attestation, Promotion, ChipFiltre } from '@/types';
+import type { AnneeAcademique, Attestation, Promotion, ChipFiltre, FiltresPage } from '@/types';
 import { ouvrirImpression } from '@/shared/services/impression';
 import { attestationsService, type VerificationAttestation } from '../services/attestations';
 
@@ -172,7 +172,7 @@ const { t } = useI18n();
 
 const modeVue = usePresentationListe();
 
-const filtres = ref<Record<string, any>>({ recherche: '', type: null, statut: null, anneeId: null, promotionId: null });
+const filtres = ref<FiltresPage>({ recherche: '', type: null, statut: null, anneeId: null, promotionId: null });
 const liste = reactive(
   useListePaginee<Attestation>({
     filtres,
