@@ -96,10 +96,10 @@ export const useAuthStore = defineStore('auth', {
     },
 
     /**
-     * La file des séances hors ligne est chiffrée : elle doit être relue pour
-     * le compte qui vient d'entrer, avant que l'interface ne l'affiche. Une
-     * file illisible n'empêche pas la connexion : elle sera signalée par la
-     * page qui la consulte.
+     * La file des séances hors ligne et les caches de tournée sont chiffrés :
+     * ils doivent être relus pour le compte qui vient d'entrer, avant que
+     * l'interface ne les affiche. Une donnée illisible n'empêche pas la
+     * connexion : elle sera signalée par la page qui la consulte.
      */
     async chargerFileHorsLigne() {
       try {

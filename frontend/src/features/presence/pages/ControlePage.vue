@@ -196,8 +196,8 @@ async function preparerTournee() {
       referentiels.salles(true),
       affectationsService.toutes(),
     ]);
-    seancesHorsLigne.enregistrerAffectations(affectations.data ?? []);
-    seancesHorsLigne.enregistrerSalles(salles);
+    await seancesHorsLigne.enregistrerAffectations(affectations.data ?? []);
+    await seancesHorsLigne.enregistrerSalles(salles);
     localStorage.setItem(
       cleTourneePreparee(auth.utilisateur.id),
       JSON.stringify({ date: date.value, prepareeLe: new Date().toISOString() }),
@@ -335,7 +335,7 @@ onMounted(async () => {
   // Les salles servent au formulaire de séance non programmée.
   try {
     salles.value = await referentiels.salles();
-    seancesHorsLigne.enregistrerSalles(salles.value);
+    await seancesHorsLigne.enregistrerSalles(salles.value);
   } catch {
     salles.value = seancesHorsLigne.sallesCache;
   }
