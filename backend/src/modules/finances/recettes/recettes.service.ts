@@ -9,12 +9,10 @@
  * ou non, en GNF par type et par mois de leur date d’émission.
  *
  * Le numéro de recette est fourni à la création et soumis à sa contrainte
- * d’unicité : il suit le format « RECX-AAAA-XXXXX », le préfixe « REC- » étant
- * réservé aux réclamations. Les références de paiement sont générées par le
- * service, sous le préfixe "PAY-X-AAAA-NNNNN" (année civile de la date de la
- * recette).
+ * d’unicité. Les références de paiement sont générées par le service, sous
+ * le préfixe "PAY-X-AAAA-NNNNN" (année civile de la date de la recette).
  */
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { t } from '../../../common/i18n';
 import { journaliser } from '../../../common/audit';
 import { ModePaiement, Prisma, RecetteExterne, StatutPaiement } from '@prisma/client';
@@ -23,7 +21,7 @@ import { AuthUser } from '../../../common/decorators';
 import { Paginated } from '../../../common/dto';
 import { pagine, paginer } from '../../../common/pagination';
 import { toDateOnly } from '../../../common/utils';
-import { SERIES_NUMERO, avecNumeroUnique, formatNumeroSerie, prochainNumeroSerie } from '../../../common/numero';
+import { SERIES_NUMERO, avecNumeroUnique, prochainNumeroSerie } from '../../../common/numero';
 import { creerPaiementTx } from '../../../common/finances/index';
 import { toMontant } from '../../../common/finances/montant';
 import { CreateRecetteDto, EncaisserRecetteDto, RecetteQueryDto, UpdateRecetteDto } from './recettes.dto';
@@ -97,24 +95,7 @@ export class RecettesService {
 
   // ---------------------------------------------------- création
 
-  /**
-   * Le numéro d'une recette est saisi à la main (il figure sur le reçu ou la
-   * facture délivrée) : le service en vérifie le format plutôt que de le
-   * générer. Le préfixe « RECX- » est réservé aux recettes, « REC- » l'est
-   * aux réclamations : une référence ne peut pas désigner deux documents.
-   *
-   * Les recettes déjà enregistrées avant ce changement (numéro « REC-… ») ne
-   * sont pas modifiées : elles restent valides et restent modifiables.
-   */
-  private verifierNumero(numero: string): void {
-    const format = formatNumeroSerie(SERIES_NUMERO.RECETTE_EXTERNE);
-    if (!format.test(numero.trim())) {
-      throw new BadRequestException(t('recettes.numero_invalide', { format: 'RECX-AAAA-XXXXX' }));
-    }
-  }
-
   async creer(dto: CreateRecetteDto, user: AuthUser) {
-    this.verifierNumero(dto.numero);
     return this.prisma.$transaction(async (tx) => {
       const recette = await tx.recetteExterne.create({
         data: {

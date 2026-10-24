@@ -1,4 +1,3 @@
-import { BadRequestException } from '@nestjs/common';
 import { TypeRecette } from '@prisma/client';
 import { I18nContext } from 'nestjs-i18n';
 import { RecettesService } from './recettes.service';
@@ -415,7 +414,9 @@ describe('numéro de recette', () => {
       date: '2026-10-01',
     }) as any;
 
-  it('accepte le préfixe « RECX- », réservé aux recettes', async () => {
+  // Le numéro est recopié du reçu ou de la facture : il est libre, seule son
+  // unicité est contrôlée (contrainte en base).
+  it.each(['REC-2026-00001', 'FACT-778', 'Reçu 2026/14'])('accepte le numéro saisi « %s »', async (numero) => {
     const prisma = {
       $transaction: jest.fn((run: (tx: any) => unknown) =>
         run({
@@ -425,25 +426,8 @@ describe('numéro de recette', () => {
       ),
     };
 
-    await service(prisma).creer(dossier('RECX-2026-00001'), { id: 'u1' } as never);
+    await service(prisma).creer(dossier(numero), { id: 'u1' } as never);
 
     expect(prisma.$transaction).toHaveBeenCalled();
-  });
-
-  it('refuse le préfixe « REC- », réservé aux réclamations', async () => {
-    const prisma = { $transaction: jest.fn() };
-
-    await expect(service(prisma).creer(dossier('REC-2026-00001'), { id: 'u1' } as never)).rejects.toBeInstanceOf(
-      BadRequestException,
-    );
-    expect(prisma.$transaction).not.toHaveBeenCalled();
-  });
-
-  it('refuse un numéro qui ne suit pas le format', async () => {
-    const prisma = { $transaction: jest.fn() };
-
-    await expect(service(prisma).creer(dossier('RECX-2026-1'), { id: 'u1' } as never)).rejects.toBeInstanceOf(
-      BadRequestException,
-    );
   });
 });

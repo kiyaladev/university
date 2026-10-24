@@ -11,8 +11,8 @@ export default {
   formDialog: {
     editTitle: 'Modifier la recette',
     newTitle: 'Émettre une recette',
-    numberHint: 'Le numéro suit le format RECX-AAAA-NNNNN ; il figure sur la facture ou le reçu.',
-    number: 'Numéro (RECX-AAAA-XXXXX)',
+    numberHint: 'Le numéro suit le format REC-AAAA-NNNNN ; il figure sur la facture ou le reçu.',
+    number: 'Numéro (REC-AAAA-XXXXX)',
     amount: 'Montant *',
     invoiceNumber: 'N° de facture',
     accountingLocked: 'La recette est encaissée : son type, sa date, son montant et sa devise sont figés.',

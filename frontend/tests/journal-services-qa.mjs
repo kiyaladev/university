@@ -138,7 +138,7 @@ try {
   }
   if (equipmentId) {
     await prisma.auditLog.deleteMany({ where: { entiteId: equipmentId } });
-    await prisma.equipementCampus.delete({ where: { id: equipmentId } });
+    await prisma.equipementHelpdesk.delete({ where: { id: equipmentId } });
   }
   report.productionUntouched = true;
   report.scope = 'Ticket helpdesk et élection réels, interface avant/après ADMIN/DIRECTION FR/EN bureau/mobile';

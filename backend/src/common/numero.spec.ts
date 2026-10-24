@@ -3,7 +3,6 @@ import {
   anneeNumero,
   avecNumeroUnique,
   estCollisionNumero,
-  formatNumeroSerie,
   millesimeSerie,
   prefixeSerie,
   prochainNumero,
@@ -141,23 +140,6 @@ describe('séries numérotées', () => {
         expect(autre.startsWith(complet)).toBe(false);
       }
     }
-  });
-
-  it('n’attribue jamais le même préfixe à deux séries', () => {
-    // Deux séries qui partagent un préfixe produiraient la même référence
-    // pour deux documents différents (« REC-2026-00001 » : réclamation ou
-    // recette ?). La règle « un préfixe = un module » est vérifiée ici.
-    const prefixes = Object.values(SERIES_NUMERO).map((serie) => serie.prefixe);
-    const doublons = prefixes.filter((prefixe, index) => prefixes.indexOf(prefixe) !== index);
-    expect(doublons).toEqual([]);
-  });
-
-  it('déduit le format d’une référence du préfixe de sa série', () => {
-    expect(formatNumeroSerie(SERIES_NUMERO.RECETTE_EXTERNE).test('RECX-2026-00001')).toBe(true);
-    expect(formatNumeroSerie(SERIES_NUMERO.RECETTE_EXTERNE).test('REC-2026-00001')).toBe(false);
-    expect(formatNumeroSerie(SERIES_NUMERO.RECLAMATION).test('REC-2026-00001')).toBe(true);
-    expect(formatNumeroSerie(SERIES_NUMERO.PAIEMENT_DOCUMENT_DEMANDE).test('PAY-D-2026-00001')).toBe(true);
-    expect(formatNumeroSerie(SERIES_NUMERO.PAIEMENT_DOCUMENT_DEMANDE).test('PAY-2026-00001')).toBe(false);
   });
 
   it('reprend la série de l’année à 00001 quand l’année change', async () => {

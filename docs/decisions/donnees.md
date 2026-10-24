@@ -581,28 +581,23 @@ Côté frontend, l'interface TypeScript `EquipementCampus` devient
 ### 8.4 « REC- » n'est plus partagé par deux séries
 
 **Constat.** `SERIES_NUMERO` (`backend/src/common/numero.ts`) applique une
-règle simple : *un préfixe = un module*. Les réclamations y sont déclarées
-sous « REC- » (« REC-2026-00001 »). Les recettes externes portaient le même
-préfixe (« REC-2026-00001 » d'après le commentaire du schéma, l'indication
-de l'écran et le jeu de démonstration) : deux séries, deux documents, une
-seule référence possible. Une recherche « REC-2026-00001 » ne disait pas si
-elle désignait une réclamation ou une recette.
+règle simple : *un préfixe = un module*. Les réclamations, numérotées
+automatiquement, y étaient déclarées sous « REC- » (« REC-2026-00001 ») ; or
+les recettes externes, dont le numéro est **saisi à la main** d'après le reçu
+ou la facture, commencent souvent par « REC- » elles aussi.
 
-**Décision.** La série des recettes externes est déclarée dans
-`SERIES_NUMERO` sous le préfixe « RECX- » : « REC- » appartient désormais à
-la seule série des réclamations. Le numéro d'une recette reste saisi à la
-main (il figure sur le reçu ou la facture délivrée par l'université) : le
-service en vérifie le format (« RECX-AAAA-XXXXX ») au lieu de le générer, et
-refuse une référence qui porterait le préfixe d'une autre série.
+**Décision (supervision, 24/10).** Un premier correctif imposait aux recettes
+le format « RECX-AAAA-XXXXX » : il a été annulé, car il empêchait de recopier
+la référence réelle d'un reçu. C'est la série **générée** qui change : les
+nouvelles réclamations sont numérotées « RCL-AAAA-NNNNN ». Le numéro d'une
+recette reste libre, seule son unicité est contrôlée.
 
-**Les numéros existants restent valides.** Aucune recette déjà enregistrée
-n'est réécrite : les « REC-2026-… » restent en base, restent affichés et
-restent modifiables. Seules les nouvelles recettes portent « RECX- ». Le jeu
-de démonstration a été aligné sur la nouvelle convention.
+**Les numéros existants restent valides.** Aucune réclamation ni recette n'est
+réécrite. La numérotation « max + 1 » filtre par préfixe : la série RCL-
+démarre à 00001.
 
-**Garde-fou.** `backend/src/common/numero.spec.ts` vérifie désormais qu'aucun
-préfixe n'est partagé par deux séries de `SERIES_NUMERO` : la collision ne
-peut pas revenir sans qu'un test le signale.
+**Garde-fou.** `backend/src/common/numero.spec.ts` vérifie qu'aucun préfixe
+n'est partagé par deux séries de `SERIES_NUMERO`.
 
 ### 8.5 Migrations ajoutées
 
@@ -631,12 +626,9 @@ SELECT "operateur", count(*) FROM "Paiement"
 -- Une valeur hors liste doit être corrigée en base (ou ramenée à « AUTRE »)
 -- AVANT la migration : celle-ci échoue volontairement sur une valeur inconnue.
 
--- 8.6.3 Numéros de recettes : le préfixe « REC- » ne doit plus être utilisé
--- pour une nouvelle recette.
-SELECT "numero" FROM "RecetteExterne" ORDER BY "numero";
-SELECT count(*) FROM "RecetteExterne" WHERE "numero" LIKE 'RECX-%';
--- attendu : les anciennes « REC-… » restent en base (elles ne sont pas
--- réécrites), les nouvelles sont en « RECX- ».
+-- 8.6.3 Réclamations : les nouvelles sont en « RCL- », les anciennes gardent
+-- leur numéro « REC-… ».
+SELECT left("numero", 4), count(*) FROM "Reclamation" GROUP BY 1;
 
 -- 8.6.4 Après migration : les colonnes sont bien des énumérations.
 SELECT t.typname, e.enumlabel

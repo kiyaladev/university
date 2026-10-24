@@ -1,0 +1,22 @@
+{
+  "date": "2026-10-24T20:30:11.885Z",
+  "passed": true,
+  "twoDepartments": true,
+  "unassignedHeadRejected": true,
+  "detailListCountPrintApprovalScoped": true,
+  "ownDepartmentCreation": true,
+  "wrongDepartmentCreationRejected": true,
+  "unknownDepartmentRejected": true,
+  "reroutingBeforeApprovalRevokesFormerAccess": true,
+  "reroutingAfterApprovalRejected": true,
+  "concurrentReroutingAndApprovalStatuses": [
+    200,
+    404
+  ],
+  "concurrentRecipientAndApproverConsistent": true,
+  "centralMailNotBroadcastToHeads": true,
+  "auditWithoutFreeText": true,
+  "sessionsSource": "AuthService.login avec mots de passe QA vérifiés, identités contrôlées par GET /auth/me",
+  "httpLoginRouteQualified": false,
+  "productionUntouched": true
+}

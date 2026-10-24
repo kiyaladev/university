@@ -1,6 +1,5 @@
 {
   "recette_introuvable": "Receipt not found",
-  "numero_invalide": "The receipt number must follow the {format} format.",
   "cette_recette_a_deja_ete_encaissee_paiement_deja_rattache": "This receipt has already been collected (payment already linked)",
   "modification_comptable_apres_encaissement_interdite": "Type, date, amount and currency are locked after collection",
   "modification_concurrente": "The receipt was changed at the same time. Reload it before trying again.",

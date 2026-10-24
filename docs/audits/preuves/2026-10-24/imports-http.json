@@ -1,0 +1,166 @@
+{
+  "date": "2026-10-24T20:32:35.887Z",
+  "statut": "valide",
+  "types": [
+    {
+      "type": "enseignants",
+      "preview": {
+        "lues": 3,
+        "valides": 2,
+        "rejetees": 1
+      },
+      "applied": {
+        "type": "enseignants",
+        "lignesLues": 3,
+        "importees": 2,
+        "rejetees": 1,
+        "erreurs": [
+          {
+            "numero": 3,
+            "erreurs": [
+              "Doublon dans le fichier : cette clé apparaît sur une ligne précédente."
+            ]
+          }
+        ],
+        "colonnesIgnorees": []
+      },
+      "replay": {
+        "type": "enseignants",
+        "lignesLues": 3,
+        "importees": 0,
+        "rejetees": 3,
+        "erreurs": [
+          {
+            "numero": 2,
+            "erreurs": [
+              "Un enregistrement portant cette clé existe déjà."
+            ]
+          },
+          {
+            "numero": 3,
+            "erreurs": [
+              "Doublon dans le fichier : cette clé apparaît sur une ligne précédente."
+            ]
+          },
+          {
+            "numero": 4,
+            "erreurs": [
+              "Un enregistrement portant cette clé existe déjà."
+            ]
+          }
+        ],
+        "colonnesIgnorees": []
+      }
+    },
+    {
+      "type": "matieres",
+      "preview": {
+        "lues": 3,
+        "valides": 2,
+        "rejetees": 1
+      },
+      "applied": {
+        "type": "matieres",
+        "lignesLues": 3,
+        "importees": 2,
+        "rejetees": 1,
+        "erreurs": [
+          {
+            "numero": 3,
+            "erreurs": [
+              "Doublon dans le fichier : cette clé apparaît sur une ligne précédente."
+            ]
+          }
+        ],
+        "colonnesIgnorees": []
+      },
+      "replay": {
+        "type": "matieres",
+        "lignesLues": 3,
+        "importees": 0,
+        "rejetees": 3,
+        "erreurs": [
+          {
+            "numero": 2,
+            "erreurs": [
+              "Un enregistrement portant cette clé existe déjà."
+            ]
+          },
+          {
+            "numero": 3,
+            "erreurs": [
+              "Doublon dans le fichier : cette clé apparaît sur une ligne précédente."
+            ]
+          },
+          {
+            "numero": 4,
+            "erreurs": [
+              "Un enregistrement portant cette clé existe déjà."
+            ]
+          }
+        ],
+        "colonnesIgnorees": []
+      }
+    },
+    {
+      "type": "salles",
+      "preview": {
+        "lues": 3,
+        "valides": 2,
+        "rejetees": 1
+      },
+      "applied": {
+        "type": "salles",
+        "lignesLues": 3,
+        "importees": 2,
+        "rejetees": 1,
+        "erreurs": [
+          {
+            "numero": 3,
+            "erreurs": [
+              "Doublon dans le fichier : cette clé apparaît sur une ligne précédente."
+            ]
+          }
+        ],
+        "colonnesIgnorees": []
+      },
+      "replay": {
+        "type": "salles",
+        "lignesLues": 3,
+        "importees": 0,
+        "rejetees": 3,
+        "erreurs": [
+          {
+            "numero": 2,
+            "erreurs": [
+              "Un enregistrement portant cette clé existe déjà."
+            ]
+          },
+          {
+            "numero": 3,
+            "erreurs": [
+              "Doublon dans le fichier : cette clé apparaît sur une ligne précédente."
+            ]
+          },
+          {
+            "numero": 4,
+            "erreurs": [
+              "Un enregistrement portant cette clé existe déjà."
+            ]
+          }
+        ],
+        "colonnesIgnorees": []
+      }
+    }
+  ],
+  "fixturesRestantes": {
+    "enseignant": 0,
+    "matiere": 0,
+    "salle": 0
+  },
+  "productionUntouched": true,
+  "limites": [
+    "Import créneaux non qualifié par cette recette",
+    "Fichiers historiques et décodeur XLSX navigateur à qualifier séparément"
+  ]
+}

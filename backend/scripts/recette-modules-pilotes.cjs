@@ -115,7 +115,7 @@ async function main() {
   const equipment = await request(admin, 'POST', '/equipements', { libelle: tag, emplacement: 'Salle QA' }, 201);
   created.equipments.push(equipment.id);
   assert.equal(equipment.codeQr, undefined);
-  const qr = (await prisma.equipementCampus.findUniqueOrThrow({ where: { id: equipment.id } })).codeQr;
+  const qr = (await prisma.equipementHelpdesk.findUniqueOrThrow({ where: { id: equipment.id } })).codeQr;
   const resolved = await request(null, 'GET', '/equipements/par-code/' + qr);
   assert.deepEqual(Object.keys(resolved).sort(), ['emplacement', 'id', 'libelle']);
   const ticket = await request(
@@ -520,7 +520,7 @@ main()
     await prisma.soutenance.deleteMany({ where: { travailEncadreId: { in: created.works } } });
     await prisma.travailEncadre.deleteMany({ where: { id: { in: created.works } } });
     await prisma.ticketSupport.deleteMany({ where: { id: { in: created.tickets } } });
-    await prisma.equipementCampus.deleteMany({ where: { id: { in: created.equipments } } });
+    await prisma.equipementHelpdesk.deleteMany({ where: { id: { in: created.equipments } } });
     await prisma.documentDepot.deleteMany({ where: { id: { in: created.documents } } });
     await prisma.reparationMateriel.deleteMany({ where: { equipementId: { in: created.assets } } });
     await prisma.equipementPatrimoine.deleteMany({ where: { id: { in: created.assets } } });
