@@ -172,6 +172,9 @@ Ces trois migrations sont écrites à la main et sont **idempotentes**
 (`CREATE INDEX IF NOT EXISTS`, `CREATE EXTENSION IF NOT EXISTS`) : elles
 peuvent être rejouées sans risque sur une base où l'objet existe déjà.
 
+La seconde vague d'harmonisation (énumérations, horodatages, inventaires,
+numéros) a ajouté deux migrations : voir le §8.
+
 Les migrations déjà présentes (`20261022120000_index_cles_etrangeres`,
 `20261023100000_suppression_restrict_attestation_demande`,
 `20261023110000_controles_seances_restrict`) ne sont pas modifiées.
@@ -435,3 +438,247 @@ n'est touchée, `backend/prisma/seed.ts` reste à sa place et la commande
 fichier généré impacté est `frontend/src/types/generated/enums.ts`, dont
 l'ordre des énumérations suit désormais les fichiers de domaine ; le contenu
 des énumérations est identique.
+
+---
+
+## 8. Suite de l'harmonisation : types, horodatages, inventaires, numéros
+
+Cette section décrit la seconde vague d'harmonisation du modèle de données,
+après les index, les suppressions et l'« `createdAt` » du §1. Elle porte sur
+quatre points : deux chaînes libres devenues des énumérations, les
+horodatages de dernière modification manquants, la distinction entre les deux
+inventaires d'équipement, et un préfixe de numéro partagé par deux séries.
+
+Les migrations correspondantes n'ont été exécutées sur aucune base : elles
+sont écrites hors ligne (`prisma migrate diff` pour le SQL de référence, puis
+rewrites manuels là où le diff détruirait les données) et sont à rejouer par
+l'opérateur sur une base jetable, puis en production, après les requêtes de
+contrôle du §8.6.
+
+### 8.1 Deux chaînes libres deviennent des énumérations
+
+`BadgeAcces.type` et `Paiement.operateur` portaient une chaîne saisie à la
+main. Aucune des deux n'était garantie : la liste des badges était
+dupliquée dans le DTO backend, dans le type `TypeBadge` du frontend et dans
+le seed ; la liste des opérateurs n'était validée que sur deux des cinq
+portefeuilles de paiement (inscriptions et restaurant), si bien qu'une demande
+de document ou un encaissement de recette pouvait écrire en base un
+opérateur que personne ne connaissait.
+
+**Valeurs retenues** (celles du code et du jeu de démonstration) :
+
+| Colonne | Énumération | Valeurs |
+| --- | --- | --- |
+| `BadgeAcces.type` | `TypeBadge` | `VISITEUR`, `INTERVENANT`, `TECHNICIEN`, `VIP` |
+| `Paiement.operateur` | `OperateurPaiement` | `ORANGE_MONEY`, `MTN_MOMO`, `TELECEL`, `AUTRE` |
+
+`TypeBadge` est déclarée dans `backend/prisma/schema/documents.prisma` (le
+modèle qui l'utilise) et `OperateurPaiement` dans
+`backend/prisma/schema/finances.prisma`.
+
+**Conséquences applicatives.**
+
+- `OPERATEURS_MOBILE_MONEY` (`backend/src/common/finances/paiement.ts`) est
+  maintenant dérivée de l'énumération Prisma : il n'y a plus de liste à
+  tenir à jour en double.
+- Les deux DTO qui acceptaient un opérateur libre
+  (`documents-demande.dto.ts`, `recettes.dto.ts`) valident désormais la liste
+  de l'énumération ; les deux autres (`inscription.dto.ts`, `resto.dto.ts`)
+  l Shakespeare's déjà, mais avec le type de l'énumération.
+- `TYPES_BADGE` (`backend/src/modules/documents/badges/badges.dto.ts`) est
+  dérivé de `TypeBadge`.
+- Le frontend consomme les deux énumérations depuis
+  `frontend/src/types/generated/enums.ts` : le type `TypeBadge` écrit à la
+  main dans `frontend/src/types/transverses.ts` a disparu.
+
+**Pourquoi le SQL de `prisma migrate diff` n'est pas utilisé tel quel.** Le
+diff hors ligne propose :
+
+```sql
+ALTER TABLE "BadgeAcces" DROP COLUMN "type", ADD COLUMN "type" "TypeBadge" NOT NULL;
+```
+
+soit la suppression de la colonne, donc la **perte des données**. La
+migration écrite à la main crée le type, normalise les valeurs déjà
+enregistrées (casse, espaces, libellés usuels comme « Orange Money »), puis
+**échoue** en nommant les valeurs fautives si une valeur ne se ramène à
+aucune valeur de l'énumération. La conversion est faite par `ALTER TABLE …
+USING`, qui conserve les lignes.
+
+### 8.2 Vingt et un modèles reçoivent un `updatedAt`
+
+Un modèle modifié après sa création doit dire *quand* il a été modifié
+pour la dernière fois. Vingt et un modèles ne le disaient pas : la dernière
+écriture d'une note, d'une réclamation, d'une demande de document, d'une
+carte d'étudiant ou d'une année académique était indatable.
+
+**Modèles retenus** (relevés sur les `update`, `updateMany` et `upsert` du
+code applicatif et du seed) : `Affectation`, `AnneeAcademique`, `Appareil`,
+`CarteEtudiante`, `CategoriePatrimoine`, `CircuitCourrier`,
+`ConsommationResto`, `Creneau`, `DeliberationLigne`, `DemandeDocument`,
+`EquipementCampus`, `Filiere`, `InscriptionFormation`, `Note`, `Promotion`,
+`RecetteExterne`, `Reclamation`, `ReparationMateriel`, `ReservationSalle`,
+`Soutenance`, `SuspicionPlagiat`.
+
+**Modèles volontairement laissés tels quels** : ils ne sont jamais modifiés
+après création — `AuditLog`, `CandidatElection`, `LignePaie`,
+`MessageReclamation`, `PreuveConsommee`, `Recharge`, `ScanExamen`,
+`StatistiqueMesrs`, `VerificationAttestation`, `VoteElection`, `VueVOD`. Un
+`updatedAt` qui ne change jamais ne serait qu'un bruit.
+
+**Migration.** Le champ est ajouté sous la forme que Prisma produit sur une
+table déjà remplie : ajout avec `DEFAULT CURRENT_TIMESTAMP`, puis
+suppression du défaut. Les lignes existantes sont donc datées du jour de la
+migration, les lignes suivantes par le client Prisma (`@updatedAt`). Le diff
+hors ligne, qui ignore les données, propose un `ADD COLUMN … NOT NULL` sans
+défaut : il échouerait sur une table peuplée.
+
+**Ce que cela change à l'API.** Les réponses du backend exposent désormais
+`updatedAt` sur ces modèles. Les types du frontend sont écrits à la main et
+ne listent que les champs utilisés : aucun écran n'est cassé, et aucun n'est
+obligé d'afficher la date.
+
+### 8.3 `EquipementCampus` et `EquipementPatrimoine` : deux inventaires, pas un
+
+**Constat.** Les deux modèles décrivent un équipement de l'université, mais
+n'ont ni les mêmes champs, ni les mêmes usages, ni les mêmes écrans :
+
+| | `EquipementCampus` (helpdesk) | `EquipementPatrimoine` (inventaire MESRS) |
+| --- | --- | --- |
+| Champs | libellé, emplacement, QR, actif | catégorie, département, salle, n° de série, n° d'inventaire, date et valeur d'acquisition, QR, actif, en réparation, obsolescence |
+| Écran | « Assistance » (fiche de signalement QR) | « Patrimoine » (inventaire, catégories, réparations) |
+| Rôle | la cible d'un signalement rapide | la base des indicateurs MESRS (valeur, obsolescence, réparations) |
+| Relations | `TicketSupport` | `TicketSupport`, `ReparationMateriel` |
+
+**Décision : pas de fusion.** Une fusion aurait :
+
+- rendu obligatoire l'union des deux jeux de champs (catégorie, valeur,
+  date d'acquisition sont facultatives pour une fiche de signalement, et
+  `numeroInventaire`, `numeroSerie` et `qrCode` sont uniques : trois
+  unicités de plus à tenir sur une table unique) ;
+- exigé de rapprocher deux inventaires **sans clé de rapprochement** : rien
+  ne permet de dire que la fiche « Vidéoprojecteur salle S204 » du helpdesk
+  est le « Vidéoprojecteur S204 » `FP-2024-0012` du patrimoine. Une fusion
+  automatique aurait dupliqué ou perdu des équipements ;
+- supprimé la contrainte `TicketSupport_un_seul_inventaire`
+  (« au plus un des deux inventaires est renseigné »), qui est aujourd'hui
+  une garantie utile : un ticket pointe soit vers une fiche de signalement,
+  soit vers un équipement inventorié, jamais vers les deux ;
+- mêlé deux cycles de vie : le helpdesk ignore la valeur d'acquisition,
+  l'inventaire ignore l'emplacement de signalement.
+
+**Décision : clarification des noms.** Le modèle est renommé
+`EquipementHelpdesk` (fiche de signalement) ; `EquipementPatrimoine` garde
+son nom (inventaire). Le nom de la **table** reste `EquipementCampus` grâce
+à `@@map("EquipementCampus")` : **aucune migration n'est nécessaire**, ni
+pour les données, ni pour les identifiants, ni pour les tickets qui la
+réfèrent. Le nom de la relation `TicketSupport.equipement` est conservé :
+la clé JSON `equipement` ne change pas dans les réponses de l'API.
+
+Côté frontend, l'interface TypeScript `EquipementCampus` devient
+`EquipementHelpdesk` (`frontend/src/types/campus.ts`).
+
+### 8.4 « REC- » n'est plus partagé par deux séries
+
+**Constat.** `SERIES_NUMERO` (`backend/src/common/numero.ts`) applique une
+règle simple : *un préfixe = un module*. Les réclamations y sont déclarées
+sous « REC- » (« REC-2026-00001 »). Les recettes externes portaient le même
+préfixe (« REC-2026-00001 » d'après le commentaire du schéma, l'indication
+de l'écran et le jeu de démonstration) : deux séries, deux documents, une
+seule référence possible. Une recherche « REC-2026-00001 » ne disait pas si
+elle désignait une réclamation ou une recette.
+
+**Décision.** La série des recettes externes est déclarée dans
+`SERIES_NUMERO` sous le préfixe « RECX- » : « REC- » appartient désormais à
+la seule série des réclamations. Le numéro d'une recette reste saisi à la
+main (il figure sur le reçu ou la facture délivrée par l'université) : le
+service en vérifie le format (« RECX-AAAA-XXXXX ») au lieu de le générer, et
+refuse une référence qui porterait le préfixe d'une autre série.
+
+**Les numéros existants restent valides.** Aucune recette déjà enregistrée
+n'est réécrite : les « REC-2026-… » restent en base, restent affichés et
+restent modifiables. Seules les nouvelles recettes portent « RECX- ». Le jeu
+de démonstration a été aligné sur la nouvelle convention.
+
+**Garde-fou.** `backend/src/common/numero.spec.ts` vérifie désormais qu'aucun
+préfixe n'est partagé par deux séries de `SERIES_NUMERO` : la collision ne
+peut pas revenir sans qu'un test le signale.
+
+### 8.5 Migrations ajoutées
+
+| Migration | Objet | Réversible par |
+| --- | --- | --- |
+| `20261024110000_enums_badge_operateur` | crée `TypeBadge` et `OperateurPaiement`, normalise les valeurs existantes, échoue sur une valeur inconnue, convertit les deux colonnes | §8.7 |
+| `20261024120000_updated_at_manquants` | ajoute `updatedAt` aux 21 modèles modifiés après création | `ALTER TABLE … DROP COLUMN "updatedAt"` |
+
+Aucune de ces deux migrations ne touche au renommage `EquipementHelpdesk` :
+le nom de la table ne change pas (§8.3).
+
+### 8.6 Requêtes de contrôle avant déploiement
+
+À exécuter sur la base **avant** de jouer les migrations, puis à rejouer
+après pour confirmer.
+
+```sql
+-- 8.6.1 Valeurs des badges : elles doivent toutes être dans la liste.
+SELECT "type", count(*) FROM "BadgeAcces" GROUP BY 1 ORDER BY 2 DESC;
+-- attendu : VISITEUR, INTERVENANT, TECHNICIEN, VIP (et rien d'autre)
+
+-- 8.6.2 Valeurs des opérateurs : idem.
+SELECT "operateur", count(*) FROM "Paiement"
+ WHERE "operateur" IS NOT NULL GROUP BY 1 ORDER BY 2 DESC;
+-- attendu : ORANGE_MONEY, MTN_MOMO, TELECEL, AUTRE (et rien d'autre)
+-- Une valeur hors liste doit être corrigée en base (ou ramenée à « AUTRE »)
+-- AVANT la migration : celle-ci échoue volontairement sur une valeur inconnue.
+
+-- 8.6.3 Numéros de recettes : le préfixe « REC- » ne doit plus être utilisé
+-- pour une nouvelle recette.
+SELECT "numero" FROM "RecetteExterne" ORDER BY "numero";
+SELECT count(*) FROM "RecetteExterne" WHERE "numero" LIKE 'RECX-%';
+-- attendu : les anciennes « REC-… » restent en base (elles ne sont pas
+-- réécrites), les nouvelles sont en « RECX- ».
+
+-- 8.6.4 Après migration : les colonnes sont bien des énumérations.
+SELECT t.typname, e.enumlabel
+  FROM pg_type t JOIN pg_enum e ON e.enumtypid = t.oid
+ WHERE t.typname IN ('TypeBadge', 'OperateurPaiement')
+ ORDER BY t.typname, e.enumsortorder;
+
+-- 8.6.5 Après migration : les 21 colonnes `updatedAt` existent et sont
+-- renseignées.
+SELECT table_name, column_name, is_nullable, column_default
+  FROM information_schema.columns
+ WHERE column_name = 'updatedAt'
+   AND table_name IN ('Affectation', 'AnneeAcademique', 'Appareil',
+     'CarteEtudiante', 'CategoriePatrimoine', 'CircuitCourrier',
+     'ConsommationResto', 'Creneau', 'DeliberationLigne', 'DemandeDocument',
+     'EquipementCampus', 'Filiere', 'InscriptionFormation', 'Note',
+     'Promotion', 'RecetteExterne', 'Reclamation', 'ReparationMateriel',
+     'ReservationSalle', 'Soutenance', 'SuspicionPlagiat');
+-- attendu : 21 lignes, is_nullable = 'NO', column_default = NULL
+
+-- 8.6.6 Après migration : le nom de la table est resté « EquipementCampus ».
+SELECT tablename FROM pg_tables WHERE tablename IN ('EquipementCampus', 'EquipementHelpdesk');
+-- attendu : EquipementCampus
+```
+
+### 8.7 Retour arrière
+
+```sql
+-- 8.7.1 Les colonnes redeviennent des chaînes.
+ALTER TABLE "BadgeAcces" ALTER COLUMN "type" TYPE TEXT USING ("type"::TEXT);
+ALTER TABLE "Paiement" ALTER COLUMN "operateur" TYPE TEXT USING ("operateur"::TEXT);
+DROP TYPE "TypeBadge";
+DROP TYPE "OperateurPaiement";
+
+-- 8.7.2 Les horodatages sont retirés (21 tables).
+ALTER TABLE "Note" DROP COLUMN "updatedAt";
+-- … et les 20 autres tables listées au §8.2.
+```
+
+Le code applicatif doit être redéployé **en même temps** que le retour
+arrière : il écrit désormais des valeurs d'énumération et expose `updatedAt`
+sur les vingt et un modèles.
+
+Le renommage `EquipementHelpdesk` ne se défait pas : il n'a jamais touché à
+la base.
