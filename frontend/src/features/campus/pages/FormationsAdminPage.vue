@@ -111,7 +111,7 @@ import FormationTableauDeBord from '../components/FormationTableauDeBord.vue';
 import FormationTableau from '../components/FormationTableau.vue';
 import FormationCartes from '../components/FormationCartes.vue';
 import { LIBELLE_STATUT_FORMATION } from '@/shared/utils/libelles';
-import type { Formation, StatutFormation, ChipFiltre } from '@/types';
+import type { Formation, StatutFormation, ChipFiltre, FiltresPage } from '@/types';
 import type { InscriptionFormationDetail } from '../types';
 import { ouvrirImpression } from '@/shared/services/impression';
 
@@ -121,7 +121,7 @@ const { confirmer: demander, supprimerAvecConfirmation } = useConfirmation();
 
 const dashboard = ref<FormationDashboard | null>(null);
 
-const filtres = ref<Record<string, any>>({ recherche: '', statut: null });
+const filtres = ref<FiltresPage>({ recherche: '', statut: null });
 // Le backend n'accepte que `search` (titre, catégorie, lieu) et `statut` :
 // tout autre paramètre serait silencieusement ignoré.
 const liste = reactive(

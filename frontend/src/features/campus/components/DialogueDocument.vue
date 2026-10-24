@@ -199,7 +199,7 @@ import { useAuthStore } from '@/stores/auth';
 import ChampRecherche from '@/shared/components/ChampRecherche.vue';
 import { LIBELLE_TYPE_DOCUMENT } from '@/shared/utils/libelles';
 import { documentsService } from '../services/documents';
-import type { DocumentDepot, SuspicionPlagiat } from '@/types';
+import type { DocumentDepot, SuspicionPlagiat, FiltresPage } from '@/types';
 
 const props = defineProps<{
   modelValue: boolean;
@@ -313,7 +313,7 @@ watch(fichierChoisi, (f) => {
   lecteur.readAsDataURL(f);
 });
 
-function nettoyable(v: any) {
+function nettoyable(v: unknown) {
   return v === undefined || v === null || v === '';
 }
 
@@ -325,7 +325,7 @@ async function enregistrer() {
   if (fichierDataUrl.value) extractionEnCours.value = true;
   enregistrement.value = true;
   try {
-    const payload: Record<string, any> = {
+    const payload: FiltresPage = {
       titre: form.value.titre.trim(),
       type: form.value.type,
       auteurs: form.value.auteurs.trim() || undefined,

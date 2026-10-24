@@ -239,7 +239,7 @@ import PastilleStatut from '@/shared/components/PastilleStatut.vue';
 import { usePresentationListe } from '@/shared/composables/usePresentationListe';
 import { dateHeureLisible } from '@/shared/utils/format';
 import { LIBELLE_CATEGORIE_INCIDENT, LIBELLE_PRIORITE_TICKET, LIBELLE_STATUT_TICKET } from '@/shared/utils/libelles';
-import type { ChipFiltre, StatutTicket, TicketSupport } from '@/types';
+import type { ChipFiltre, StatutTicket, TicketSupport, FiltresPage } from '@/types';
 
 defineProps<{
   lignes: TicketSupport[];
@@ -250,7 +250,7 @@ defineProps<{
 }>();
 
 /** Filtres du panneau : la page les garde (et les inscrit dans l'URL). */
-const filtres = defineModel<Record<string, any>>('filtres', { required: true });
+const filtres = defineModel<FiltresPage>('filtres', { required: true });
 /** Pagination : la page garde l'état, pour rester synchronisée avec l'URL. */
 const page = defineModel<number>('page', { required: true });
 const pageSize = defineModel<number>('pageSize', { required: true });

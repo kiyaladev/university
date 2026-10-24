@@ -137,7 +137,7 @@ import CitesResidencesPanneau from '../components/CitesResidencesPanneau.vue';
 import CitesChambresPanneau from '../components/CitesChambresPanneau.vue';
 import CitesAttributionsPanneau from '../components/CitesAttributionsPanneau.vue';
 import CitesDecisionAttribution from '../components/CitesDecisionAttribution.vue';
-import type { AnneeAcademique, AttributionLogement, Chambre, Residence } from '@/types';
+import type { AnneeAcademique, AttributionLogement, Chambre, Residence, FiltresPage } from '@/types';
 
 const $q = useQuasar();
 const auth = useAuthStore();
@@ -161,7 +161,7 @@ const chambresDialogue = ref<Chambre[]>([]);
 // préfixe (res_, ch_, at_).
 
 /** Résidences : peu nombreuses, chargées en entier et filtrées par l'onglet. */
-const filtresResidences = ref<Record<string, any>>({ recherche: '', capaciteMin: null, actif: null, ville: '' });
+const filtresResidences = ref<FiltresPage>({ recherche: '', capaciteMin: null, actif: null, ville: '' });
 const res = reactive(
   useListePaginee<Residence>({
     filtres: filtresResidences,
@@ -173,7 +173,7 @@ const res = reactive(
   }),
 );
 
-const filtresChambres = ref<Record<string, any>>({ recherche: '', residenceId: null, categorie: null, statut: null });
+const filtresChambres = ref<FiltresPage>({ recherche: '', residenceId: null, categorie: null, statut: null });
 const ch = reactive(
   useListePaginee<Chambre>({
     filtres: filtresChambres,
@@ -190,7 +190,7 @@ const ch = reactive(
   }),
 );
 
-const filtresAttributions = ref<Record<string, any>>({ anneeId: null, statut: null, residenceId: null, etudiant: '' });
+const filtresAttributions = ref<FiltresPage>({ anneeId: null, statut: null, residenceId: null, etudiant: '' });
 const att = reactive(
   useListePaginee<AttributionLogement>({
     filtres: filtresAttributions,

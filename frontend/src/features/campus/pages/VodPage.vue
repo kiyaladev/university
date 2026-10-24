@@ -21,7 +21,7 @@ import BarrePagination from '@/shared/components/BarrePagination.vue';
 import DialogueVod from '../components/DialogueVod.vue';
 import VodListe from '../components/VodListe.vue';
 import { vodService, type ParametresVod } from '../services/vod';
-import { LIBELLE_STATUT_VOD, LIBELLE_TYPE_RESSOURCE_VOD, optionsDepuis } from '@/shared/utils/libelles';
+import { LIBELLE_STATUT_VOD, LIBELLE_TYPE_RESSOURCE_VOD, libelleDepuis, optionsDepuis } from '@/shared/utils/libelles';
 import type { CoursVOD, ChipFiltre } from '@/types';
 import type { RessourceCatalogue } from '../types';
 
@@ -31,7 +31,14 @@ const { t } = useI18n();
 const { confirmer } = useConfirmation();
 const $q = useQuasar();
 
-const filtres = ref<Record<string, any>>({ recherche: '', type: null, statut: null });
+/** Filtres de la liste VOD : recherche, type de ressource et statut de publication. */
+interface FiltresVod {
+  recherche: string;
+  type: string | null;
+  statut: string | null;
+}
+
+const filtres = ref<FiltresVod>({ recherche: '', type: null, statut: null });
 
 /** Écriture : les mêmes rôles que le backend (POST/PUT/publier/archiver). */
 const peutEditer = computed(() => auth.peut('vod.editer'));
@@ -90,9 +97,9 @@ const chips = computed(() => {
     cs.push({ label: `« ${f.recherche} »`, value: f.recherche, icone: 'search', defaut: true });
   }
   if (f.type)
-    cs.push({ label: LIBELLE_TYPE_RESSOURCE_VOD[f.type] ?? f.type, value: f.type, icone: 'movie', cle: 'type' });
+    cs.push({ label: libelleDepuis(LIBELLE_TYPE_RESSOURCE_VOD, f.type), value: f.type, icone: 'movie', cle: 'type' });
   if (f.statut) {
-    cs.push({ label: LIBELLE_STATUT_VOD[f.statut] ?? f.statut, value: f.statut, icone: 'flag', cle: 'statut' });
+    cs.push({ label: libelleDepuis(LIBELLE_STATUT_VOD, f.statut), value: f.statut, icone: 'flag', cle: 'statut' });
   }
   return cs;
 });

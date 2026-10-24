@@ -11,7 +11,7 @@ import type { QTableColumn } from 'quasar';
 import PastilleStatut from '@/shared/components/PastilleStatut.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
 import { usePresentationListe } from '@/shared/composables/usePresentationListe';
-import { LIBELLE_TYPE_RESSOURCE_VOD } from '@/shared/utils/libelles';
+import { LIBELLE_TYPE_RESSOURCE_VOD, libelleDepuis } from '@/shared/utils/libelles';
 import { useAuthStore } from '@/stores/auth';
 import type { RessourceCatalogue } from '../types';
 
@@ -113,7 +113,7 @@ function avancement(v: RessourceCatalogue): number {
       </etat-vide>
     </template>
     <template #body-cell-type="p">
-      <q-td :props="p">{{ LIBELLE_TYPE_RESSOURCE_VOD[p.row.type] ?? p.row.type }}</q-td>
+      <q-td :props="p">{{ libelleDepuis(LIBELLE_TYPE_RESSOURCE_VOD, p.row.type) }}</q-td>
     </template>
     <template #body-cell-matiere="p">
       <q-td :props="p">

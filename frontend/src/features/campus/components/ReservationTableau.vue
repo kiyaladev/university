@@ -15,7 +15,7 @@
       <div class="col-12 q-pb-sm">
         <q-card flat bordered class="carte">
           <q-card-section>
-            <div v-for="c in p.cols.filter((c) => c.name !== 'actions')" :key="c.name" class="q-mb-sm">
+            <div v-for="c in colonnesSansActions(p.cols)" :key="c.name" class="q-mb-sm">
               <div class="text-caption text-grey-7">{{ c.label }}</div>
               <template v-if="c.name === 'creneau'">
                 {{ dateLisible(p.row.dateJour) }} · {{ p.row.heureDebut }}–{{ p.row.heureFin }}
@@ -108,6 +108,7 @@ import EtatVide from '@/shared/components/EtatVide.vue';
 import PastilleStatut from '@/shared/components/PastilleStatut.vue';
 import { dateLisible } from '@/shared/utils/format';
 import { LIBELLE_STATUT_RESERVATION } from '@/shared/utils/libelles';
+import { colonnesSansActions } from '@/shared/utils/colonnes';
 import type { ReservationSalle } from '@/types';
 
 defineProps<{

@@ -180,7 +180,9 @@ async function enregistrer() {
       libelle: form.value.libelle.trim(),
       numeroSerie: form.value.numeroSerie.trim(),
       numeroInventaire: form.value.numeroInventaire.trim(),
-      categorieId: form.value.categorieId,
+      // La catégorie est obligatoire : le bouton de validation reste désactivé
+      // tant qu'elle n'est pas choisie.
+      categorieId: form.value.categorieId ?? '',
       departementId: form.value.departementId ?? undefined,
       salleId: form.value.salleId ?? undefined,
       dateAcquisition: form.value.dateAcquisition || undefined,

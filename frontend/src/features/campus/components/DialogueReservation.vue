@@ -83,6 +83,7 @@ import { aujourdhui } from '@/shared/utils/format';
 import { LIBELLE_STATUT_RESERVATION } from '@/shared/utils/libelles';
 import { reservationsService } from '../services/reservations';
 import type { ReservationSalle, Salle } from '@/types';
+import { messageErreurApi } from '@/shared/utils/erreur-http';
 
 const ouvert = defineModel<boolean>({ required: true });
 const props = defineProps<{ salles: Salle[] }>();
@@ -162,8 +163,8 @@ async function enregistrer() {
     $q.notify({ type: 'positive', message: t('reservations.createDialog.sent') });
     emit('enregistre');
     ouvert.value = false;
-  } catch (e: any) {
-    erreur.value = e.response?.data?.message ?? t('reservations.createDialog.saveFailed');
+  } catch (e: unknown) {
+    erreur.value = messageErreurApi(e) ?? t('reservations.createDialog.saveFailed');
   } finally {
     enregistrement.value = false;
   }

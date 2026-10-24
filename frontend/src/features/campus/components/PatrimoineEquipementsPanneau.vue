@@ -323,7 +323,7 @@ import ChampRecherche from '@/shared/components/ChampRecherche.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
 import { usePresentationListe } from '@/shared/composables/usePresentationListe';
 import { montantLisible } from '@/shared/utils/format';
-import type { EquipementPatrimoine } from '@/types';
+import type { EquipementPatrimoine, FiltresPage } from '@/types';
 
 defineProps<{
   lignes: EquipementPatrimoine[];
@@ -334,7 +334,7 @@ defineProps<{
 }>();
 
 /** Filtres du panneau : la page les garde (et les inscrit dans l'URL). */
-const filtres = defineModel<Record<string, any>>('filtres', { required: true });
+const filtres = defineModel<FiltresPage>('filtres', { required: true });
 /** Pagination : la page garde l'état, pour rester synchronisée avec l'URL. */
 const page = defineModel<number>('page', { required: true });
 const pageSize = defineModel<number>('pageSize', { required: true });
@@ -374,8 +374,8 @@ const colonnes = computed<QTableColumn[]>(() => [
   { name: 'actions', label: '', field: 'id', align: 'right' },
 ]);
 
-function enregistrerCanvas(el: any, e: EquipementPatrimoine) {
-  if (!el) return;
+function enregistrerCanvas(el: unknown, e: EquipementPatrimoine) {
+  if (!(el instanceof HTMLCanvasElement)) return;
   QRCode.toCanvas(el, e.qrCode, { width: 96, margin: 1 }).catch(() => {});
 }
 </script>
