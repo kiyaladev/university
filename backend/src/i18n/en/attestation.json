@@ -11,5 +11,6 @@
   "appareil_inconnu_ou_revoque_sa_lecture_d_empreinte_n_est_pas": "Unknown or revoked device: its fingerprint scan is not admissible.",
   "l_enseignant_doit_consentir_avant_tout_enrolement_d_empreint": "Teacher consent is required before any fingerprint enrolment. Personal code and signature remain available.",
   "passerelle_biometrique_non_configuree": "Biometric gateway not configured: use an enrolled device, the personal code or a signature",
-  "empreinte_non_reconnue": "Fingerprint not recognized (score {score} < {seuil}) — try again or use another method"
+  "empreinte_non_reconnue": "Fingerprint not recognized (score {score} < {seuil}) — try again or use another method",
+  "preuve_deja_utilisee": "Proof already used: please read the fingerprint again"
 }

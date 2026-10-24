@@ -24,6 +24,12 @@ autre gabarit que celui enrôlé, ou dont le score est sous `EMPREINTE_SCORE_MIN
 valeur d’exemple, le chemin passerelle est désactivé (erreur 400) ; les
 appareils enrôlés gardent leur clé propre.
 
+Une preuve acceptée est **consommée** : elle est inscrite au registre
+`PreuveConsommee`, et la même preuve présentée une seconde fois est refusée
+(409). Sans ce registre, une preuve interceptée restait rejouable pendant les
+cinq minutes de sa fenêtre d’acceptation, sur le même poste. Voir
+« Anti-rejeu côté API » plus bas.
+
 Les gabarits sont chiffrés au repos (`BIOMETRIE_CHIFFREMENT_CLE`) et purgés
 après `BIOMETRIE_CONSERVATION_JOURS` (90) jours de fiche désactivée, par une
 tâche planifiée qui écrit l’effacement et sa trace dans la même transaction.
@@ -84,6 +90,47 @@ Le script écrit `~/.config/university/biometrie.json` — **hors du dépôt**, 
 permissions `600`. La passerelle refuse de démarrer si le fichier est lisible
 par un autre compte de la machine, ou s’il se trouve dans le dépôt.
 
+### Anti-rejeu côté API
+
+La signature d’une lecture est un **authentificateur** : rejouée telle quelle,
+elle ferait passer un pointage sans nouvelle lecture du doigt. L’API tient
+donc un registre des preuves déjà consommées (`PreuveConsommee`), et chaque
+preuve acceptée y est inscrite.
+
+| Élément | Rôle |
+| --- | --- |
+| `cle` (unique) | ce qui identifie la preuve : `nonce:<tentativeId>` quand la charge signée porte le nonce de la tentative, sinon `signature:<empreinte SHA-256>` |
+| `enseignantId`, `appareilId`, `score` | qui a produit la preuve, sur quel poste — jamais de biométrie |
+| `expireLe` | fin de la fenêtre pendant laquelle la preuve aurait pu être rejouée |
+
+- **Rejeu refusé** : la présentation d’une preuve déjà consommée répond **409**
+  (« Preuve déjà utilisée »). Deux lectures distinctes restent acceptées :
+  leur signature diffère, donc leur empreinte diffère.
+- **Purge** : une tâche planifiée (toutes les 10 minutes) efface les entrées
+  dont la fenêtre est passée. Le registre ne garde que ce qui peut encore être
+  rejoué.
+- **Écriture** : l’inscription de la consommation part dans la transaction du
+  pointage (`verifierPreuves(…, tx)`), pour que la preuve consommée et le
+  contrôle écrit forment un seul fait.
+- **Compatibilité** : une passerelle ancienne, qui ne signe pas de nonce,
+  continue de fonctionner — l’empreinte de la signature identifie alors la
+  preuve.
+
+**Nonce de tentative.** La passerelle reçoit déjà un `tentativeId` (elle
+refuse 409 une tentative déjà traitée). Pour que ce nonce serve aussi côté
+API, il doit être **signé** : la charge de vérification porte alors le nonce
+en fin de charge, ou juste avant l’horodatage — l’API accepte les deux formes,
+et ne retient le nonce que si la signature le couvre.
+
+```
+vérification avec nonce = HMAC_SHA256(clé appareil, "verification|<appareilId>|<enseignantId>|<empreinte>|<score>|<horodatage>|<tentativeId>")
+vérification sans nonce  = HMAC_SHA256(clé appareil, "verification|<appareilId>|<enseignantId>|<empreinte>|<score>|<horodatage>")
+```
+
+> Le nonce reste lui aussi une preuve à usage unique : changer le
+> `tentativeId` sans la clé ne produit plus une signature valide, et l’API
+> refuse (400) une preuve dont la charge ne correspond pas.
+
 ### Sécurité de la passerelle
 
 | Garde-fou | Mise en œuvre |
@@ -125,14 +172,14 @@ autre), durée de conservation à valider par les RH, protocole anti-rejeu hors
 ligne pour une empreinte seule (aujourd’hui refusée après 5 minutes de coupure),
 écran d’administration des appareils enrôlés.
 
-Deux points sideurs, signalés à l’API :
+Deux points sideurs, signalés à l'API :
 
-1. **Nonce ou registre de consommation.** L’API vérifie la signature et la
-   fraîcheur (5 minutes, tolérance 60 s) mais ne consomme pas le résultat : une
-   preuve interceptée peut être rejouée pendant cette fenêtre. La signature
-   par appareil empêche le rejeu *entre* appareils, pas le rejeu répété sur le
-   même appareil. Un nonce dans la charge — ou un registre des résultats déjà
-   vérifiés — fermerait la porte ; cela sort du périmètre de la passerelle.
+1. **Nonce signé par la passerelle.** L’API tient désormais le registre des
+   preuves consommées (voir « Anti-rejeu côté API »), et refuse 409 une preuve
+   déjà consommée. Reste à faire côté passerelle : signer le `tentativeId`
+   dans la charge de vérification, pour que le nonce — et non l’empreinte de la
+   signature — identifie la preuve. Tant que la passerelle ne le signe pas,
+   l’API s’appuie sur l’empreinte de la signature, ce qui convient déjà.
 2. **Horloge.** La tolérance de 60 secondes est le filet de sécurité d’un
    poste désynchronisé. Un poste de contrôle hors ligne accumule une dérive
    que rien ne rattrape aujourd’hui.

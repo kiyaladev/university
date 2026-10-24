@@ -1,4 +1,15 @@
-import { IsBoolean, IsUUID, IsInt, IsNotEmpty, IsOptional, IsString, Matches, Max, Min } from 'class-validator';
+import {
+  IsBoolean,
+  IsUUID,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  Matches,
+  Max,
+  MaxLength,
+  Min,
+} from 'class-validator';
 
 export class DefinirCodePinDto {
   @Matches(/^\d{4,6}$/, { message: 'Le code doit comporter 4 à 6 chiffres' })
@@ -38,4 +49,13 @@ export class PreuveEmpreinteDto {
   @IsString() horodatage: string;
   @IsString() signature: string;
   @IsOptional() @IsUUID() appareilId?: string;
+
+  /**
+   * Nonce de la tentative : identifiant unique de la lecture. Quand la
+   * passerelle le signe, il identifie la preuve consommée — deux envois de la
+   * même tentative se rejoignent alors, même si la signature diffère. Une
+   * passerelle plus ancienne ne le signe pas : l'API s'appuie alors sur
+   * l'empreinte de la signature, qui change à chaque lecture.
+   */
+  @IsOptional() @IsString() @MaxLength(128) @Matches(/^[A-Za-z0-9._:-]{1,128}$/) tentativeId?: string;
 }
