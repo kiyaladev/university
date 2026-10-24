@@ -68,6 +68,25 @@ const SEANCE_STATS_INCLUDE_RESTREINT = {
 
 type SeanceComplete = Prisma.SeanceGetPayload<{ include: typeof SEANCE_STATS_INCLUDE }>;
 
+/** Enseignant d'une séance, tel que le rapport le relit. */
+type EnseignantRapport = SeanceComplete['affectation']['enseignant'];
+
+/** Affectation d'une séance, telle que le rapport la relit. */
+type AffectationRapport = SeanceComplete['affectation'];
+
+/** Salle d'une séance : la salle sans affectation est neutre. */
+type SalleRapport = { id: string | null; code: string; nom: string; capacite: number; batiment?: string | null };
+
+/** Point d'évolution quotidienne du rapport de présence. */
+type PointEvolution = {
+  date: string;
+  planifiees: number;
+  assurees: number;
+  absences: number;
+  retards: number;
+  tauxPresence: number;
+};
+
 interface Compteurs {
   planifiees: number;
   controlees: number;
@@ -168,7 +187,7 @@ export class RapportsService {
     }
     const date: Prisma.DateTimeFilter = { gte: debut, lte: fin };
 
-    const affectation: Record<string, any> = {};
+    const affectation: Prisma.AffectationWhereInput = {};
     if (query.anneeId) affectation.anneeId = query.anneeId;
     if (query.enseignantId) affectation.enseignantId = query.enseignantId;
     if (query.promotionId) affectation.promotionId = query.promotionId;
@@ -221,7 +240,7 @@ export class RapportsService {
     seancesJour.forEach((s) => cumuler(jour, s));
 
     // Évolution sur les 14 derniers jours
-    const evolution: Array<Record<string, any>> = [];
+    const evolution: PointEvolution[] = [];
     for (let i = 13; i >= 0; i--) {
       const d = isoDate(new Date(Date.now() - i * 86400000));
       const c = nouveauxCompteurs();
@@ -290,7 +309,7 @@ export class RapportsService {
 
   async presenceEnseignants(query: RapportQueryDto) {
     const seances = await this.seances(query);
-    const map = new Map<string, { enseignant: any; c: Compteurs }>();
+    const map = new Map<string, { enseignant: EnseignantRapport; c: Compteurs }>();
 
     for (const s of seances) {
       const e = s.affectation.enseignant;
@@ -320,7 +339,7 @@ export class RapportsService {
 
   async volumeHoraire(query: RapportQueryDto) {
     const seances = await this.seances(query);
-    const map = new Map<string, { aff: any; c: Compteurs }>();
+    const map = new Map<string, { aff: AffectationRapport; c: Compteurs }>();
 
     for (const s of seances) {
       const a = s.affectation;
@@ -351,7 +370,7 @@ export class RapportsService {
 
   async etatPaiement(query: RapportQueryDto) {
     const seances = await this.seances(query);
-    const map = new Map<string, { enseignant: any; c: Compteurs; detail: Map<string, Compteurs> }>();
+    const map = new Map<string, { enseignant: EnseignantRapport; c: Compteurs; detail: Map<string, Compteurs> }>();
 
     for (const s of seances) {
       const e = s.affectation.enseignant;
@@ -404,7 +423,7 @@ export class RapportsService {
    */
   async parSalle(query: RapportQueryDto) {
     const seances = await this.seances(query);
-    const map = new Map<string, { salle: any; c: Compteurs; derniereVisite: Date | null }>();
+    const map = new Map<string, { salle: SalleRapport; c: Compteurs; derniereVisite: Date | null }>();
 
     for (const s of seances) {
       const cle = s.salle?.id ?? 'sans';

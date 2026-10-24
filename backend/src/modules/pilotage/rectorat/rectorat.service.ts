@@ -54,6 +54,56 @@ import { t } from '../../../common/i18n';
 import { journaliser } from '../../../common/audit';
 import { toMontant } from '../../../common/finances/montant';
 
+/**
+ * Effectif d'une promotion dans le bilan MESRS.
+ */
+type EffectifPromotion = {
+  promotionId: string;
+  effectif: number;
+  nom: string;
+  niveau: string | null;
+  filiere: { id: string; code: string; nom: string } | null;
+};
+
+/** Agrégat patrimonial d'une catégorie d'équipement. */
+type CategoriePatrimoineBilan = { code: string; libelle: string; nombre: number; valeur: number };
+
+/** Agrégat patrimonial d'un département d'équipement. */
+type DepartementPatrimoineBilan = { code: string; nom: string; nombre: number; valeur: number };
+
+/**
+ * Contenu JSON d'un snapshot MESRS : les chiffres de l'année et l'état du
+ * patrimoine, tels que le bilan imprimé les relit.
+ */
+type BilanMesrs = {
+  annee: { id: string; libelle: string } | null;
+  effectifTotal: number;
+  effectifParPromotion: EffectifPromotion[];
+  tauxReussite: number;
+  masseSalariale: number;
+  masseSalarialeMois: string;
+  nbEnseignants: number;
+  nbVacataires: number;
+  nbReclamationsEnCours: number;
+  nbIncidentsHelpdesk24h: number;
+  patrimoine: {
+    parCategorie: CategoriePatrimoineBilan[];
+    parDepartement: DepartementPatrimoineBilan[];
+    enReparation: number;
+    obsoletes: number;
+  };
+  genereLe: string;
+  version: string;
+};
+
+/** Patrimoine vide : ce que lit une ligne MESRS sans état patrimonial. */
+const PATRIMOINE_VIDE: BilanMesrs['patrimoine'] = {
+  parCategorie: [],
+  parDepartement: [],
+  enReparation: 0,
+  obsoletes: 0,
+};
+
 @Injectable()
 export class RectoratService {
   constructor(private prisma: PrismaService) {}
@@ -265,7 +315,7 @@ export class RectoratService {
       const snapshot = await tx.statistiqueMesrs.create({
         data: {
           anneeId,
-          donnees: donnees as any,
+          donnees: donnees as unknown as Prisma.InputJsonValue,
           genereParId: user.id,
         },
         include: {
@@ -387,12 +437,12 @@ export class RectoratService {
    */
   async imprimerBilan(id: string, _baseUrl: string): Promise<string> {
     const snapshot = await this.trouverBilan(id);
-    const d = snapshot.donnees as any;
+    const d = snapshot.donnees as BilanMesrs;
     const etablissement = await chargerEtablissement(this.prisma);
     const edite = new Date().toLocaleString('fr-FR');
 
     const promos = Array.isArray(d?.effectifParPromotion) ? d.effectifParPromotion : [];
-    const patrimoine = d?.patrimoine ?? {};
+    const patrimoine = d?.patrimoine ?? PATRIMOINE_VIDE;
     const cats = Array.isArray(patrimoine.parCategorie) ? patrimoine.parCategorie : [];
     const depts = Array.isArray(patrimoine.parDepartement) ? patrimoine.parDepartement : [];
 
@@ -427,7 +477,7 @@ export class RectoratService {
         promos.length
           ? promos
               .map(
-                (p: any) =>
+                (p) =>
                   `<tr><td>${echapper(p.nom)}</td><td>${echapper(p.niveau ?? '—')}</td><td>${echapper(p.filiere?.nom ?? '—')}</td><td class="num">${p.effectif}</td></tr>`,
               )
               .join('')
@@ -446,7 +496,7 @@ export class RectoratService {
         cats.length
           ? cats
               .map(
-                (c: any) =>
+                (c) =>
                   `<tr><td>${echapper(c.libelle)} <small>(${echapper(c.code)})</small></td><td class="num">${c.nombre}</td><td class="num">${montant(c.valeur)}</td></tr>`,
               )
               .join('')
@@ -464,7 +514,7 @@ export class RectoratService {
         depts.length
           ? depts
               .map(
-                (d2: any) =>
+                (d2) =>
                   `<tr><td>${echapper(d2.nom)} <small>(${echapper(d2.code)})</small></td><td class="num">${d2.nombre}</td><td class="num">${montant(d2.valeur)}</td></tr>`,
               )
               .join('')
