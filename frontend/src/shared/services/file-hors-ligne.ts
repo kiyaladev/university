@@ -11,13 +11,7 @@
 import { i18n } from '@/boot/i18n';
 import { normaliserJetonsStatuts } from '@/shared/utils/statuts';
 import type { Pointage } from '@/types';
-import {
-  CLE_AFFECTATIONS,
-  CLE_FILE_POINTAGES,
-  CLE_FILE_SEANCES,
-  CLE_SALLES,
-  clePour,
-} from './cles-stockage';
+import { CLE_AFFECTATIONS, CLE_FILE_POINTAGES, CLE_FILE_SEANCES, CLE_SALLES, clePour } from './cles-stockage';
 import { ecrireFileChiffree, lireFileChiffree } from './file-chiffree';
 
 /**
@@ -198,11 +192,7 @@ export async function lireCacheHorsLigne<T>(
   if (!proprietaire) return undefined;
   const enMemoire = cacheEnMemoire<T>(prefixe, proprietaire);
   if (enMemoire) return enMemoire;
-  const lu = await lireFileChiffree<CacheDonnees<T> | null>(
-    clePour(prefixe, proprietaire),
-    proprietaire,
-    null,
-  );
+  const lu = await lireFileChiffree<CacheDonnees<T> | null>(clePour(prefixe, proprietaire), proprietaire, null);
   if (!lu || !Array.isArray(lu.data)) return undefined;
   cachesEnMemoire.set(clef(prefixe, proprietaire), lu);
   return lu;

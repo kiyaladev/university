@@ -233,4 +233,7 @@ export default {
     quoted: '« {texte} »',
     emptyValue: '—',
   },
+  champDate: {
+    calendar: 'Ouvrir le calendrier',
+  },
 };
