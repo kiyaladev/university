@@ -1,130 +1,79 @@
 /**
- * Passerelle biométrique UniPrésence.
+ * Passerelle biométrique University — point d'entrée.
  *
  * Tourne sur l'appareil du contrôleur (PC, tablette, ou téléphone Android via
- * Termux avec un lecteur en OTG). Le navigateur l'appelle en local ; elle pilote
- * le lecteur et signe ses résultats, de sorte que l'API puisse faire la
+ * Termux avec un lecteur en OTG). Le navigateur l'appelle en local ; elle
+ * pilote le lecteur et signe ses résultats, de sorte que l'API puisse faire la
  * différence entre une vraie lecture et un client qui prétendrait avoir vérifié.
+ *
+ * Deux modes de signature :
+ *   • par appareil — un fichier de configuration hors dépôt porte l'identifiant
+ *     et la clé de l'appareil enrôlé ; chaque poste a sa clé, révocable
+ *     individuellement ;
+ *   • par secret partagé — l'ancien chemin, conservé pour les postes non
+ *     enrôlés, avec un avertissement au démarrage.
  */
-import { createHash, createHmac } from 'node:crypto';
-import { PiloteSimulateur } from './pilotes/simulateur';
+import { chargerConfiguration, ErreurConfiguration } from './configuration';
+import { creerPasserelle, VERSION_PASSERELLE } from './passerelle';
+import { PILOTES } from './pilotes';
 import type { PiloteLecteur } from './pilote';
 
-const PORT = Number(process.env.PORT ?? 5044);
-const SECRET = process.env.BIOMETRIE_SECRET ?? 'change-me-biometrie';
-const ORIGINES = (process.env.ORIGINES ?? '*').split(',').map((o) => o.trim());
-const SEUIL = Number(process.env.SCORE_MIN ?? 60);
+async function demarrer() {
+  let configuration;
+  try {
+    configuration = chargerConfiguration();
+  } catch (e: any) {
+    if (e instanceof ErreurConfiguration) {
+      console.error(`[biometrie] configuration refusée : ${e.message}`);
+      process.exit(1);
+    }
+    throw e;
+  }
 
-// Remplacer par le pilote du lecteur réellement branché (voir README).
-const pilote: PiloteLecteur = new PiloteSimulateur();
-await pilote.initialiser();
+  const fabrique = PILOTES[configuration.pilote];
+  if (!fabrique) {
+    console.error(
+      `[biometrie] pilote inconnu « ${configuration.pilote} » — disponibles : ${Object.keys(PILOTES).join(', ')}`,
+    );
+    process.exit(1);
+  }
 
-function signer(charge: string) {
-  return createHmac('sha256', SECRET).update(charge).digest('hex');
-}
+  const pilote: PiloteLecteur = fabrique();
+  await pilote.initialiser();
 
-/** Empreinte numérique du gabarit comparé : elle est incluse dans la signature
- *  pour que l'API vérifie que la comparaison a bien porté sur le gabarit
- *  qu'elle a enrôlé, et non sur un gabarit fourni par le client. */
-function empreinteGabarit(template: string) {
-  return createHash('sha256').update(template).digest('hex');
-}
+  for (const avertissement of configuration.avertissements) {
+    console.warn(`[biometrie] ${avertissement}`);
+  }
 
-function entetes(origine: string | null) {
-  const autorisee =
-    ORIGINES.includes('*') || (origine && ORIGINES.includes(origine)) ? (origine ?? '*') : '';
-  return {
-    'Content-Type': 'application/json; charset=utf-8',
-    'Access-Control-Allow-Origin': autorisee || 'null',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  const passerelle = creerPasserelle({
+    configuration,
+    pilote,
+    doigtSimule: process.env.DOIGT_SIMULE === 'inconnu',
+  });
+
+  const serveur = Bun.serve({
+    port: configuration.port,
+    // Écoute locale uniquement : le poste du contrôleur n'a pas à exposer son
+    // lecteur d'empreintes au réseau de l'établissement.
+    hostname: '127.0.0.1',
+    fetch: passerelle.fetch,
+  });
+
+  console.log(
+    `[biometrie] passerelle ${VERSION_PASSERELLE} à l'écoute sur http://127.0.0.1:${serveur.port} `
+      + `(pilote : ${pilote.nom}, signature : ${configuration.mode})`,
+  );
+  if (configuration.fichierConfig) {
+    console.log(`[biometrie] configuration d'appareil : ${configuration.fichierConfig}`);
+  }
+
+  const arreter = async () => {
+    await pilote.fermer?.();
+    await serveur.stop(true);
+    process.exit(0);
   };
+  process.on('SIGINT', arreter);
+  process.on('SIGTERM', arreter);
 }
 
-function json(corps: unknown, origine: string | null, statut = 200) {
-  return new Response(JSON.stringify(corps), { status: statut, headers: entetes(origine) });
-}
-
-Bun.serve({
-  port: PORT,
-  hostname: '127.0.0.1',
-
-  async fetch(req) {
-    const url = new URL(req.url);
-    const origine = req.headers.get('origin');
-
-    if (req.method === 'OPTIONS') {
-      return new Response(null, { status: 204, headers: entetes(origine) });
-    }
-
-    // --- état du lecteur : interrogé par l'écran de pointage
-    if (url.pathname === '/etat') {
-      return json({ pret: true, pilote: pilote.nom, seuil: SEUIL, version: '1.0.0' }, origine);
-    }
-
-    // --- enrôlement : capture le doigt de référence d'un enseignant
-    if (url.pathname === '/enroler' && req.method === 'POST') {
-      const { enseignantId } = (await req.json()) as { enseignantId?: string };
-      if (!enseignantId) return json({ erreur: 'enseignantId requis' }, origine, 400);
-
-      try {
-        const capture = await pilote.capturer();
-        const horodatage = new Date().toISOString();
-        return json(
-          {
-            template: capture.template,
-            qualite: capture.qualite,
-            horodatage,
-            signature: signer(`enrolement|${enseignantId}|${capture.template}|${horodatage}`),
-          },
-          origine,
-        );
-      } catch (e: any) {
-        return json({ erreur: e?.message ?? 'Lecture impossible' }, origine, 503);
-      }
-    }
-
-    // --- vérification en salle : compare le doigt posé au gabarit enrôlé
-    if (url.pathname === '/verifier' && req.method === 'POST') {
-      const { enseignantId, template } = (await req.json()) as {
-        enseignantId?: string;
-        template?: string;
-      };
-      if (!enseignantId || !template) {
-        return json({ erreur: 'enseignantId et template requis' }, origine, 400);
-      }
-
-      try {
-        // Le simulateur reproduit le doigt attendu ; un vrai lecteur, lui,
-        // capture ce que l'enseignant pose réellement.
-        if (pilote instanceof PiloteSimulateur) {
-          pilote.preparerDoigt(process.env.DOIGT_SIMULE === 'inconnu' ? null : template);
-        }
-
-        const capture = await pilote.capturer();
-        const score = await pilote.comparer(template, capture.template);
-        const horodatage = new Date().toISOString();
-        const gabarit = empreinteGabarit(template);
-
-        return json(
-          {
-            score,
-            correspond: score >= SEUIL,
-            qualite: capture.qualite,
-            horodatage,
-            // L'API rejettera tout résultat dont la signature ne correspond pas,
-            // ou dont le gabarit comparé n'est pas celui qu'elle a enrôlé.
-            signature: signer(`verification|${enseignantId}|${gabarit}|${score}|${horodatage}`),
-          },
-          origine,
-        );
-      } catch (e: any) {
-        return json({ erreur: e?.message ?? 'Lecture impossible' }, origine, 503);
-      }
-    }
-
-    return json({ erreur: 'Route inconnue' }, origine, 404);
-  },
-});
-
-console.log(`[biometrie] passerelle à l'écoute sur http://127.0.0.1:${PORT} (pilote : ${pilote.nom})`);
+await demarrer();

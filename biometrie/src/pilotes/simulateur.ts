@@ -10,6 +10,9 @@ import type { Capture, PiloteLecteur } from '../pilote';
 export class PiloteSimulateur implements PiloteLecteur {
   readonly nom = 'simulateur';
 
+  /** Un simulateur ne prouve rien : l'interface doit le signaler. */
+  readonly simule = true;
+
   /** Gabarit que le « doigt posé » produira à la prochaine capture. */
   private prochainGabarit: string | null = null;
 
@@ -27,7 +30,7 @@ export class PiloteSimulateur implements PiloteLecteur {
     await new Promise((r) => setTimeout(r, 400));
     const template =
       this.prochainGabarit ?? `SIMU-${Math.random().toString(36).slice(2, 10).toUpperCase()}`;
-    return { template, qualite: 70 + Math.floor(Math.random() * 30) };
+    return { template, qualite: 70 + Math.floor(Math.random() * 30), doigt: 'index droit' };
   }
 
   async comparer(gabaritEnrole: string, gabaritCapture: string): Promise<number> {
