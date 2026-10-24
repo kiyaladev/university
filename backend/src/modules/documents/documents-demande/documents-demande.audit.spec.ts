@@ -135,7 +135,6 @@ describe('Demandes de documents — encaissement', () => {
       telephone: '+224622334455',
       transactionId: 'opérateur-777',
     };
-    const paiementApres = { ...paiementAvant, statut: StatutPaiement.REUSSI };
     const { tx, prisma, audit } = transaction({
       demandeDocument: {
         findUnique: jest.fn().mockResolvedValue(demandeAvant),
@@ -143,7 +142,7 @@ describe('Demandes de documents — encaissement', () => {
       },
       paiement: {
         findUnique: jest.fn().mockResolvedValue(paiementAvant),
-        update: jest.fn().mockResolvedValue(paiementApres),
+        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
       },
     });
     const service = new DocumentsDemandeService(prisma as any);
@@ -151,12 +150,12 @@ describe('Demandes de documents — encaissement', () => {
     await service.confirmerPaiement('dem-1', { paiementId: 'pay-1' }, AGENT);
 
     expect(prisma.$transaction).toHaveBeenCalledTimes(1);
-    expect(tx.paiement.update).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: { id: 'pay-1' },
-        data: expect.objectContaining({ statut: StatutPaiement.REUSSI }),
-      }),
-    );
+    // Le paiement passe RÉUSSI sous verrou optimiste : il n'est écrit que si
+    // son statut est encore celui attendu.
+    expect(tx.paiement.updateMany).toHaveBeenCalledWith({
+      where: { id: 'pay-1', statut: StatutPaiement.EN_ATTENTE },
+      data: { statut: StatutPaiement.REUSSI, completeLe: expect.any(Date) },
+    });
     expect(tx.demandeDocument.update).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: 'dem-1' },
@@ -184,7 +183,7 @@ describe('Demandes de documents — encaissement', () => {
         findUnique: jest.fn().mockResolvedValue({ ...DEMANDE, paiementId: 'pay-1' }),
         update: jest.fn(),
       },
-      paiement: { findUnique: jest.fn(), update: jest.fn() },
+      paiement: { findUnique: jest.fn(), updateMany: jest.fn() },
     });
     const service = new DocumentsDemandeService(prisma as any);
 
@@ -192,8 +191,53 @@ describe('Demandes de documents — encaissement', () => {
       BadRequestException,
     );
 
-    expect(tx.paiement.update).not.toHaveBeenCalled();
+    expect(tx.paiement.updateMany).not.toHaveBeenCalled();
     expect(tx.demandeDocument.update).not.toHaveBeenCalled();
+    expect(audit).not.toHaveBeenCalled();
+  });
+
+  it('refuse une demande déjà traitée sans encaisser ni tracer', async () => {
+    const { tx, prisma, audit } = transaction({
+      demandeDocument: {
+        findUnique: jest.fn().mockResolvedValue({ ...DEMANDE, statut: StatutDemande.EN_TRAITEMENT }),
+        update: jest.fn(),
+      },
+      paiement: { findUnique: jest.fn(), updateMany: jest.fn() },
+    });
+    const service = new DocumentsDemandeService(prisma as any);
+
+    await expect(service.confirmerPaiement('dem-1', {}, AGENT)).rejects.toThrow(BadRequestException);
+
+    expect(tx.paiement.updateMany).not.toHaveBeenCalled();
+    expect(tx.demandeDocument.update).not.toHaveBeenCalled();
+    expect(audit).not.toHaveBeenCalled();
+  });
+
+  it('abandonne la confirmation quand la demande ne peut plus passer en traitement', async () => {
+    const { prisma, audit } = transaction({
+      demandeDocument: {
+        findUnique: jest.fn().mockResolvedValue({ ...DEMANDE, paiementId: 'pay-1' }),
+        update: jest.fn().mockRejectedValue(new Error('demande verrouillee')),
+      },
+      paiement: {
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'pay-1',
+          reference: 'PAY-D-2026-00001',
+          montant: 25000,
+          devise: 'GNF',
+          mode: 'ESPECES',
+          statut: StatutPaiement.EN_ATTENTE,
+        }),
+        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+      },
+    });
+    const service = new DocumentsDemandeService(prisma as any);
+
+    await expect(service.confirmerPaiement('dem-1', { paiementId: 'pay-1' }, AGENT)).rejects.toThrow(
+      'demande verrouillee',
+    );
+
+    // L'effet a échoué : la transaction est abandonnée, rien n'est journalisé.
     expect(audit).not.toHaveBeenCalled();
   });
 

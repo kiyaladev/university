@@ -54,6 +54,7 @@ import { pagine, paginer } from '../../../common/pagination';
 import { ParametresService } from '../../socle/parametres/parametres.service';
 import { SERIES_NUMERO, avecNumeroUnique, millesimeSerie, prochainNumeroSerie } from '../../../common/numero';
 import { creerPaiementTx } from '../../../common/finances/index';
+import { type EffetConfirmationPaiement, confirmerPaiement } from '../../../common/finances/confirmation';
 import {
   AnnulerConsommationDto,
   ConsommationsQueryDto,
@@ -73,6 +74,19 @@ export const PORTEFEUILLE_INCLUDE = {
     select: { id: true, matricule: true, nom: true, prenom: true, telephone: true },
   },
 } satisfies Prisma.PortefeuilleRestoInclude;
+
+/** Recharge lue avant la confirmation, avec son paiement et son portefeuille. */
+type RechargeAvant = Prisma.RechargeGetPayload<{
+  include: { paiement: true; portefeuille: { select: { id: true } } };
+}>;
+
+/** Ce que l'effet de confirmation rend à l'appelant. */
+type EffetRecharge = {
+  /** Solde du portefeuille avant le crédit. */
+  soldeAvant: number | null;
+  /** Solde du portefeuille après le crédit. */
+  soldeApres: number | null;
+};
 
 const LIBELLES_OPERATEUR: Record<string, string> = {
   ORANGE_MONEY: 'Orange Money',
@@ -212,6 +226,10 @@ export class RestoService {
    * Confirmation pilote : la caisse répercute la réponse de l'opérateur
    * Mobile Money (miroir du module paiement). Une recharge réussie crédite le
    * portefeuille ; la recharge EN_ATTENTE reste sans effet sur le solde.
+   *
+   * La recharge porte le statut de l'encaissement : c'est elle qui est
+   * verrouillée par le moteur commun. Le module garde son effet : créditer
+   * le solde du portefeuille.
    */
   async simulerRecharge(id: string, dto: SimulerRechargeDto, user: AuthUser) {
     const recharge = await this.prisma.recharge.findUnique({
@@ -220,13 +238,9 @@ export class RestoService {
     });
     if (!recharge) throw new NotFoundException(t('resto.recharge_introuvable'));
 
-    if (recharge.statut === StatutPaiement.REUSSI && dto.statut === StatutPaiement.REUSSI) {
-      return this.prisma.recharge.findUnique({
-        where: { id },
-        include: { paiement: true, portefeuille: { include: PORTEFEUILLE_INCLUDE } },
-      });
-    }
     if (recharge.statut === StatutPaiement.REUSSI) {
+      // Déjà encaissée : on renvoie l'état, l'effet n'est pas rejoué.
+      if (dto.statut === StatutPaiement.REUSSI) return this.chargerRecharge(id);
       throw new BadRequestException(t('resto.cette_recharge_est_deja_encaissee_impossible_de_la_faire_ech'));
     }
     if (recharge.statut === StatutPaiement.ANNULE || recharge.statut === StatutPaiement.REMBOURSE) {
@@ -234,49 +248,81 @@ export class RestoService {
     }
 
     const reussi = dto.statut === StatutPaiement.REUSSI;
-    await this.prisma.$transaction(async (tx) => {
-      // Claim the current state with a conditional write before applying any
-      // balance side effect. Concurrent confirmations can only win once.
-      const prise = await tx.recharge.updateMany({
-        where: { id, statut: recharge.statut },
-        data: { statut: dto.statut },
-      });
-      if (prise.count !== 1) {
-        throw new BadRequestException(t('resto.cette_recharge_est_close_elle_ne_peut_plus_etre_confirmee'));
-      }
-      let soldeAvant: number | null = null;
-      let soldeApres: number | null = null;
-      if (reussi) {
-        const portefeuilleAvant = await tx.portefeuilleResto.findUnique({
-          where: { id: recharge.portefeuilleId },
-          select: { solde: true },
-        });
-        soldeAvant = portefeuilleAvant?.solde ?? null;
-        const portefeuilleApres = await tx.portefeuilleResto.update({
-          where: { id: recharge.portefeuilleId },
-          data: { solde: { increment: recharge.montant } },
-          select: { solde: true },
-        });
-        soldeApres = portefeuilleApres.solde;
-      }
-      if (recharge.paiementId) {
-        await tx.paiement.update({
-          where: { id: recharge.paiementId },
-          data: {
-            statut: dto.statut,
-            completeLe: reussi ? new Date() : null,
-          },
-        });
-      }
-
-      await journaliser(tx, user, reussi ? 'RECHARGE_CONFIRMEE' : 'RECHARGE_ECHOUEE', 'Recharge', id, {
-        avant: { statut: recharge.statut, solde: soldeAvant },
-        apres: { statut: dto.statut, solde: soldeApres },
-        montant: recharge.montant,
-        champsModifies: reussi ? ['statut', 'solde'] : ['statut'],
-      });
+    await confirmerPaiement({
+      prisma: this.prisma,
+      user,
+      statut: dto.statut,
+      effet: this.effetRecharge(id, recharge),
+      journal: {
+        action: (statut) => (statut === StatutPaiement.REUSSI ? 'RECHARGE_CONFIRMEE' : 'RECHARGE_ECHOUEE'),
+        entite: 'Recharge',
+        entiteId: id,
+        details: ({ preparation, resultat }) => ({
+          avant: { statut: preparation.objet.statut, solde: resultat.valeur.soldeAvant },
+          apres: { statut: dto.statut, solde: resultat.valeur.soldeApres },
+          montant: preparation.objet.montant,
+          champsModifies: reussi ? ['statut', 'solde'] : ['statut'],
+        }),
+      },
     });
 
+    return this.chargerRecharge(id);
+  }
+
+  /**
+   * Effet de confirmation d'une recharge : le solde du portefeuille est
+   * crédité du montant de la recharge, et le paiement jumeau prend le statut
+   * de la recharge.
+   *
+   * Le verrou optimiste porte sur la recharge : deux confirmations
+   * concurrentes ne peuvent créditer qu'une fois le portefeuille. Le paiement
+   * jumeau n'existe pas toujours (recharge antérieure à la table Paiement) :
+   * il est alors simplement mis à jour s'il existe.
+   */
+  private effetRecharge(id: string, recharge: RechargeAvant): EffetConfirmationPaiement<EffetRecharge, RechargeAvant> {
+    return {
+      preparer: async () => ({
+        transition: {
+          modele: 'recharge',
+          id,
+          statutAttendu: recharge.statut,
+          erreur: () => new BadRequestException(t('resto.cette_recharge_est_close_elle_ne_peut_plus_etre_confirmee')),
+        },
+        objet: recharge,
+        confirme: false,
+      }),
+
+      dejaConfirme: async () => ({ soldeAvant: null, soldeApres: null }),
+
+      appliquer: async ({ tx, statut }) => {
+        let soldeAvant: number | null = null;
+        let soldeApres: number | null = null;
+        if (statut === StatutPaiement.REUSSI) {
+          const portefeuilleAvant = await tx.portefeuilleResto.findUnique({
+            where: { id: recharge.portefeuilleId },
+            select: { solde: true },
+          });
+          soldeAvant = portefeuilleAvant?.solde ?? null;
+          const portefeuilleApres = await tx.portefeuilleResto.update({
+            where: { id: recharge.portefeuilleId },
+            data: { solde: { increment: recharge.montant } },
+            select: { solde: true },
+          });
+          soldeApres = portefeuilleApres.solde;
+        }
+        if (recharge.paiementId) {
+          await tx.paiement.update({
+            where: { id: recharge.paiementId },
+            data: { statut, completeLe: statut === StatutPaiement.REUSSI ? new Date() : null },
+          });
+        }
+        return { valeur: { soldeAvant, soldeApres } };
+      },
+    };
+  }
+
+  /** Recharge avec son paiement et son portefeuille (solde à jour). */
+  private chargerRecharge(id: string) {
     return this.prisma.recharge.findUnique({
       where: { id },
       include: { paiement: true, portefeuille: { include: PORTEFEUILLE_INCLUDE } },
