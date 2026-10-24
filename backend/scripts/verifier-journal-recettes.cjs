@@ -30,7 +30,7 @@ const report = {
       ['coursVOD', { titre: prefix }],
       ['courrier', { objet: prefix }],
       ['ticketSupport', { description: prefix }],
-      ['equipementCampus', { libelle: prefix }],
+      ['equipementHelpdesk', { libelle: prefix }],
       ['election', { titre: prefix }],
       ['reservationSalle', { motif: prefix }],
       ['reparationMateriel', { description: prefix }],
