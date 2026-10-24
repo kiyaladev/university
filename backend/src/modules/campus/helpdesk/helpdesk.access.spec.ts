@@ -16,7 +16,7 @@ describe('résolution publique des QR d’équipement', () => {
       emplacement: 'Salle B12',
       actif: true,
     });
-    const prisma = { equipementCampus: { findUnique } };
+    const prisma = { equipementHelpdesk: { findUnique } };
     const service = new EquipementsService(prisma as never, {} as never);
 
     await expect(service.parCode('UP-IT-secret')).resolves.toEqual({
@@ -34,7 +34,7 @@ describe('résolution publique des QR d’équipement', () => {
     const findMany = jest.fn().mockResolvedValue([]);
     const count = jest.fn().mockResolvedValue(0);
     const findUnique = jest.fn().mockResolvedValue({ id: 'eq-1', libelle: 'Vidéoprojecteur' });
-    const service = new EquipementsService({ equipementCampus: { findMany, count, findUnique } } as never, {} as never);
+    const service = new EquipementsService({ equipementHelpdesk: { findMany, count, findUnique } } as never, {} as never);
 
     await service.lister({});
     await service.lire('eq-1');
@@ -55,7 +55,7 @@ describe('résolution publique des QR d’équipement', () => {
       .fn()
       .mockResolvedValueOnce(null)
       .mockResolvedValueOnce({ id: 'eq-2', libelle: 'Climatisation', emplacement: null, actif: false });
-    const service = new EquipementsService({ equipementCampus: { findUnique } } as never, {} as never);
+    const service = new EquipementsService({ equipementHelpdesk: { findUnique } } as never, {} as never);
 
     await expect(service.parCode('UP-IT-unknown')).rejects.toBeInstanceOf(NotFoundException);
     await expect(service.parCode('UP-IT-disabled')).rejects.toBeInstanceOf(NotFoundException);
@@ -65,7 +65,7 @@ describe('résolution publique des QR d’équipement', () => {
   it('rejette une référence anormalement longue sans requête en base', async () => {
     jest.spyOn(I18nContext, 'current').mockReturnValue({ t: () => 'Équipement indisponible' } as never);
     const findUnique = jest.fn();
-    const service = new EquipementsService({ equipementCampus: { findUnique } } as never, {} as never);
+    const service = new EquipementsService({ equipementHelpdesk: { findUnique } } as never, {} as never);
 
     await expect(service.parCode('x'.repeat(65))).rejects.toBeInstanceOf(NotFoundException);
     expect(findUnique).not.toHaveBeenCalled();
@@ -80,7 +80,7 @@ describe('résolution publique des QR d’équipement', () => {
       codeQr: 'UP-IT-abc123',
     });
     const parametres = { valeur: jest.fn().mockResolvedValue('Université') };
-    const service = new EquipementsService({ equipementCampus: { findUnique } } as never, parametres as never);
+    const service = new EquipementsService({ equipementHelpdesk: { findUnique } } as never, parametres as never);
 
     const html = await service.imprimerQr('eq-1', 'https://campus.test/');
 

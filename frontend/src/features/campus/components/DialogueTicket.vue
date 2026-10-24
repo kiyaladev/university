@@ -101,7 +101,7 @@ import { useI18n } from 'vue-i18n';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
 import { ticketsService } from '../services/assistance';
 import { LIBELLE_CATEGORIE_INCIDENT } from '@/shared/utils/libelles';
-import type { CategorieIncident, EquipementCampus, TicketSupport } from '@/types';
+import type { CategorieIncident, EquipementHelpdesk, TicketSupport } from '@/types';
 
 /**
  * Formulaire express de déclaration : catégorie en une tuile, description, et
@@ -111,9 +111,9 @@ import type { CategorieIncident, EquipementCampus, TicketSupport } from '@/types
 const ouvert = defineModel<boolean>({ required: true });
 const props = defineProps<{
   /** Équipement résolu depuis le QR scanné (?equipement= dans l'URL). */
-  equipement?: EquipementCampus | null;
+  equipement?: EquipementHelpdesk | null;
   /** Inventaire proposé au sélecteur (facultatif). */
-  equipements?: EquipementCampus[];
+  equipements?: EquipementHelpdesk[];
   /** Catégorie pré-sélectionnée (depuis les tuiles express). */
   categorieInitiale?: CategorieIncident | '';
 }>();

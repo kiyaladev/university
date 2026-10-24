@@ -146,7 +146,7 @@ describe("Journal avant/après de l'inventaire d'équipements", () => {
 
   function preparer() {
     const tx: any = {
-      equipementCampus: {
+      equipementHelpdesk: {
         findUnique: jest.fn(async (args: any) => projette(EQUIPEMENT, args.select)),
         create: jest.fn(async (args: any) => projette(EQUIPEMENT, args.select)),
         update: jest.fn(async (args: any) => projette({ ...EQUIPEMENT, ...args.data }, args.select)),
@@ -154,7 +154,7 @@ describe("Journal avant/après de l'inventaire d'équipements", () => {
       },
     };
     const prisma: any = {
-      equipementCampus: {
+      equipementHelpdesk: {
         findMany: jest.fn().mockResolvedValue([]),
         count: jest.fn().mockResolvedValue(0),
         findUnique: jest.fn(async (args: any) => projette(EQUIPEMENT, args.select)),
@@ -191,7 +191,7 @@ describe("Journal avant/après de l'inventaire d'équipements", () => {
 
   it("conserve l'état avant et après d'une désactivation, champ par champ", async () => {
     const { service, prisma, tx, journal, mutations } = preparer();
-    tx.equipementCampus.update.mockResolvedValue({
+    tx.equipementHelpdesk.update.mockResolvedValue({
       ...EQUIPEMENT,
       libelle: 'Vidéoprojecteur S204 — hors service',
       actif: false,
@@ -219,8 +219,8 @@ describe("Journal avant/après de l'inventaire d'équipements", () => {
     expect(ecrit.champsModifies).toEqual(['libelle', 'actif']);
     expect(journal[0].data.details).not.toContain('UP-IT-jeton-imprime-secret');
     // Ni la lecture « avant » ni l'écriture ne chargent le code QR.
-    expect(tx.equipementCampus.findUnique.mock.calls[0][0].select).not.toHaveProperty('codeQr');
-    expect(tx.equipementCampus.update.mock.calls[0][0].select).not.toHaveProperty('codeQr');
+    expect(tx.equipementHelpdesk.findUnique.mock.calls[0][0].select).not.toHaveProperty('codeQr');
+    expect(tx.equipementHelpdesk.update.mock.calls[0][0].select).not.toHaveProperty('codeQr');
   });
 
   it("journalise la suppression avec l'état avant et un après vide", async () => {
@@ -249,7 +249,7 @@ describe("Journal avant/après de l'inventaire d'équipements", () => {
 
   it("n'écrit rien sur un équipement introuvable", async () => {
     const { service, tx, journal, mutations } = preparer();
-    tx.equipementCampus.findUnique.mockResolvedValue(null);
+    tx.equipementHelpdesk.findUnique.mockResolvedValue(null);
 
     await expect(service.supprimer('eq-inconnu', admin)).rejects.toBeInstanceOf(NotFoundException);
     await expect(service.modifier('eq-inconnu', { actif: false } as any, admin)).rejects.toBeInstanceOf(
@@ -324,7 +324,7 @@ describe('Journal avant/après des tickets de support', () => {
         groupBy: jest.fn().mockResolvedValue([]),
         update: jest.fn().mockResolvedValue(TICKET),
       },
-      equipementCampus: { findUnique: jest.fn().mockResolvedValue(EQUIPEMENT) },
+      equipementHelpdesk: { findUnique: jest.fn().mockResolvedValue(EQUIPEMENT) },
       // Un journal écrit hors transaction serait visible ici.
       auditLog: { create: jest.fn() },
     };
@@ -416,7 +416,7 @@ describe('Journal avant/après des tickets de support', () => {
 
   it("n'ouvre aucune transaction ni trace si l'équipement visé est désactivé", async () => {
     const { service, prisma, journal, mutations } = preparer();
-    prisma.equipementCampus.findUnique.mockResolvedValue({ ...EQUIPEMENT, actif: false });
+    prisma.equipementHelpdesk.findUnique.mockResolvedValue({ ...EQUIPEMENT, actif: false });
 
     await expect(service.declarer({ ...declaration, equipementId: 'eq-1' }, enseignant)).rejects.toBeInstanceOf(
       BadRequestException,
