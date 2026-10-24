@@ -1,6 +1,7 @@
 import { IsDateString, IsEnum, IsIn, IsNumber, IsOptional, IsString, Min } from 'class-validator';
-import { ModePaiement, StatutPaiement, TypeRecette } from '@prisma/client';
+import { ModePaiement, OperateurPaiement, StatutPaiement, TypeRecette } from '@prisma/client';
 import { QueryDto } from '../../../common/dto';
+import { OPERATEURS_MOBILE_MONEY } from '../../../common/finances/paiement';
 
 export class CreateRecetteDto {
   @IsString() numero: string;
@@ -28,7 +29,7 @@ export class UpdateRecetteDto {
 export class EncaisserRecetteDto {
   /** Mode d'encaissement ; l'API crée un Paiement REUSSI rattaché. */
   @IsOptional() @IsEnum(ModePaiement) mode?: ModePaiement;
-  @IsOptional() @IsString() operateur?: string;
+  @IsOptional() @IsIn(OPERATEURS_MOBILE_MONEY) operateur?: OperateurPaiement;
   @IsOptional() @IsString() nomComplet?: string;
   @IsOptional() @IsString() telephone?: string;
 }

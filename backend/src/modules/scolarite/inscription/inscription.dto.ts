@@ -13,7 +13,7 @@ import {
   MinLength,
 } from 'class-validator';
 import { PartialType } from '@nestjs/swagger';
-import { ModePaiement, StatutInscription, StatutPaiement } from '@prisma/client';
+import { ModePaiement, OperateurPaiement, StatutInscription, StatutPaiement } from '@prisma/client';
 import { QueryDto } from '../../../common/dto';
 import { OPERATEURS_MOBILE_MONEY } from '../../../common/finances/paiement';
 
@@ -101,7 +101,7 @@ export class CreatePaiementDto {
   @Type(() => Number) @IsNumber() @Min(1) montant: number;
   @IsOptional() @IsString() devise?: string;
   @IsEnum(ModePaiement) mode: ModePaiement;
-  @IsOptional() @IsIn(OPERATEURS_MOBILE_MONEY) operateur?: string;
+  @IsOptional() @IsIn(OPERATEURS_MOBILE_MONEY) operateur?: OperateurPaiement;
   @IsOptional() @IsString() telephone?: string;
   @IsOptional() @IsString() nomComplet?: string;
   @IsOptional() @IsString() motif?: string;

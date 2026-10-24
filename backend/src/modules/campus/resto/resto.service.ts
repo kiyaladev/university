@@ -46,7 +46,7 @@ import {
 } from '@nestjs/common';
 import { t } from '../../../common/i18n';
 import { journaliser } from '../../../common/audit';
-import { ModePaiement, Prisma, Role, StatutConsommation, StatutPaiement, type Etudiant } from '@prisma/client';
+import { ModePaiement, OperateurPaiement, Prisma, Role, StatutConsommation, StatutPaiement, type Etudiant } from '@prisma/client';
 import { randomBytes } from 'node:crypto';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { AuthUser } from '../../../common/decorators';
@@ -614,7 +614,7 @@ export class RestoService {
     portefeuilleId: string;
     montant: number;
     mode: ModePaiement;
-    operateur?: string | undefined;
+    operateur?: OperateurPaiement | undefined;
     telephone?: string | null;
     user: AuthUser;
     statutImmediat: boolean;

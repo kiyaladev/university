@@ -237,6 +237,18 @@ export const StatutBadge = {
 /** Union des valeurs de l'enum `StatutBadge`. */
 export type StatutBadge = (typeof StatutBadge)[keyof typeof StatutBadge];
 
+/** Qualité de la personne à qui le badge est délivré. */
+export const TypeBadge = {
+  VISITEUR: 'VISITEUR',
+  INTERVENANT: 'INTERVENANT',
+  TECHNICIEN: 'TECHNICIEN',
+  // personnage officiel
+  VIP: 'VIP',
+} as const;
+
+/** Union des valeurs de l'enum `TypeBadge`. */
+export type TypeBadge = (typeof TypeBadge)[keyof typeof TypeBadge];
+
 /** État d'une transaction de paiement (Mobile Money ou autre). */
 export const StatutPaiement = {
   EN_ATTENTE: 'EN_ATTENTE',
@@ -260,6 +272,18 @@ export const ModePaiement = {
 
 /** Union des valeurs de l'enum `ModePaiement`. */
 export type ModePaiement = (typeof ModePaiement)[keyof typeof ModePaiement];
+
+/** Opérateur ayant encaissé le paiement (Mobile Money ou autre canal). */
+export const OperateurPaiement = {
+  ORANGE_MONEY: 'ORANGE_MONEY',
+  MTN_MOMO: 'MTN_MOMO',
+  TELECEL: 'TELECEL',
+  // guichet, virement, passerelle inconnue…
+  AUTRE: 'AUTRE',
+} as const;
+
+/** Union des valeurs de l'enum `OperateurPaiement`. */
+export type OperateurPaiement = (typeof OperateurPaiement)[keyof typeof OperateurPaiement];
 
 /** Cycle de vie d'une feuille de paie vacataires. */
 export const StatutPaie = {

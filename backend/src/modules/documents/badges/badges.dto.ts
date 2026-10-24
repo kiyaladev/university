@@ -1,9 +1,15 @@
 import { PartialType } from '@nestjs/swagger';
 import { IsDateString, IsEmail, IsIn, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
+import { TypeBadge } from '@prisma/client';
 import { QueryDto } from '../../../common/dto';
 
-export const TYPES_BADGE = ['VISITEUR', 'INTERVENANT', 'TECHNICIEN', 'VIP'] as const;
-export type TypeBadge = (typeof TYPES_BADGE)[number];
+/**
+ * Types de badge acceptés.
+ *
+ * La colonne `BadgeAcces.type` est un enum Prisma (`TypeBadge`) : la liste
+ * ci-dessous en est dérivée, il n'y a donc plus de chaîne libre à valider.
+ */
+export const TYPES_BADGE = Object.values(TypeBadge);
 
 export class CreateBadgeDto {
   @IsIn(TYPES_BADGE)

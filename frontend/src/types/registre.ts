@@ -6,6 +6,7 @@ import type { AnneeAcademique, Enseignant, Matiere, Promotion } from './referent
 import type {
   DecisionJury,
   ModePaiement,
+  OperateurPaiement,
   SessionDeliberation,
   StatutAttestation,
   StatutDeliberation,
@@ -21,6 +22,7 @@ import type {
 export type {
   DecisionJury,
   ModePaiement,
+  OperateurPaiement,
   SessionDeliberation,
   StatutAttestation,
   StatutDeliberation,
@@ -84,7 +86,7 @@ export interface Paiement {
   montant: number;
   devise: string;
   mode: ModePaiement;
-  operateur?: string | null;
+  operateur?: OperateurPaiement | null;
   telephone?: string | null;
   nomComplet?: string | null;
   motif?: string | null;

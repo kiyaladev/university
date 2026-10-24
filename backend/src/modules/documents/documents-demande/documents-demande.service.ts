@@ -24,6 +24,7 @@ import {
   TypeDemandeDocument,
   TypeAttestation,
   ModePaiement,
+  OperateurPaiement,
   Role,
 } from '@prisma/client';
 import { AttestationsService } from '../attestations/attestations.service';
@@ -437,7 +438,7 @@ export class DocumentsDemandeService extends CrudService<
    */
   async payer(
     id: string,
-    dto: { mode: ModePaiement; simuler?: boolean; operateur?: string; telephone?: string },
+    dto: { mode: ModePaiement; simuler?: boolean; operateur?: OperateurPaiement; telephone?: string },
     user: AuthUser,
   ) {
     if (dto.simuler && process.env.NODE_ENV === 'production') {
