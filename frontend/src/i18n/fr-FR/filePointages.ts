@@ -7,6 +7,8 @@ export default {
     'Le résultat d’empreinte expire après quelques minutes : sans signature, il sera refusé si la connexion tarde à revenir.',
   synced: '{synced}/{total} pointage(s) synchronisé(s)',
   failed: '{n} en échec',
+  proofUsed: '{n} pointage(s) retiré(s) de la file : la preuve d’empreinte avait déjà été utilisée.',
+  proofUsedHelp: 'Relisez l’empreinte de l’enseignant pour pointer à nouveau.',
   unavailable: 'Synchronisation indisponible : les pointages restent sur cet appareil',
   keyUnavailable:
     'Le coffre hors ligne est inaccessible : les nouveaux pointages ne peuvent pas être conservés sur cet appareil.',

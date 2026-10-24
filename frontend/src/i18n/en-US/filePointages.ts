@@ -7,6 +7,8 @@ export default {
     'A fingerprint result expires after a few minutes: without a signature it will be rejected if the connection takes long to return.',
   synced: '{synced}/{total} attendance record(s) synced',
   failed: '{n} failed',
+  proofUsed: '{n} attendance record(s) removed from the queue: the fingerprint proof had already been used.',
+  proofUsedHelp: 'Read the teacher’s fingerprint again to record attendance anew.',
   unavailable: 'Sync unavailable: records remain on this device',
   keyUnavailable: 'The offline vault is unavailable. New attendance records cannot be saved on this device.',
   title: 'Pending attendance records',
