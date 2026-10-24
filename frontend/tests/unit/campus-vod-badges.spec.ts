@@ -93,6 +93,18 @@ describe('campus/services/vod (écrans catalogue et lecteur)', () => {
       {},
     );
   });
+
+  it('lit les statistiques de consultation d’une ressource', async () => {
+    const stats = {
+      vod: { id: 'v1', titre: 'Cours', type: 'VIDEO', dureeSecondes: 600, nbVues: 4, nbComplets: 1 },
+      calcules: { nbVues: 4, nbComplets: 1, tauxComplet: 25, dureeMoyenneSecondes: 300 },
+      dernieres: [],
+    };
+    api.get.mockResolvedValue({ data: stats });
+
+    await expect(vodService.statistiques('v1')).resolves.toEqual(stats);
+    expect(api.get).toHaveBeenCalledWith('/vod/v1/stats', { params: undefined });
+  });
 });
 
 describe('campus/services/badges (écrans badges)', () => {

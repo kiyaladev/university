@@ -37,6 +37,33 @@ export interface VueVod {
   termine: boolean;
 }
 
+/** Agrégats de consultation d'une ressource, calculés par le serveur. */
+export interface StatsVod {
+  vod: {
+    id: string;
+    titre: string;
+    type: string;
+    dureeSecondes?: number | null;
+    nbVues: number;
+    nbComplets: number;
+  };
+  calcules: {
+    nbVues: number;
+    nbComplets: number;
+    tauxComplet: number;
+    dureeMoyenneSecondes: number;
+  };
+  /** Les dernières vues : qui a regardé quoi, et jusqu'où. */
+  dernieres: Array<{
+    id: string;
+    dateDebut?: string | null;
+    positionSecondes?: number | null;
+    dureeSecondes?: number | null;
+    termine?: boolean;
+    etudiant?: { id: string; matricule: string; nom: string; prenom: string } | null;
+  }>;
+}
+
 export const vodService = {
   /** Catalogue des ressources, filtré et paginé par le serveur. */
   liste: (params: ParametresVod = {}) => lister<RessourceCatalogue>('/vod', params),
@@ -56,6 +83,9 @@ export const vodService = {
 
   /** Archive la ressource (elle disparaît du catalogue). */
   archiver: (id: string) => creer<void>(`/vod/${id}/archiver`, {}),
+
+  /** Vues et taux de complétion d'une ressource (administration, enseignant). */
+  statistiques: (id: string) => lire<StatsVod>(`/vod/${id}/stats`),
 
   /** Rapporte la position de lecture d'un étudiant. */
   signalerVue: (id: string, corps: VueVod) => creer<void>(`/vod/${id}/vue`, corps),

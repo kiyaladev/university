@@ -19,6 +19,7 @@ import EnTetePage from '@/shared/components/EnTetePage.vue';
 import BarreFiltres from '@/shared/components/BarreFiltres.vue';
 import BarrePagination from '@/shared/components/BarrePagination.vue';
 import DialogueVod from '../components/DialogueVod.vue';
+import DialogueStatsVod from '../components/DialogueStatsVod.vue';
 import VodListe from '../components/VodListe.vue';
 import { vodService, type ParametresVod } from '../services/vod';
 import { LIBELLE_STATUT_VOD, LIBELLE_TYPE_RESSOURCE_VOD, libelleDepuis, optionsDepuis } from '@/shared/utils/libelles';
@@ -118,6 +119,15 @@ const messageVide = computed(() => {
 const dialogEdition = ref(false);
 const vodEnEdition = ref<CoursVOD | null>(null);
 
+const dialogStats = ref(false);
+const vodObserve = ref<RessourceCatalogue | null>(null);
+
+/** Ouvre le panneau de consultation : vues, complétion, dernières vues. */
+function statistiques(v: RessourceCatalogue) {
+  vodObserve.value = v;
+  dialogStats.value = true;
+}
+
 function ouvrirEdition(v?: RessourceCatalogue) {
   // Le personnel reçoit la ressource complète : le formulaire peut la relire.
   vodEnEdition.value = (v as CoursVOD | undefined) ?? null;
@@ -215,6 +225,7 @@ async function archiver(v: RessourceCatalogue) {
       @ouvrir-edition="ouvrirEdition"
       @publier="publier"
       @archiver="archiver"
+      @statistiques="statistiques"
     />
 
     <!-- La collecte étudiante arrive d'un bloc : rien à paginer. -->
@@ -227,5 +238,7 @@ async function archiver(v: RessourceCatalogue) {
     />
 
     <dialogue-vod v-if="peutEditer" v-model="dialogEdition" :vod="vodEnEdition" @enregistre="liste.recharger()" />
+
+    <dialogue-stats-vod v-model="dialogStats" :vod-id="vodObserve?.id ?? null" :titre="vodObserve?.titre" />
   </q-page>
 </template>
