@@ -29,6 +29,9 @@ function run(env = {}) {
     encoding: 'utf8',
     env: {
       ...process.env,
+      // Le nom des dumps vient de la base de DATABASE_URL : on la fixe pour que
+      // le test ne dépende ni de la CI (base « ci ») ni du backend/.env local.
+      DATABASE_URL: 'postgresql://test:test@127.0.0.1:1/university',
       PATH: pathEnv,
       UNIVERSITY_BACKUP_DIR: backups,
       UNIVERSITY_BACKUP_CLES_DIR: cles,
