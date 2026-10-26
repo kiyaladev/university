@@ -32,7 +32,7 @@ android-cle/
 telechargement/
 
 # Sauvegardes de la base
-backups/
+backups
 
 # Captures d'écran et journaux des recettes : archivés hors dépôt
 # (/var/backups/university/audit-archive-AAAAMMJJ.tar.gz, voir docs/audits/README.md).
