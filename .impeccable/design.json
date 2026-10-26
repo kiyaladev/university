@@ -1,7 +1,7 @@
 {
  "schemaVersion": 2,
  "generatedAt": "2026-08-20T12:00:00Z",
- "title": "Design System: UniPrésence",
+ "title": "Design System: University",
  "extensions": {
   "colorMeta": {
    "encre": {
@@ -355,7 +355,7 @@
    "kind": "decoration",
    "refersTo": "vert-drapeau",
    "description": "La seule décoration du système : rouge, jaune, vert en un trait de 4 px et 72 px de large, posé en tête des écrans publics. Les trois bandes pleine largeur du panneau peint criaient ; ce filet dit la même chose sans prendre la parole.",
-   "html": "<div class=\"ds-filet\"></div><p class=\"ds-sur\">Personnel de l’université</p><h1 class=\"ds-marque\">UniPrésence</h1>",
+   "html": "<div class=\"ds-filet\"></div><p class=\"ds-sur\">Personnel de l’université</p><h1 class=\"ds-marque\">University</h1>",
    "css": ".ds-filet{width:72px;height:4px;border-radius:980px;background:linear-gradient(90deg,#CE1126 0 33.34%,#FCD116 33.34% 66.67%,#009460 66.67% 100%)}.ds-sur{margin:24px 0 0;font-size:12px;letter-spacing:-.003em;color:#86868B}.ds-marque{margin:8px 0 0;font-size:3rem;font-weight:600;letter-spacing:-.024em;color:#1D1D1F}"
   },
   {
@@ -395,7 +395,7 @@
    "kind": "navigation",
    "refersTo": "blanc",
    "description": "L'en-tête de fenêtre : une couche translucide sous laquelle le contenu défile (§12). En corps de page, le même nom `.bandeau` désigne une surface franche.",
-   "html": "<div class=\"ds-chrome\"><span class=\"ds-marque\">UniPrésence</span><span class=\"ds-fil\">/</span><span class=\"ds-page\">Contrôle des séances</span></div>",
+   "html": "<div class=\"ds-chrome\"><span class=\"ds-marque\">University</span><span class=\"ds-fil\">/</span><span class=\"ds-page\">Contrôle des séances</span></div>",
    "css": ".ds-chrome{display:flex;align-items:center;gap:8px;min-height:48px;padding:0 16px;background:rgba(255,255,255,.72);-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid rgba(0,0,0,.08)}.ds-marque{font-size:1.0625rem;font-weight:600;letter-spacing:-.021em;color:#1D1D1F}.ds-fil{color:#86868B}.ds-page{font-size:1.0625rem;letter-spacing:-.021em;color:#6E6E73}"
   },
   {

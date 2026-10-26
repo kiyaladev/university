@@ -1,4 +1,4 @@
-// Configuration Quasar — UniPrésence
+// Configuration Quasar — University
 // https://v2.quasar.dev/quasar-cli-vite/quasar-config-file
 import { defineConfig } from '#q-app/wrappers';
 import { rmSync } from 'node:fs';

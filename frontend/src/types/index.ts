@@ -1,5 +1,5 @@
 /**
- * Types partagés avec l'API UniPrésence, découpés par domaine. Ce module les
+ * Types partagés avec l'API University, découpés par domaine. Ce module les
  * réexporte tous : les imports existants `from '../types'` restent valables.
  *
  * Les énumérations ne sont pas recopiées : elles sont générées depuis le

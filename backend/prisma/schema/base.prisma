@@ -4,7 +4,7 @@
 // modèles et les énumérations d'un seul domaine. Les relations traversent
 // les fichiers sans différence.
 
-// UniPrésence — contrôle numérique de présence des enseignants en séance de cours
+// University — plateforme de gestion universitaire (présences, scolarité, finances, campus, documents)
 // Remplace le registre papier du contrôleur pédagogique.
 
 generator client {
