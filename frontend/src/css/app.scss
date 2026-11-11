@@ -1275,6 +1275,30 @@ body.body--dark .q-table__middle {
 
 // Dans un registre, « Autres actions » se réduit aux trois points : le libellé
 // reste lu par les lecteurs d'écran (aria-label) et en infobulle (title).
-.q-table td .actions-secondaires__declencheur .q-btn__content > .block {
-  display: none;
+// Même règle pour tout bouton d'action de ligne qui porte une icône ET un
+// aria-label : le libellé long (« Voir les notes de l'évaluation ») rognait la
+// colonne d'actions hors écran. Il reste lu par les lecteurs d'écran
+// (aria-label) et affiché en infobulle.
+.q-table td .actions-secondaires__declencheur .q-btn__content > .block,
+.q-table td .q-btn[aria-label]:has(.q-icon) .q-btn__content > .block {
+  display: none !important; // Quasar impose .block { display: block !important }
+}
+
+// Première colonne (intitulé, nom) : elle passe à la ligne au lieu d'étirer
+// tout le registre.
+.q-table tbody td:first-child:not(:last-child) {
+  white-space: normal;
+  min-width: 200px;
+  max-width: 320px;
+}
+
+// Colonne d'actions toujours atteignable : quand le registre déborde (1440 px
+// et moins), elle reste collée au bord droit au lieu de sortir de l'écran.
+.q-table td:last-child:has(.q-btn) {
+  position: sticky;
+  right: 0;
+  z-index: 1;
+  background: var(--up-plaque, #fff);
+  white-space: nowrap;
+  box-shadow: -8px 0 8px -8px rgb(0 0 0 / 0.18);
 }

@@ -12,11 +12,18 @@ defineProps<{ title: string; subtitle?: string }>();
 </script>
 <style scoped>
 .page-entete {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: start;
-  gap: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px 16px;
   margin-bottom: 20px;
+}
+/* Le bloc titre garde au moins 20 rem : si les actions sont trop larges
+   (tablette), elles passent sous le titre au lieu de l'écraser. */
+.page-entete > :first-child {
+  flex: 1 1 20rem;
+  min-width: 0;
 }
 .page-titre {
   margin: 0;
@@ -36,8 +43,8 @@ defineProps<{ title: string; subtitle?: string }>();
   max-width: 100%;
 }
 @media (max-width: 599px) {
-  .page-entete {
-    grid-template-columns: minmax(0, 1fr);
+  .page-entete > :first-child {
+    flex-basis: 100%;
   }
 }
 </style>
