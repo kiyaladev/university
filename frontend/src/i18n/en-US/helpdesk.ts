@@ -67,7 +67,7 @@ export default {
   },
   equipmentTab: {
     subtitle:
-      'Each label carries a unique QR code: faults reach IT with the exact name of the equipment, with no possible impersonation.',
+      'Each label carries a unique QR code: faults reach IT with the exact name of the equipment.',
     emptyTitle: 'No equipment matches these criteria.',
     emptyHint: 'Register the fleet so every fault arrives with the exact name of the equipment.',
     active: 'in service',

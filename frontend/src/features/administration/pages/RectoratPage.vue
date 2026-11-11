@@ -156,22 +156,24 @@
               role="img"
               :aria-label="resumePromotions"
             />
-            <div v-else class="etat-vide">
-              <q-icon name="groups" size="36px" />
-              <div class="text-subtitle2 q-mt-sm">{{ $t('rectorat.headcountChart.emptyTitle') }}</div>
-              <div class="text-caption">
-                {{ $t('rectorat.headcountChart.emptyDescription') }}
-              </div>
-              <q-btn
-                flat
-                dense
-                no-caps
-                color="primary"
-                icon="how_to_reg"
-                :label="$t('rectorat.headcountChart.openEnrollments')"
-                to="/inscriptions"
-              />
-            </div>
+            <etat-vide
+              v-else
+              icone="groups"
+              :titre="$t('rectorat.headcountChart.emptyTitle')"
+              :aide="$t('rectorat.headcountChart.emptyDescription')"
+            >
+              <template #action>
+                <q-btn
+                  flat
+                  dense
+                  no-caps
+                  color="primary"
+                  icon="how_to_reg"
+                  :label="$t('rectorat.headcountChart.openEnrollments')"
+                  to="/inscriptions"
+                />
+              </template>
+            </etat-vide>
           </q-card-section>
         </q-card>
       </div>
@@ -195,22 +197,24 @@
           </q-card-section>
           <q-card-section>
             <graphique v-if="configMasse" :config="configMasse" :hauteur="300" role="img" :aria-label="resumeMasse" />
-            <div v-else class="etat-vide">
-              <q-icon name="payments" size="36px" />
-              <div class="text-subtitle2 q-mt-sm">{{ $t('rectorat.payrollChart.emptyTitle') }}</div>
-              <div class="text-caption">
-                {{ $t('rectorat.payrollChart.emptyDescription') }}
-              </div>
-              <q-btn
-                flat
-                dense
-                no-caps
-                color="primary"
-                icon="payments"
-                :label="$t('rectorat.payrollChart.openPayroll')"
-                to="/paie"
-              />
-            </div>
+            <etat-vide
+              v-else
+              icone="payments"
+              :titre="$t('rectorat.payrollChart.emptyTitle')"
+              :aide="$t('rectorat.payrollChart.emptyDescription')"
+            >
+              <template #action>
+                <q-btn
+                  flat
+                  dense
+                  no-caps
+                  color="primary"
+                  icon="payments"
+                  :label="$t('rectorat.payrollChart.openPayroll')"
+                  to="/paie"
+                />
+              </template>
+            </etat-vide>
           </q-card-section>
         </q-card>
       </div>
@@ -306,6 +310,7 @@
 </template>
 
 <script setup lang="ts">
+import EtatVide from '@/shared/components/EtatVide.vue';
 import SectionNavigation from '@/shared/components/SectionNavigation.vue';
 import { computed, onMounted, ref } from 'vue';
 import { useQuasar } from 'quasar';

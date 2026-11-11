@@ -27,19 +27,20 @@
           <q-item-label caption>{{ dossier.numero }} · {{ dossier.promotion?.nom }}</q-item-label> </q-item-section
         ><q-item-section side><q-icon name="chevron_right" /></q-item-section>
       </q-item>
-      <q-item v-if="!dossiers.length && !chargement"
-        ><q-item-section>{{ t('accueilScolarite.empty') }}</q-item-section></q-item
-      >
     </q-list>
+    <etat-vide
+      v-if="!dossiers.length && !chargement"
+      icone="how_to_reg"
+      :titre="t('accueilScolarite.empty')"
+      :aide="t('accueilScolarite.emptyHint')"
+    />
     <div class="row q-gutter-sm q-mt-md">
-      <q-btn to="/etudiants" flat icon="groups" :label="t('nav.etudiants')" />
-      <q-btn to="/notes" flat icon="grading" :label="t('nav.notes')" />
-      <q-btn to="/deliberations" flat icon="how_to_vote" :label="t('nav.deliberations')" />
       <q-btn flat icon="refresh" :label="t('common.actions.refresh')" :loading="chargement" @click="charger" />
     </div>
   </q-page>
 </template>
 <script setup lang="ts">
+import EtatVide from '@/shared/components/EtatVide.vue';
 import EnTetePage from '@/shared/components/EnTetePage.vue';
 import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';

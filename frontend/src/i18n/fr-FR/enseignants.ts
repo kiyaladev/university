@@ -1,7 +1,6 @@
 /** Namespace `enseignants` — page EnseignantsPage.vue (corps enseignant). */
 export default {
   header: {
-    subtitle: 'Corps enseignant suivi par le dispositif de contrôle',
     newTeacher: 'Nouvel enseignant',
   },
   filters: {

@@ -6,7 +6,6 @@ export default {
   template: 'Download a CSV template',
   apply: 'Import valid rows',
   confirm: 'Create the {count} valid row(s)? Invalid rows will be skipped and listed in the report.',
-  previewRequired: 'Preview the file before starting the import.',
   separatorHelp:
     'CSV: semicolon or comma separators are detected automatically. XLSX: the first worksheet is read. Columns may be reordered; accented column names are recognized.',
   previewTitle: 'Preview results',

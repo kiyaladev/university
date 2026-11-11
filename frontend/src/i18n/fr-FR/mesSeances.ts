@@ -1,7 +1,6 @@
 /** Namespace `mesSeances` — page MesSeancesPage.vue (relevé des séances de l’enseignant). */
 export default {
   title: 'Mes séances',
-  subtitle: 'Suivi de mes cours et des contrôles de présence me concernant',
   actions: {
     myJustificatifs: 'Mes justificatifs',
     printAttendance: 'Imprimer ma fiche d’assiduité',

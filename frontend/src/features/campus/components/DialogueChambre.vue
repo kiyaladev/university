@@ -89,7 +89,6 @@
           outlined
           dense
           :label="$t('common.fields.currency')"
-          :hint="$t('cites.chambres.dialogs.form.currencyHint')"
         />
       </div>
     </div>

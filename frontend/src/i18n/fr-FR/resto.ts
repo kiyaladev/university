@@ -2,7 +2,7 @@
 export default {
   title: 'Restaurant universitaire',
   subtitle:
-    "Fini les tickets papier : le guichet scanne la carte de l'étudiant, valide le repas en deux secondes — zéro cash, zéro fraude.",
+    "Le guichet scanne la carte de l'étudiant et débite son portefeuille repas ; rechargements et remboursements sont tracés ci-dessous.",
   cantine: 'Cantine',
   actions: {
     creditWallet: 'Créditer un portefeuille',

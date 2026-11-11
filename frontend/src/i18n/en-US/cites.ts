@@ -2,7 +2,7 @@
 export default {
   title: 'University halls',
   subtitle:
-    'Transparent room allocation — social and merit criteria, run with the rectorate (Centre for Student Affairs)',
+    'Residences, rooms and room allocations to students, based on social and merit criteria.',
   tabs: {
     residences: 'Halls',
     chambres: 'Rooms',
@@ -115,7 +115,6 @@ export default {
         categoryLabel: 'Category *',
         statusLabel: 'Status *',
         monthlyRent: 'Monthly rent',
-        currencyHint: 'Billing through Mobile Money is planned for the payment module',
         saved: 'Room saved',
       },
       delete: {

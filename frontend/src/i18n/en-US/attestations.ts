@@ -1,8 +1,7 @@
 /** Namespace `attestations`. */
 export default {
   title: 'Attestations',
-  subtitle:
-    'Official documents verifiable via QR code — every public scan is logged, nothing is erased, everything can be revoked.',
+  subtitle: 'Official documents verifiable via QR code; every public check is logged.',
   actions: {
     bulletins: 'Transcripts',
     issue: 'Issue an attestation',
@@ -76,7 +75,8 @@ export default {
     failed: 'failed',
     ip: 'IP: {ip}',
     ipUnknown: 'unknown',
-    empty: 'No verification recorded.',
+    empty: 'No verification recorded',
+    emptyHint: 'Each scan of the attestation QR code will appear here.',
   },
   messages: {
     revoked: 'Attestation revoked — the QR code will no longer be valid',

@@ -17,7 +17,6 @@ export default {
   },
   list: {
     title: 'Scrutins',
-    subtitle: 'Choisissez le scrutin à consulter ou auquel participer.',
     seat: 'siège',
     seats: 'sièges',
     closes_on: 'clôture le {date}',

@@ -2,7 +2,7 @@
 export default {
   title: 'Digital canteen',
   subtitle:
-    'No more paper tickets: the counter scans the student card, validates the meal in two seconds — zero cash, zero fraud.',
+    "The counter scans the student's card and debits their meal wallet; top-ups and refunds are listed below.",
   cantine: 'Canteen',
   actions: {
     creditWallet: 'Top up a wallet',

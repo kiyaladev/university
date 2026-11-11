@@ -26,7 +26,6 @@ export default {
     evolutionTitle: 'Évolution sur 14 jours',
     evolutionSubtitle: 'Séances assurées, absences et retards',
     distributionTitle: 'Répartition des constats',
-    distributionSubtitle: 'Sur la période sélectionnée',
     noData: 'Aucune donnée sur la période.',
     datasets: {
       sessionsHeld: 'Séances assurées',

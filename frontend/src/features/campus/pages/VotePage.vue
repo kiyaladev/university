@@ -240,9 +240,6 @@ onMounted(charger);
         <q-card flat bordered class="carte">
           <q-card-section>
             <div class="text-h6">{{ $t('vote.list.title') }}</div>
-            <div class="text-caption text-grey-7">
-              {{ $t('vote.list.subtitle') }}
-            </div>
           </q-card-section>
           <q-separator />
           <q-list separator>

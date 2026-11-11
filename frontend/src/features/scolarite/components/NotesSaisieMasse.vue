@@ -12,6 +12,7 @@
  * ligne courante, ↑/↓ pour naviguer entre lignes. Indicateur visuel par ligne
  * (chip « modifié » / « enregistré ») et par groupe (compteur X/Y).
  */
+import EtatVide from '@/shared/components/EtatVide.vue';
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import type { LigneEvaluation, SaisieNotes } from '../services/evaluations';
 import type { LigneSaisie } from './NotesSaisie.types';
@@ -274,9 +275,12 @@ const peutEditer = computed(() => !props.lectureSeule);
         </div>
       </div>
 
-      <div v-if="!lignes.length" class="saisie-masse__vide">
-        {{ $t('notes.bulk.empty') }}
-      </div>
+      <etat-vide
+        v-if="!lignes.length"
+        icone="group_off"
+        :titre="$t('notes.bulk.empty')"
+        :aide="$t('notes.bulk.emptyHint')"
+      />
     </div>
 
     <div class="saisie-masse__actions">
@@ -405,12 +409,6 @@ const peutEditer = computed(() => !props.lectureSeule);
 .col-eta {
   display: flex;
   justify-content: center;
-}
-
-.saisie-masse__vide {
-  padding: var(--up-5);
-  text-align: center;
-  color: var(--up-encre-douce);
 }
 
 .saisie-masse__actions {

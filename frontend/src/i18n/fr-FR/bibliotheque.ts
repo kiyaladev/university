@@ -2,7 +2,7 @@
 export default {
   title: 'Bibliothèque numérique',
   subtitle:
-    'Gestion du dépôt institutionnel : mémoires, thèses, articles et supports de cours — le fonds qui porte les subventions AUF / UNESCO. Vous voyez ici le fonds complet, publié ou non.',
+    'Gestion du dépôt institutionnel : mémoires, thèses, articles et supports de cours. Vous voyez ici le fonds complet, publié ou non.',
   actions: {
     viewShowcase: 'Voir la vitrine publique',
     viewShowcaseTooltip: 'Page consultée par les visiteurs — documents publiés uniquement',

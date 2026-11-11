@@ -5,7 +5,6 @@ export default {
     'Activez les services utilisés. Désactiver un service retire ses accès et ses liens sans supprimer ses données. Les services essentiels restent disponibles.',
   required: 'Service essentiel',
   pilot: 'Pilote — recette métier à terminer',
-  verified: 'Cycle vérifié en recette locale',
   hidePilots: 'Masquer les modules pilotes',
   save: 'Enregistrer les services',
   saved: 'Services mis à jour',

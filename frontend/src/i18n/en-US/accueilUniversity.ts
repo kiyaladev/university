@@ -1,6 +1,9 @@
 export default {
   title: 'University home',
-  subtitle: 'Find your institution’s records, attendance and operations.',
+  emptyState: {
+    title: 'No tasks available',
+    hint: 'Your role has no shortcuts here. Use the menu to reach your screens.',
+  },
   attendance: 'Attendance overview',
   dossiers: 'Student records',
   resultats: 'Assessments and results',

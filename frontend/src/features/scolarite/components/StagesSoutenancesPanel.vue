@@ -74,11 +74,12 @@
       </q-item-section>
     </q-item>
     <q-item v-if="!soutenancesFiltrees.length">
-      <q-item-section class="text-grey-7 text-center q-py-md">
-        <div>{{ $t('stages.list.emptyTitle') }}</div>
-        <div class="text-caption q-mt-xs">
-          {{ $t('stages.list.emptyDescription') }}
-        </div>
+      <q-item-section>
+        <etat-vide
+          icone="event_busy"
+          :titre="$t('stages.list.emptyTitle')"
+          :aide="$t('stages.list.emptyDescription')"
+        />
       </q-item-section>
     </q-item>
   </q-list>
@@ -94,6 +95,7 @@
  */
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import EtatVide from '@/shared/components/EtatVide.vue';
 import BarreFiltres from '@/shared/components/BarreFiltres.vue';
 import GrilleCalendrier from '@/shared/components/GrilleCalendrier.vue';
 import { LIBELLE_STATUT_ENCADREMENT } from '@/shared/utils/libelles';

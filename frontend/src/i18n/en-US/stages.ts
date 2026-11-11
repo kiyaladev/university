@@ -50,7 +50,6 @@ export default {
   },
   stats: {
     byType: 'Breakdown by type',
-    byStatus: 'Breakdown by status',
     upcoming7Days: 'Defenses in the next 7 days',
     inDefensePhase: 'Works in the defense phase',
     defended: 'Defended works',
@@ -63,11 +62,19 @@ export default {
       'A defense is scheduled from the "Works" tab, for an ongoing file whose report has been submitted.',
   },
   kanban: {
-    columns: {
-      proposed: 'Proposed',
-      validated: 'Approved',
+    columns: { proposed: 'Proposed', validated: 'Approved' },
+    label: 'Kanban board of works by status',
+    drop: 'Drop here',
+    moved: '"{title}" moved to "{status}"',
+    empty: {
+      PROPOSE: 'No topic awaiting approval.',
+      VALIDE: 'No approved topic awaiting supervision.',
+      EN_COURS: 'No work under supervision.',
+      SOUTENU: 'No defended work.',
+      ABANDONNE: 'No abandoned work.',
     },
   },
+  views: { table: 'Table', kanban: 'Kanban' },
   transitions: {
     validate: 'Approve',
     abandon: 'Abandon',

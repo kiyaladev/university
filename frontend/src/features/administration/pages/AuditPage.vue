@@ -1,6 +1,6 @@
 <template>
   <q-page class="q-pa-md">
-    <en-tete-page :title="t('audit.title')" :subtitle="t('audit.subtitle')" />
+    <en-tete-page :title="t('audit.title')" />
     <q-form class="row q-col-gutter-sm q-mb-md" @submit="rechercher">
       <q-input v-model="saisie.entite" outlined dense class="col-12 col-sm-4" :label="t('audit.entity')" />
       <q-input v-model="saisie.action" outlined dense class="col-12 col-sm-4" :label="t('audit.action')" />

@@ -1,7 +1,6 @@
 /** Namespace `plagiatDetail`. */
 export default {
   title: 'Détail suspicion',
-  subtitle: 'Comparaison automatique par empreinte + similarité Jaccard.',
   notFound: {
     message: 'Suspicion introuvable ou supprimée.',
     backToQueue: "Retour à la file d'arbitrage",

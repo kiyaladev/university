@@ -1,11 +1,7 @@
 <template>
   <q-page class="q-pa-md">
-    <en-tete-page :title="$t('parametres.title')" :subtitle="$t('parametres.subtitle')" />
-
-    <section aria-labelledby="regles-presence">
-      <h2 id="regles-presence" class="text-h6">{{ $t('parametres.attendanceRules') }}</h2>
-
-      <div class="col-auto q-gutter-sm">
+    <en-tete-page :title="$t('parametres.title')" :subtitle="$t('parametres.subtitle')">
+      <template #actions>
         <q-btn
           flat
           no-caps
@@ -24,7 +20,11 @@
           :loading="enregistrement"
           @click="enregistrer"
         />
-      </div>
+      </template>
+    </en-tete-page>
+
+    <section aria-labelledby="regles-presence">
+      <h2 id="regles-presence" class="text-h6 q-mb-sm">{{ $t('parametres.attendanceRules') }}</h2>
 
       <q-banner v-if="modifie" class="note--alerte q-mb-md" style="max-width: 820px">
         <template #avatar><q-icon name="edit_note" /></template>
@@ -86,8 +86,6 @@
       :label="$t('nav.tarifs-demandes')"
       class="q-mb-md"
     />
-
-    <q-btn to="/audit" outline no-caps icon="history" :label="$t('audit.title')" />
   </q-page>
 </template>
 
@@ -213,6 +211,7 @@ onMounted(async () => {
   .parametre-row :deep(.q-item__section--side) {
     min-width: 0 !important;
     width: 100%;
+    align-items: stretch;
     padding: 12px 0 0;
   }
 }

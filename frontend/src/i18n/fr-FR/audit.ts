@@ -1,7 +1,6 @@
 export default {
   declaredTime: 'Heure déclarée du pointage',
   title: 'Journal d’audit',
-  subtitle: 'Historique des opérations et des corrections.',
   entity: 'Entité',
   action: 'Action',
   actor: 'Acteur',

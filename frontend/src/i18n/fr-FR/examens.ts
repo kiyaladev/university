@@ -1,8 +1,7 @@
 /** Namespace `examens` — page Examens. */
 export default {
   title: 'Examens',
-  subtitle:
-    "Planification des épreuves et scan des cartes étudiantes à l'entrée de la salle. Chaque examen ouvre sur son tirage et sur son poste de scan.",
+  subtitle: 'Planification des épreuves ; chaque examen ouvre sur son tirage et son poste de scan.',
   actions: {
     schedule: 'Planifier un examen',
     scanStation: 'Poste de scan',

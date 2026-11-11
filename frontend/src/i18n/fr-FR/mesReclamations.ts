@@ -1,8 +1,7 @@
 /** Namespace `mesReclamations` — page Mes réclamations (vue étudiante). */
 export default {
   title: 'Mes réclamations',
-  subtitle:
-    'Le guichet unique pour vos doléances : note manquante, erreur de saisie, scolarité, enseignement. Chaque réclamation suit un cycle tracé et peut être anonyme si vous préférez.',
+  subtitle: 'Déposez une réclamation (note manquante, erreur de saisie…), anonyme si vous le souhaitez, et suivez son traitement.',
   actions: {
     new: 'Nouvelle réclamation',
   },

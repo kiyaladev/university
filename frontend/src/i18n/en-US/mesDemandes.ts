@@ -1,8 +1,7 @@
 /** Namespace `mesDemandes` — My document requests page (student view). */
 export default {
   title: 'My document requests',
-  subtitle:
-    'Request your certificates and transcripts online: pay the configured fee, track progress, and pick them up at the front desk once the status reaches "Ready".',
+  subtitle: 'Request certificates and transcripts, pay the fee, then pick the document up at the desk once it is “Ready”.',
   actions: {
     new: 'New request',
     pay: 'Pay',

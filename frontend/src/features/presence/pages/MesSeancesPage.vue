@@ -1,6 +1,6 @@
 <template>
   <q-page class="q-pa-md">
-    <en-tete-page :title="$t('mesSeances.title')" :subtitle="$t('mesSeances.subtitle')">
+    <en-tete-page :title="$t('mesSeances.title')">
       <template #actions>
         <div class="row q-gutter-sm items-center">
           <champ-date v-model="dateDebut" :label="$t('common.actions.from')" style="width: 152px" />

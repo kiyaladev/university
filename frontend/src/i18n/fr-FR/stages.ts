@@ -50,7 +50,6 @@ export default {
   },
   stats: {
     byType: 'Répartition par type',
-    byStatus: 'Répartition par statut',
     upcoming7Days: 'Soutenances des 7 prochains jours',
     inDefensePhase: 'Travaux en phase de soutenance',
     defended: 'Travaux soutenus',
@@ -63,11 +62,19 @@ export default {
       "Une soutenance se planifie depuis l'onglet « Travaux », sur un dossier en cours dont le rapport est rendu.",
   },
   kanban: {
-    columns: {
-      proposed: 'Proposé',
-      validated: 'Validé',
+    columns: { proposed: 'Proposé', validated: 'Validé' },
+    label: 'Tableau Kanban des travaux par statut',
+    drop: 'Déposer ici',
+    moved: '« {title} » déplacé vers « {status} »',
+    empty: {
+      PROPOSE: 'Aucun sujet en attente de validation.',
+      VALIDE: 'Aucun sujet validé en attente d’encadrement.',
+      EN_COURS: 'Aucun travail en cours d’encadrement.',
+      SOUTENU: 'Aucun travail soutenu.',
+      ABANDONNE: 'Aucun abandon.',
     },
   },
+  views: { table: 'Tableau', kanban: 'Kanban' },
   transitions: {
     validate: 'Valider',
     abandon: 'Abandonner',

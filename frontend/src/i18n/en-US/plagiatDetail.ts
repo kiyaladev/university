@@ -1,7 +1,6 @@
 /** Namespace `plagiatDetail`. */
 export default {
   title: 'Suspicion detail',
-  subtitle: 'Automatic comparison by fingerprint + Jaccard similarity.',
   notFound: {
     message: 'Suspicion not found or deleted.',
     backToQueue: 'Back to the review queue',

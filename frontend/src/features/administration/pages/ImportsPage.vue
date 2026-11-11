@@ -63,11 +63,6 @@
       </q-card-section>
     </q-card>
 
-    <q-banner v-if="!apercu && !rapport" rounded class="bg-blue-1 text-blue-10 q-mb-md">
-      <template #avatar><q-icon name="info" /></template>
-      {{ t('imports.previewRequired') }}
-    </q-banner>
-
     <q-card v-if="apercu" flat bordered class="carte q-mb-md">
       <q-card-section>
         <div class="text-h6">{{ t('imports.previewTitle') }}</div>

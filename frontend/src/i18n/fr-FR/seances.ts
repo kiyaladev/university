@@ -1,6 +1,5 @@
 /** Namespace `seances` — page SeancesPage.vue (registre des séances). */
 export default {
-  subtitle: 'Le registre des séances programmées et de ce qui y a été constaté',
   actions: {
     newUnscheduled: 'Séance non programmée',
     newAdHoc: 'Séance ponctuelle',

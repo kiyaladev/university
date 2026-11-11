@@ -1,8 +1,7 @@
 /** Namespace `demandeDocuments`. */
 export default {
   title: 'Document requests',
-  subtitle:
-    'The student submits their request online, pays the configured fee, the registrar processes it, marks the document as ready, and hands it over at the counter.',
+  subtitle: 'Requests paid online: to process, mark as ready, then hand over at the counter.',
   studentBanner: {
     message: "Register restricted to a single student's requests (incoming link).",
     seeAll: 'See all requests',

@@ -29,8 +29,8 @@ export default {
       sessionsLink: 'Ses séances',
     },
     empty: {
-      cards: 'Aucune séance programmée en salle sur cette période — élargissez les dates.',
-      table: 'Aucune séance programmée en salle sur cette période.',
+      title: 'Aucune séance programmée en salle sur cette période.',
+      hint: 'Élargissez les dates.',
     },
     table: {
       loading: 'Calcul du relevé…',
@@ -56,8 +56,8 @@ export default {
       hoursDone: '{hours} assurées',
     },
     empty: {
-      cards: 'Aucun enseignant n’a de séance programmée sur cette période — élargissez les dates.',
-      table: 'Aucun enseignant n’a de séance programmée sur cette période.',
+      title: 'Aucun enseignant n’a de séance programmée sur cette période.',
+      hint: 'Élargissez les dates.',
     },
     table: {
       loading: 'Calcul du relevé…',

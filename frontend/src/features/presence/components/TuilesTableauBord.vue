@@ -17,7 +17,6 @@
       <q-card flat bordered class="carte">
         <q-card-section>
           <div class="text-subtitle2">{{ $t('dashboard.charts.distributionTitle') }}</div>
-          <div class="text-caption">{{ $t('dashboard.charts.distributionSubtitle') }}</div>
         </q-card-section>
         <q-card-section>
           <graphique v-if="rapport" :config="configRepartition" :hauteur="260" />

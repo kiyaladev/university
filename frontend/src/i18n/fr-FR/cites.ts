@@ -2,7 +2,7 @@
 export default {
   title: 'Cités universitaires',
   subtitle:
-    'Attribution transparente des chambres — critères sociaux et mérite, pilotée avec le rectorat (Centre des Œuvres Universitaires)',
+    'Résidences, chambres et attributions aux étudiants, selon critères sociaux et mérite.',
   tabs: {
     residences: 'Résidences',
     chambres: 'Chambres',
@@ -115,7 +115,6 @@ export default {
         categoryLabel: 'Catégorie *',
         statusLabel: 'Statut *',
         monthlyRent: 'Loyer par mois',
-        currencyHint: 'Facturation future via Mobile Money (module paiement)',
         saved: 'Chambre enregistrée',
       },
       delete: {

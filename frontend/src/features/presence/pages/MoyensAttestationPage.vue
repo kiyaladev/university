@@ -32,11 +32,7 @@
         :hide-bottom="true"
       >
         <template #no-data>
-          <q-item>
-            <q-item-section class="text-grey-7">
-              {{ $t('moyensAttestation.devices.emptyState') }}
-            </q-item-section>
-          </q-item>
+          <etat-vide icone="devices" :titre="$t('moyensAttestation.devices.emptyState')" />
         </template>
 
         <template #body-cell-etat="p">
@@ -228,6 +224,7 @@
 </template>
 
 <script setup lang="ts">
+import EtatVide from '@/shared/components/EtatVide.vue';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { useI18n } from 'vue-i18n';

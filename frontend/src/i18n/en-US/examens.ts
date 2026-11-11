@@ -1,8 +1,7 @@
 /** Namespace `examens` — Exams page. */
 export default {
   title: 'Exams',
-  subtitle:
-    'Scheduling of exams and scanning of student cards at the room entrance. Each exam opens onto its draw and its scan station.',
+  subtitle: 'Exam scheduling; each exam opens onto its draw and its scan station.',
   actions: {
     schedule: 'Schedule an exam',
     scanStation: 'Scan station',

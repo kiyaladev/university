@@ -1,7 +1,6 @@
 /** Namespace `enseignants` — EnseignantsPage.vue (teaching staff). */
 export default {
   header: {
-    subtitle: 'Teaching staff monitored by the control system',
     newTeacher: 'New teacher',
   },
   filters: {

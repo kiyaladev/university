@@ -35,7 +35,6 @@ export default {
     ariaLabel: 'Services accessibles sans compte',
     title: 'Sans compte',
     links: {
-      portailSms: 'Portail étudiant (connexion par SMS) →',
       preinscription: 'Se préinscrire en ligne →',
       formationContinue: 'Formation continue →',
       bibliotheque: 'Bibliothèque numérique →',

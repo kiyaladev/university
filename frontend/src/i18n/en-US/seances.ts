@@ -1,6 +1,5 @@
 /** Namespace `seances` — Sessions register page. */
 export default {
-  subtitle: 'The register of scheduled sessions and what was observed there',
   actions: {
     newUnscheduled: 'Unscheduled session',
     newAdHoc: 'One-off session',

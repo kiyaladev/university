@@ -1,8 +1,7 @@
 /** Namespace `reclamations` — ReclamationsPage.vue (complaints desk, admin view). */
 export default {
   title: 'Complaints & requests',
-  subtitle:
-    'Single window for student grievances — missing grade, entry error, registrar, teaching. Each complaint follows a tracked lifecycle: from opening to closing, through assignment and automatic escalation after 48 h.',
+  subtitle: 'Complaints tracked from opening to closing, with automatic escalation after 48 h.',
   actions: {
     newReclamation: 'New complaint',
     escalate: 'Escalate',

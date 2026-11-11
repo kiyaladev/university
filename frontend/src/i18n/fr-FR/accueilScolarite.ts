@@ -5,6 +5,7 @@ export default {
   readyRegistrations: 'Inscriptions payées à valider',
   documentsToProcess: 'Documents à traiter',
   documentsToDeliver: 'Documents prêts à remettre',
-  empty: 'Aucune inscription payée en attente de validation',
+  empty: 'Aucune inscription payée à valider',
+  emptyHint: 'Les dossiers réglés apparaîtront ici dès leur paiement.',
   error: 'Certains dossiers n’ont pas pu être chargés',
 };

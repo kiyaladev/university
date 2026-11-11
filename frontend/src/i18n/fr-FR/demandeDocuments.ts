@@ -1,8 +1,7 @@
 /** Namespace `demandeDocuments`. */
 export default {
   title: 'Demandes de documents',
-  subtitle:
-    "L'étudiant formule sa demande en ligne, paie les frais au tarif paramétré, la scolarité traite, marque le document comme prêt et le remet au guichet.",
+  subtitle: 'Demandes payées en ligne : à traiter, à marquer prêtes, puis à remettre au guichet.',
   studentBanner: {
     message: "Registre restreint aux demandes d'un seul étudiant (lien entrant).",
     seeAll: 'Voir toutes les demandes',

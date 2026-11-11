@@ -4,7 +4,7 @@
       <q-card flat bordered class="carte">
         <q-card-section class="text-center">
           <div class="stat-chiffre chiffres" :class="{ 'text-warning': s.alerte }">
-            {{ stats?.[s.cle] ?? 0 }}
+            {{ stats ? (stats[s.cle] ?? 0) : '—' }}
           </div>
           <div class="pochoir text-grey-7">{{ s.libelle }}</div>
         </q-card-section>

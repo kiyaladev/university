@@ -67,8 +67,12 @@
           </footer>
         </article>
       </li>
-      <li v-if="!(rapport?.lignes ?? []).length" class="stats__vide pochoir">
-        {{ $t('statistiques.enseignants.empty.cards') }}
+      <li v-if="!(rapport?.lignes ?? []).length" class="stats__vide">
+        <etat-vide
+          icone="school"
+          :titre="$t('statistiques.enseignants.empty.title')"
+          :aide="$t('statistiques.enseignants.empty.hint')"
+        />
       </li>
     </ul>
 
@@ -84,8 +88,15 @@
       :pagination="{ rowsPerPage: 25 }"
       :visible-columns="colonnesVisibles"
       :loading-label="$t('statistiques.enseignants.table.loading')"
-      :no-data-label="$t('statistiques.enseignants.empty.table')"
     >
+      <template #no-data>
+        <etat-vide
+          icone="school"
+          :titre="$t('statistiques.enseignants.empty.title')"
+          :aide="$t('statistiques.enseignants.empty.hint')"
+        />
+      </template>
+
       <template #body-cell-presence="p">
         <q-td :props="p"><barre-taux :valeur="p.row.tauxPresence" /></q-td>
       </template>
@@ -123,6 +134,7 @@ import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useQuasar, type QTableColumn } from 'quasar';
 import ReleveChiffres from './ReleveChiffres.vue';
+import EtatVide from '@/shared/components/EtatVide.vue';
 import BarreTaux from '@/shared/components/BarreTaux.vue';
 import { heuresLisibles, pourcentLisible } from '@/shared/utils/libelles';
 import type { RapportAssiduite } from '../services/rapports';
@@ -303,9 +315,6 @@ const colonnesVisibles = computed(() =>
 
 .stats__vide {
   grid-column: 1 / -1;
-  padding: var(--up-5);
-  text-align: center;
-  color: var(--up-encre-douce);
 }
 
 @media (max-width: 599px) {

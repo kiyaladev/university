@@ -34,7 +34,6 @@ export default {
     ariaLabel: 'Services accessible without an account',
     title: 'No account needed',
     links: {
-      portailSms: 'Student portal (SMS sign-in) →',
       preinscription: 'Pre-register online →',
       formationContinue: 'Continuing education →',
       bibliotheque: 'Digital library →',

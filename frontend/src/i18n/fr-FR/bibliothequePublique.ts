@@ -1,8 +1,7 @@
 /** Namespace `bibliothequePublique`. */
 export default {
   title: 'Bibliothèque numérique',
-  subtitle:
-    "Mémoires, thèses, articles et supports de cours de l'université : le dépôt institutionnel accessible à tous, pour le prestige de l'établissement et son éligibilité aux programmes AUF / UNESCO.",
+  subtitle: 'Mémoires, thèses, articles et supports de cours de l’université, en libre accès.',
   search: {
     placeholder: 'Rechercher dans tout le fonds (intitulé, mots-clés, contenu…)',
   },
@@ -25,7 +24,6 @@ export default {
   },
   populaires: {
     title: 'Les plus téléchargés',
-    subtitle: 'Les documents que le fonds public rend le plus accessibles cette année.',
     empty: "Aucun document n'a encore été téléchargé cette année.",
   },
   table: {
@@ -34,6 +32,5 @@ export default {
       downloads: 'Téléchargements',
     },
   },
-  footer:
-    "La consultation et le téléchargement sont libres et gratuits. La numérisation des fonds papier fait l'objet d'un marché distinct.",
+  footer: 'La consultation et le téléchargement sont libres et gratuits.',
 };

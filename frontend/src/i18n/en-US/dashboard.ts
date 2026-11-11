@@ -26,7 +26,6 @@ export default {
     evolutionTitle: '14-day trend',
     evolutionSubtitle: 'Sessions held, absences and delays',
     distributionTitle: 'Breakdown of findings',
-    distributionSubtitle: 'Over the selected period',
     noData: 'No data for this period.',
     datasets: {
       sessionsHeld: 'Sessions held',

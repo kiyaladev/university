@@ -1,8 +1,8 @@
 /** Namespace `formationsPubliques` — page FormationsPubliquesPage.vue (public storefront for continuing education). */
 export default {
   hero: {
-    overline: 'Continuing education & certifications',
-    title: 'Skills for tomorrow',
+    overline: 'Evening courses and certifications',
+    title: 'Continuing education',
     text: 'The university opens its evening courses and certifications to professionals and the general public. Choose your course, submit your request without an account, pay via Mobile Money — and receive your training certificate.',
     facts: {
       noAccount: {

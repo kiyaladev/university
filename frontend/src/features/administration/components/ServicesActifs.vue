@@ -34,14 +34,8 @@
       <q-item v-for="service in services" :key="service.id">
         <q-item-section>
           <q-item-label>{{ t(`servicesActifs.names.${service.id}`) }}</q-item-label>
-          <q-item-label caption>{{
-            t(
-              service.obligatoire
-                ? 'servicesActifs.required'
-                : service.pilote
-                  ? 'servicesActifs.pilot'
-                  : 'servicesActifs.verified',
-            )
+          <q-item-label v-if="service.obligatoire || service.pilote" caption>{{
+            t(service.obligatoire ? 'servicesActifs.required' : 'servicesActifs.pilot')
           }}</q-item-label>
         </q-item-section>
         <q-item-section side

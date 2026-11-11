@@ -5,7 +5,6 @@ export default {
     'Enable the services you use. Disabling a service removes its access and links without deleting its data. Essential services remain available.',
   required: 'Essential service',
   pilot: 'Pilot — business validation pending',
-  verified: 'Workflow verified in local testing',
   hidePilots: 'Hide pilot modules',
   save: 'Save services',
   saved: 'Services updated',

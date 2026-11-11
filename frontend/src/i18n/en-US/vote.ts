@@ -17,7 +17,6 @@ export default {
   },
   list: {
     title: 'Elections',
-    subtitle: 'Choose the election to view or take part in.',
     seat: 'seat',
     seats: 'seats',
     closes_on: 'closes on {date}',

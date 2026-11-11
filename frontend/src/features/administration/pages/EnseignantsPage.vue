@@ -1,6 +1,6 @@
 <template>
   <q-page class="q-pa-md">
-    <en-tete-page :title="$t('common.fields.teachers')" :subtitle="$t('enseignants.header.subtitle')">
+    <en-tete-page :title="$t('common.fields.teachers')">
       <template v-if="auth.peutPlanifier" #actions>
         <q-btn
           unelevated

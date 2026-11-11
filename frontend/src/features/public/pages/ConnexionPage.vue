@@ -88,11 +88,6 @@
         <p class="pochoir acces__services-titre">{{ $t('loginPage.services.title') }}</p>
         <ul class="acces__liens">
           <li>
-            <router-link to="/portail-connexion" class="acces__lien-lien">
-              {{ $t('loginPage.services.links.portailSms') }}
-            </router-link>
-          </li>
-          <li>
             <router-link to="/s-inscrire" class="acces__lien-lien">
               {{ $t('loginPage.services.links.preinscription') }}
             </router-link>

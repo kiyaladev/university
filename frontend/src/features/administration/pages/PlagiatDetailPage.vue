@@ -28,7 +28,7 @@
         class="q-mb-md"
       />
 
-      <en-tete-page :title="$t('plagiatDetail.title')" :subtitle="$t('plagiatDetail.subtitle')">
+      <en-tete-page :title="$t('plagiatDetail.title')">
         <template #actions>
           <PastilleStatut domaine="suspicion" :statut="suspicion.statut" :icone="iconeStatut(suspicion.statut)" />
         </template>

@@ -1,7 +1,7 @@
 <template>
   <div class="resume-liste" role="status">
     <span v-for="s in plaques" :key="s.cle"
-      >{{ s.libelle }} : <strong>{{ stats?.[s.cle] ?? 0 }}</strong></span
+      >{{ s.libelle }} : <strong>{{ stats ? (stats[s.cle] ?? 0) : '—' }}</strong></span
     >
   </div>
 </template>

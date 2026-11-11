@@ -26,8 +26,8 @@
   </barre-filtres>
 
   <!-- Compteurs par statut -->
-  <div class="row q-col-gutter-sm q-mb-md">
-    <div v-for="c in compteurs" :key="c.statut" class="col-6 col-sm-4 col-lg-2">
+  <div class="grille-compteurs q-mb-md">
+    <div v-for="c in compteurs" :key="c.statut">
       <q-card
         flat
         bordered
@@ -43,8 +43,45 @@
     </div>
   </div>
 
+  <div class="row items-center q-mb-sm">
+    <q-btn-toggle
+      v-model="vue"
+      unelevated
+      no-caps
+      dense
+      toggle-color="white"
+      text-color="grey-8"
+      toggle-text-color="primary"
+      class="segmented"
+      :options="[
+        { value: 'tableau', icon: 'table_rows', label: $t('stages.views.table') },
+        { value: 'kanban', icon: 'view_kanban', label: $t('stages.views.kanban') },
+      ]"
+    />
+  </div>
+
+  <stages-kanban
+    v-if="vue === 'kanban'"
+    :lignes="lignes"
+    :cibles="boutonsTransition"
+    @detail="(tr) => emit('detail', tr)"
+    @transition="(tr, cible) => emit('transition', tr, cible)"
+  />
+  <div v-if="vue === 'kanban' && !lignes.length && !chargement" class="q-mt-md">
+    <etat-vide
+      icone="work_off"
+      :titre="$t('stages.table.emptyState.title')"
+      :aide="$t('stages.table.emptyState.description')"
+    >
+      <template v-if="peutCreer" #action>
+        <q-btn flat no-caps color="primary" icon="add" :label="$t('stages.actions.new')" @click="emit('creer')" />
+      </template>
+    </etat-vide>
+  </div>
+
   <!-- Vue tableau -->
   <q-table
+    v-if="vue === 'tableau'"
     :grid="$q.screen.lt.md"
     flat
     bordered
@@ -345,37 +382,24 @@
   </q-table>
 
   <!-- Statistiques par type -->
-  <div class="row q-col-gutter-md q-mt-md">
-    <q-card flat bordered class="col-12 col-md-6 carte">
-      <q-card-section>
-        <div class="text-subtitle1 text-weight-medium q-mb-sm">{{ $t('stages.stats.byType') }}</div>
-        <q-list dense>
-          <q-item v-for="s in statsParType" :key="s.type">
-            <q-item-section>
-              <q-item-label>{{ s.label }}</q-item-label>
-            </q-item-section>
-            <q-item-section side>
-              <q-badge color="primary" :label="s.nb" />
-            </q-item-section>
-          </q-item>
-        </q-list>
-      </q-card-section>
-    </q-card>
-    <q-card flat bordered class="col-12 col-md-6 carte">
-      <q-card-section>
-        <div class="text-subtitle1 text-weight-medium q-mb-sm">{{ $t('stages.stats.byStatus') }}</div>
-        <q-list dense>
-          <q-item v-for="c in compteurs" :key="`stat-${c.statut}`">
-            <q-item-section>
-              <q-item-label>{{ c.label }}</q-item-label>
-            </q-item-section>
-            <q-item-section side>
-              <PastilleStatut domaine="stage" :statut="c.statut" :libelle="String(c.nb)" />
-            </q-item-section>
-          </q-item>
-        </q-list>
-      </q-card-section>
-    </q-card>
+  <div class="row q-col-gutter-md q-mt-sm">
+    <div class="col-12 col-md-6">
+      <q-card flat bordered class="carte">
+        <q-card-section>
+          <div class="text-subtitle1 text-weight-medium q-mb-sm">{{ $t('stages.stats.byType') }}</div>
+          <q-list dense>
+            <q-item v-for="s in statsParType" :key="s.type">
+              <q-item-section>
+                <q-item-label>{{ s.label }}</q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-badge color="primary" :label="s.nb" />
+              </q-item-section>
+            </q-item>
+          </q-list>
+        </q-card-section>
+      </q-card>
+    </div>
   </div>
 </template>
 
@@ -387,7 +411,8 @@
  * filtres, le panneau ne fait que les afficher et remonter les intentions
  * (transition, rapport, impression, édition, soutenance, jury, suppression).
  */
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
+import StagesKanban from './StagesKanban.vue';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import PastilleStatut from '@/shared/components/PastilleStatut.vue';
@@ -427,6 +452,9 @@ const emit = defineEmits<{
   detail: [travail: TravailEncadre];
   creer: [];
 }>();
+
+const vue = ref<'tableau' | 'kanban'>(localStorage.getItem('stages.vue') === 'kanban' ? 'kanban' : 'tableau');
+watch(vue, (v) => localStorage.setItem('stages.vue', v));
 
 const optionsTypes = computed(() => [
   { label: t('stages.types.memoire'), value: 'MEMOIRE' },
@@ -548,7 +576,7 @@ function peutConstatJury(tr: TravailEncadre) {
   transition: background 0.15s ease;
 }
 .carte-compteur--actif {
-  background: #e3f2fd;
-  border-color: #0066cc;
+  background: var(--up-vert-fond);
+  border-color: var(--up-vert-action);
 }
 </style>

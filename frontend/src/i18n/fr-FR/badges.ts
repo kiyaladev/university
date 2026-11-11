@@ -2,7 +2,7 @@
 export default {
   title: 'Badges & visiteurs',
   subtitle:
-    'Visiteurs, intervenants, techniciens, personnalités — badge imprimable avec QR et validité paramétrable, prolongeable ou annulable.',
+    'Badges imprimables avec QR pour visiteurs, intervenants et techniciens ; validité paramétrable, prolongeable ou annulable.',
   actions: {
     issueBadge: 'Émettre un badge',
     edit: 'Éditer',

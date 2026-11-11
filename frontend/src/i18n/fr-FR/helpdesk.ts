@@ -68,7 +68,7 @@ export default {
   },
   equipmentTab: {
     subtitle:
-      "Chaque étiquette porte un QR unique : les pannes arrivent à la DSI avec le nom exact de l'équipement, sans usurpation possible.",
+      "Chaque étiquette porte un QR unique : les pannes arrivent à la DSI avec le nom exact de l'équipement.",
     emptyTitle: 'Aucun équipement pour ces critères.',
     emptyHint: 'Déclarez le parc pour que chaque panne arrive avec le nom exact du matériel.',
     active: 'en service',

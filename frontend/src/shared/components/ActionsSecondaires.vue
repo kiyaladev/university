@@ -18,6 +18,9 @@ function presente(nodes: VNode[]): boolean {
     no-caps
     icon="more_horiz"
     :label="t('common.actions.otherActions')"
+    :aria-label="t('common.actions.otherActions')"
+    :title="t('common.actions.otherActions')"
+    class="actions-secondaires__declencheur"
     @click.stop
   >
     <q-menu auto-close>

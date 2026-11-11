@@ -156,6 +156,13 @@ onMounted(charger);
   gap: var(--up-2);
 }
 
+// Des champs de date à largeur propre : sans elle, chacun s'étirait sur 280 px
+// et la période occupait la moitié de l'en-tête.
+.stats__periode :deep(.champ-date) {
+  flex: 0 1 176px;
+  min-width: 140px;
+}
+
 // Même gouttière que le registre des séances ; le reste vient de la règle
 // globale `.raccourci` d'app.scss.
 .stats__raccourcis {

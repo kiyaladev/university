@@ -64,8 +64,12 @@
           </footer>
         </article>
       </li>
-      <li v-if="!(rapport?.lignes ?? []).length" class="stats__vide pochoir">
-        {{ $t('statistiques.salles.empty.cards') }}
+      <li v-if="!(rapport?.lignes ?? []).length" class="stats__vide">
+        <etat-vide
+          icone="meeting_room"
+          :titre="$t('statistiques.salles.empty.title')"
+          :aide="$t('statistiques.salles.empty.hint')"
+        />
       </li>
     </ul>
 
@@ -81,8 +85,15 @@
       :pagination="{ rowsPerPage: 25, sortBy: 'code' }"
       :visible-columns="colonnesVisibles"
       :loading-label="$t('statistiques.salles.table.loading')"
-      :no-data-label="$t('statistiques.salles.empty.table')"
     >
+      <template #no-data>
+        <etat-vide
+          icone="meeting_room"
+          :titre="$t('statistiques.salles.empty.title')"
+          :aide="$t('statistiques.salles.empty.hint')"
+        />
+      </template>
+
       <template #body-cell-salle="p">
         <q-td :props="p">
           <div class="stats__salle">
@@ -138,6 +149,7 @@ import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useQuasar, type QTableColumn } from 'quasar';
 import ReleveChiffres from './ReleveChiffres.vue';
+import EtatVide from '@/shared/components/EtatVide.vue';
 import BarreTaux from '@/shared/components/BarreTaux.vue';
 import { dateLisible, heuresLisibles } from '@/shared/utils/libelles';
 import type { RapportSalles } from '../services/rapports';
@@ -341,9 +353,6 @@ const colonnesVisibles = computed(() =>
 
 .stats__vide {
   grid-column: 1 / -1;
-  padding: var(--up-5);
-  text-align: center;
-  color: var(--up-encre-douce);
 }
 
 @media (max-width: 599px) {

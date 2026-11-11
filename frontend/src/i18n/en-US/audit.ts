@@ -1,7 +1,6 @@
 export default {
   declaredTime: 'Declared attendance time',
   title: 'Audit log',
-  subtitle: 'History of operations and corrections.',
   entity: 'Entity',
   action: 'Action',
   actor: 'Actor',

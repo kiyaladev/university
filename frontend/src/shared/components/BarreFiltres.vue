@@ -181,6 +181,21 @@ const developpe = ref(false);
   flex: 1 1 320px;
   max-width: 480px;
 }
+/* Un filtre principal (liste déroulante) garde une largeur lisible : sans base,
+   il s'écrasait sur sa seule flèche, seul sur une ligne en mobile. */
+.barre-filtres__ligne > :deep(.q-select),
+.barre-filtres__ligne > :deep(.q-input:not(.barre-filtres__recherche)) {
+  flex: 0 1 200px;
+  min-width: 160px;
+}
+@media (max-width: 599px) {
+  .barre-filtres__recherche,
+  .barre-filtres__ligne > :deep(.q-select),
+  .barre-filtres__ligne > :deep(.q-input:not(.barre-filtres__recherche)) {
+    flex: 1 1 100%;
+    max-width: none;
+  }
+}
 .barre-filtres__avances--actif {
   background: var(--up-chaux);
 }

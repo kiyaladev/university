@@ -1,8 +1,7 @@
 /** Namespace `attestations`. */
 export default {
   title: 'Attestations',
-  subtitle:
-    "Documents officiels vérifiables par QR code — tout scan public est journalisé, rien ne s'efface, tout se révoque.",
+  subtitle: 'Documents officiels vérifiables par QR code ; chaque vérification publique est journalisée.',
   actions: {
     bulletins: 'Bulletins',
     issue: 'Émettre une attestation',
@@ -76,7 +75,8 @@ export default {
     failed: 'échec',
     ip: 'IP : {ip}',
     ipUnknown: 'inconnue',
-    empty: 'Aucune vérification enregistrée.',
+    empty: 'Aucune vérification enregistrée',
+    emptyHint: 'Chaque scan du QR de l’attestation apparaîtra ici.',
   },
   messages: {
     revoked: 'Attestation révoquée — le QR ne sera plus valable',

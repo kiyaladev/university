@@ -1246,3 +1246,35 @@ body.body--dark .q-table__middle {
     font-variant-numeric: tabular-nums;
   }
 }
+
+// Rangée de compteurs : les tuiles se partagent la largeur à parts égales,
+// quel qu'en soit le nombre (5 états ne laissent plus un vide à droite).
+.grille-compteurs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+  gap: var(--up-2);
+}
+
+// Registre large : des gouttières de 12 px au lieu de 16 gagnent ~4 % de
+// largeur par ligne.
+.q-table thead th,
+.q-table tbody td {
+  padding-left: 12px;
+  padding-right: 12px;
+}
+
+.q-table thead th:first-child,
+.q-table tbody td:first-child {
+  padding-left: var(--up-3);
+}
+
+.q-table thead th:last-child,
+.q-table tbody td:last-child {
+  padding-right: var(--up-3);
+}
+
+// Dans un registre, « Autres actions » se réduit aux trois points : le libellé
+// reste lu par les lecteurs d'écran (aria-label) et en infobulle (title).
+.q-table td .actions-secondaires__declencheur .q-btn__content > .block {
+  display: none;
+}

@@ -1,8 +1,8 @@
 /** Namespace `formationsPubliques` — page FormationsPubliquesPage.vue (vitrine publique de la formation continue). */
 export default {
   hero: {
-    overline: 'Formation continue & certifications',
-    title: 'Compétences pour demain',
+    overline: 'Cours du soir et certifications',
+    title: 'Formation continue',
     text: "L'université ouvre ses cours du soir et ses certifications aux professionnels et au grand public. Choisissez votre formation, déposez votre demande sans compte, réglez par Mobile Money — et recevez votre attestation de formation.",
     facts: {
       noAccount: {

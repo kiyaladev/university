@@ -1,8 +1,7 @@
 /** Namespace `reclamations` — page ReclamationsPage.vue (guichet des réclamations, vue admin). */
 export default {
   title: 'Réclamations & requêtes',
-  subtitle:
-    'Guichet unique des doléances étudiantes — note manquante, erreur de saisie, scolarité, enseignement. Chaque réclamation suit un cycle tracé : de l’ouverture à la clôture, en passant par l’assignation et l’escalade automatique à 48 h.',
+  subtitle: 'Suivi des réclamations de l’ouverture à la clôture, avec escalade automatique après 48 h.',
   actions: {
     newReclamation: 'Nouvelle réclamation',
     escalate: 'Escalader',

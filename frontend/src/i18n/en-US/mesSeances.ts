@@ -1,7 +1,6 @@
 /** Namespace `mesSeances` — MesSeancesPage.vue (log of the teacher's sessions). */
 export default {
   title: 'My sessions',
-  subtitle: 'Overview of my classes and the attendance checks concerning me',
   actions: {
     myJustificatifs: 'My justifications',
     printAttendance: 'Print my attendance sheet',

@@ -1,8 +1,7 @@
 /** Namespace `mesDemandes` — page Mes demandes de documents (vue étudiante). */
 export default {
   title: 'Mes demandes de documents',
-  subtitle:
-    "Demandez vos attestations et relevés en ligne : payez les frais au tarif paramétré, suivez l'avancement, retirez au guichet lorsque le statut passe à « Prête ».",
+  subtitle: 'Demandez attestations et relevés, payez les frais, puis retirez le document au guichet une fois « Prête ».',
   actions: {
     new: 'Nouvelle demande',
     pay: 'Payer',

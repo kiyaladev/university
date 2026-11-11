@@ -32,9 +32,12 @@
               }}</q-item-label>
             </q-item-section>
           </q-item>
-          <q-item v-if="!verifications.length">
-            <q-item-section class="text-grey-7">{{ $t('attestations.verificationsDialog.empty') }}</q-item-section>
-          </q-item>
+          <etat-vide
+            v-if="!verifications.length"
+            icone="qr_code_scanner"
+            :titre="$t('attestations.verificationsDialog.empty')"
+            :aide="$t('attestations.verificationsDialog.emptyHint')"
+          />
         </q-list>
       </q-card-section>
       <q-card-actions align="right">
@@ -45,6 +48,7 @@
 </template>
 
 <script setup lang="ts">
+import EtatVide from '@/shared/components/EtatVide.vue';
 import { dateHeureLisible } from '@/shared/utils/format';
 import type { VerificationAttestation } from '../services/attestations';
 import type { Attestation } from '@/types';

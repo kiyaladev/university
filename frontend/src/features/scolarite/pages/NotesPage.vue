@@ -31,6 +31,7 @@
         </div>
         <div class="col-12 col-md-4 text-right q-gutter-sm">
           <q-btn
+            v-if="evaluationActive"
             flat
             no-caps
             icon="fact_check"

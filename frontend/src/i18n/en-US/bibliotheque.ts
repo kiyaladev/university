@@ -2,7 +2,7 @@
 export default {
   title: 'Digital library',
   subtitle:
-    'Institutional repository management: theses, dissertations, articles and course materials — the collection backing the AUF / UNESCO grants. You are viewing the full collection here, published or not.',
+    'Institutional repository management: theses, dissertations, articles and course materials. You are viewing the full collection here, published or not.',
   actions: {
     viewShowcase: 'View public showcase',
     viewShowcaseTooltip: 'Page seen by visitors — published documents only',

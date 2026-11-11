@@ -55,8 +55,8 @@ export default {
     missing: 'missing',
     modified: 'modified',
     saved: 'saved',
-    empty:
-      'No students to grade: the sheet only lists students with validated enrollment in this class for the evaluation year.',
+    empty: 'No students to grade',
+    emptyHint: 'The sheet only lists validated enrollments of this class for the evaluation year.',
     markAllPresent: 'Mark all present',
     markAllAbsent: 'Mark all absent',
     saveAll: 'Save all',

@@ -34,7 +34,6 @@
              encore rien cherché. Ils disparaissent dès qu'un filtre parle. -->
         <section v-if="!filtrageActif && populaires.length" class="q-mb-md">
           <h2 class="lettrage biblio-populaires-titre">{{ $t('bibliothequePublique.populaires.title') }}</h2>
-          <p class="text-caption text-grey-7 q-mb-sm">{{ $t('bibliothequePublique.populaires.subtitle') }}</p>
           <div class="row q-col-gutter-sm">
             <div v-for="doc in populaires" :key="doc.id" class="col-12 col-sm-6 col-md-4">
               <q-card flat bordered class="carte biblio-populaire">

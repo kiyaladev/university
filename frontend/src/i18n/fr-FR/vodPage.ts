@@ -12,8 +12,8 @@ export default {
     player: 'Lecteur',
   },
   formDialog: {
-    editTitle: 'Modifier la cours en vidéo',
-    newTitle: 'Nouvelle cours en vidéo',
+    editTitle: 'Modifier le cours en vidéo',
+    newTitle: 'Nouveau cours en vidéo',
     mediaUrl: 'URL du média (Mux / S3 / CDN / chemin local)',
     mediaUrlPlaceholder: 'https://… ou /vod/fichier.mp4',
     thumbnailUrl: 'URL de la miniature (optionnel)',

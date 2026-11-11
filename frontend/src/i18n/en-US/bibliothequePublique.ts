@@ -1,8 +1,7 @@
 /** Namespace `bibliothequePublique`. */
 export default {
   title: 'Digital library',
-  subtitle:
-    "The university's theses, dissertations, articles and course materials: the institutional repository open to everyone, supporting the institution's standing and its eligibility for AUF / UNESCO programs.",
+  subtitle: 'The university’s theses, dissertations, articles and course materials, in open access.',
   search: {
     placeholder: 'Search the whole collection (title, keywords, content…)',
   },
@@ -24,7 +23,6 @@ export default {
   },
   populaires: {
     title: 'Most downloaded',
-    subtitle: 'The documents the public collection makes most accessible this year.',
     empty: 'No document has been downloaded yet this year.',
   },
   table: {
@@ -33,6 +31,5 @@ export default {
       downloads: 'Downloads',
     },
   },
-  footer:
-    'Browsing and downloading are free and require no account. Digitizing the paper archives is handled under a separate project.',
+  footer: 'Browsing and downloading are free and require no account.',
 };

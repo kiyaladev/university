@@ -1,8 +1,8 @@
 /** Namespace `inscriptionPublique` — InscriptionPubliquePage.vue page (online pre-registration, no account). */
 export default {
   hero: {
-    overline: 'Online registration',
-    title: 'Join the university',
+    overline: 'Apply without an account',
+    title: 'Online pre-registration',
     text: 'Submit your application without an account: choose your program, pay your fees via Mobile Money (Orange Money, MTN MoMo or Telecel), and the registrar’s office validates your enrollment.',
     facts: {
       noCash: {

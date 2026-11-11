@@ -1,8 +1,8 @@
 /** Namespace `inscriptionPublique` — page InscriptionPubliquePage.vue (préinscription en ligne sans compte). */
 export default {
   hero: {
-    overline: 'Inscriptions en ligne',
-    title: 'Rejoignez l’université',
+    overline: 'Dépôt de dossier sans compte',
+    title: 'Préinscription en ligne',
     text: 'Déposez votre dossier sans compte : choisissez votre filière, payez vos frais par Mobile Money (Orange Money, MTN MoMo ou Telecel), et la scolarité valide votre inscription.',
     facts: {
       noCash: {

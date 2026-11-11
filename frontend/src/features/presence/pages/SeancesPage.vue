@@ -1,6 +1,6 @@
 <template>
   <q-page class="registre">
-    <en-tete-page :title="$t('common.fields.sessions')" :subtitle="$t('seances.subtitle')">
+    <en-tete-page :title="$t('common.fields.sessions')">
       <template #actions>
         <q-btn
           v-if="peutAffecterControleur"
@@ -109,39 +109,41 @@
 
     <q-inner-loading :showing="chargement" />
 
-    <div v-if="!chargement && !seancesFiltrees.length" class="registre__vide">
-      <q-icon name="event_busy" size="42px" />
-      <span class="lettrage registre__vide-titre">{{ $t('seances.emptyState.title') }}</span>
-      <span class="pochoir">
-        {{ filtresActifs ? $t('seances.emptyState.filtered') : $t('seances.emptyState.default') }}
-      </span>
-      <div class="registre__vide-actions">
-        <q-btn
-          v-if="filtresActifs"
-          outline
-          no-caps
-          icon="filter_alt_off"
-          :label="$t('seances.emptyState.removeFilters')"
-          @click="reinitialiserFiltres"
-        />
-        <q-btn
-          v-else
-          outline
-          no-caps
-          icon="date_range"
-          :label="$t('seances.emptyState.expand30')"
-          @click="elargirA30Jours"
-        />
-        <q-btn
-          v-if="auth.peutPlanifier"
-          outline
-          no-caps
-          icon="calendar_month"
-          :label="$t('nav.emploi-du-temps')"
-          to="/emploi-du-temps"
-        />
-      </div>
-    </div>
+    <etat-vide
+      v-if="!chargement && !seancesFiltrees.length"
+      icone="event_busy"
+      :titre="$t('seances.emptyState.title')"
+      :aide="filtresActifs ? $t('seances.emptyState.filtered') : $t('seances.emptyState.default')"
+    >
+      <template #action>
+        <div class="registre__vide-actions">
+          <q-btn
+            v-if="filtresActifs"
+            outline
+            no-caps
+            icon="filter_alt_off"
+            :label="$t('seances.emptyState.removeFilters')"
+            @click="reinitialiserFiltres"
+          />
+          <q-btn
+            v-else
+            outline
+            no-caps
+            icon="date_range"
+            :label="$t('seances.emptyState.expand30')"
+            @click="elargirA30Jours"
+          />
+          <q-btn
+            v-if="auth.peutPlanifier"
+            outline
+            no-caps
+            icon="calendar_month"
+            :label="$t('nav.emploi-du-temps')"
+            to="/emploi-du-temps"
+          />
+        </div>
+      </template>
+    </etat-vide>
 
     <!-- Vue tableau : pour comparer et trier, quand la lecture par jour ne
          suffit plus (recherche d'une salle, d'un enseignant, tri par état). -->
@@ -199,6 +201,7 @@ import { useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useQuasar } from 'quasar';
 
+import EtatVide from '@/shared/components/EtatVide.vue';
 import { useAuthStore } from '@/stores/auth';
 import { useReferentielsStore } from '@/stores/referentiels';
 import EnTetePage from '@/shared/components/EnTetePage.vue';
@@ -502,26 +505,10 @@ onMounted(async () => {
   border-bottom: var(--up-filet);
 }
 
-.registre__vide {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--up-2);
-  padding: var(--up-6) var(--up-3);
-  color: var(--up-encre-douce);
-  text-align: center;
-}
-
-.registre__vide-titre {
-  font-size: 1.3rem;
-  color: var(--up-encre);
-}
-
 .registre__vide-actions {
   display: flex;
   gap: var(--up-2);
   flex-wrap: wrap;
   justify-content: center;
-  margin-top: var(--up-3);
 }
 </style>

@@ -29,8 +29,8 @@ export default {
       sessionsLink: 'Its sessions',
     },
     empty: {
-      cards: 'No session scheduled in a room over this period — widen the dates.',
-      table: 'No session scheduled in a room over this period.',
+      title: 'No session scheduled in a room over this period.',
+      hint: 'Widen the dates.',
     },
     table: {
       loading: 'Computing the report…',
@@ -56,8 +56,8 @@ export default {
       hoursDone: '{hours} delivered',
     },
     empty: {
-      cards: 'No teacher has a session scheduled over this period — widen the dates.',
-      table: 'No teacher has a session scheduled over this period.',
+      title: 'No teacher has a session scheduled over this period.',
+      hint: 'Widen the dates.',
     },
     table: {
       loading: 'Computing the report…',

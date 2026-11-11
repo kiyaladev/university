@@ -1,8 +1,7 @@
 /** Namespace `mesReclamations` — My complaints page (student view). */
 export default {
   title: 'My complaints',
-  subtitle:
-    'The single point of contact for your grievances: missing grade, data entry error, registrar, teaching. Each complaint follows a tracked cycle and can be anonymous if you prefer.',
+  subtitle: 'File a complaint (missing grade, entry error…), anonymously if you prefer, and follow its handling.',
   actions: {
     new: 'New complaint',
   },

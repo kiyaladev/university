@@ -2,7 +2,7 @@
 export default {
   title: 'Badges & visitors',
   subtitle:
-    'Visitors, guest speakers, technicians, dignitaries — printable badge with QR code and configurable validity, extendable or revocable.',
+    'Printable QR badges for visitors, guest speakers and technicians; validity is configurable, extendable or revocable.',
   actions: {
     issueBadge: 'Issue a badge',
     edit: 'Edit',
